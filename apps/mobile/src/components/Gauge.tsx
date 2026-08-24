@@ -1,5 +1,5 @@
 import { View, Text, StyleSheet } from 'react-native';
-import { colors, fontFamily, radius } from '@hr/tokens';
+import { colors, radius, typography } from '@hr/tokens';
 
 interface Props {
   /** 0~1. 서버가 준 값으로 계산하되 1을 넘어도 바가 깨지지 않는다. */
@@ -40,5 +40,5 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     marginTop: 10,
   },
-  caption: { fontFamily, fontSize: 13, color: colors.textWeak },
+  caption: { ...typography.label, color: colors.textWeak },
 });

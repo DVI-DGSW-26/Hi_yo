@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { addDays, endOfMonth, format, isSameMonth, startOfMonth, startOfWeek } from 'date-fns';
-import { colors, fontFamily } from '@hr/tokens';
+import { colors, typography } from '@hr/tokens';
 
 /** 날짜 아래에 찍히는 점의 종류. 화면마다 의미가 다르므로 이름은 중립적으로 둔다. */
 export type MarkerType = 'full' | 'half' | 'duty' | 'group';
@@ -100,8 +100,7 @@ const styles = StyleSheet.create({
   weekday: {
     flex: 1,
     textAlign: 'center',
-    fontFamily,
-    fontSize: 12,
+    ...typography.caption,
     color: colors.textWeak,
     paddingBottom: 8,
   },
@@ -114,7 +113,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   daySelected: { backgroundColor: colors.primary },
-  day: { fontFamily, fontSize: 15, color: colors.textStrong },
+  // 날짜는 36x36 고정 칸 안에 들어간다. lineHeight를 고정하면 글꼴 확대 시
+  // fontSize는 maxFontSizeMultiplier 1.3에서 멈추는데 lineHeight에는 그 상한이
+  // 적용되지 않아 계속 커진다. 칸을 넘기므로 lineHeight만 뺀다.
+  day: { ...typography.bodySmall, lineHeight: undefined, color: colors.textStrong },
   daySelectedText: { color: colors.white, fontWeight: '500' },
   sunday: { color: colors.textWeak },
   outside: { color: 'transparent' },
