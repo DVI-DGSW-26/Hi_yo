@@ -1,5 +1,15 @@
-// TODO: docs/DESIGN_SYSTEM.md 확정 후 값을 채운다.
-// 여백 숫자를 컴포넌트에서 임의로 정하지 않는다.
-export const spacing = {} as const;
+export const spacing = {
+  screenX: 24,
+  sectionY: 28,
+  sectionTitleGap: 20,
+  rowGap: 18,
+  ctaX: 20,
+  navHeight: 52,
+  dividerHeight: 10,
+} as const;
 
-export type SpacingToken = keyof typeof spacing;
+export const radius = {
+  button: 14,
+  gauge: 5,
+  chip: 8,
+} as const;
