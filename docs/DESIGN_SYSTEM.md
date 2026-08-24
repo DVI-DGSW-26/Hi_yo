@@ -1,0 +1,280 @@
+# 디자인 시스템 — 수치 레퍼런스
+
+`DESIGN_RULES.md`가 "하지 말 것"이라면, 이 문서는 **"정확히 어떤 값을 쓸 것인가"**다.
+여기 없는 값은 쓰지 않는다. 필요하면 만들기 전에 사람에게 묻는다.
+
+모든 값은 `@hr/tokens`에 정의되어 있다. 아래 표는 그 값이 무엇이고 어디에 쓰는지의 설명이다.
+**표의 숫자를 코드에 직접 적지 않는다. 반드시 토큰을 import해서 쓴다.**
+
+---
+
+## 1. 컬러
+
+```ts
+import { colors } from '@hr/tokens';
+```
+
+| 토큰 | 값 | 쓰는 곳 |
+|---|---|---|
+| `primary` | `#00C471` | Primary 버튼 배경, 선택된 날짜, 게이지 채움, 핵심 숫자, `확정` 상태 |
+| `primaryPress` | `#00B267` | Primary 버튼 눌림 상태 **전용**. 다른 곳에 쓰지 않는다 |
+| `textStrong` | `#191F28` | 화면 제목, 섹션 제목, 값, 금액 |
+| `textBody` | `#4E5968` | 본문, Secondary 버튼 글자, 부서명 등 |
+| `textWeak` | `#8B95A1` | 라벨, 보조 설명, 요일, 캡션, 중립 상태값 |
+| `textDisabled` | `#D1D6DB` | 값이 아직 없을 때 ("아직이에요"), 누를 수 없는 날짜 |
+| `white` | `#FFFFFF` | 화면 배경, 섹션 배경, Primary 버튼 글자 |
+| `divider` | `#F2F4F6` | 섹션 구분 띠, 게이지 트랙, Secondary 버튼 눌림 배경 |
+| `border` | `#E5E8EB` | 얇은 구분선 |
+| `borderStrong` | `#D1D6DB` | Secondary 버튼 보더 |
+| `danger` | `#E24B4A` | 오류, 누락, 반려 |
+
+### 그린 사용 예산
+
+**한 화면에 `primary`가 등장하는 지점은 최대 2곳.** (`primaryPress`는 세지 않는다)
+
+| 화면 | 1곳 | 2곳 |
+|---|---|---|
+| 근태 현황 | 게이지 채움 | `퇴근하기` 버튼 |
+| 연차 신청 | 선택된 날짜 | `신청하기` 버튼 |
+| 마이페이지 | 근속일수 숫자 | `정보 수정 요청` 버튼 |
+| 재직증명서 | 선택된 용도 칩 | `발급받기` 버튼 |
+| 급여명세서 | 실수령액 숫자 | **없음** (`PDF 저장`은 secondary) |
+
+조회가 목적인 화면은 1곳 이하가 정상이다. 억지로 채우지 않는다.
+
+---
+
+## 2. 타이포그래피
+
+```ts
+import { typography, fontFamily } from '@hr/tokens';
+```
+
+폰트는 **Pretendard** 하나. weight는 **400과 500만**. 600 이상은 프로젝트에 존재하지 않는다.
+
+| 토큰 | 크기 | weight | lineHeight | letterSpacing | 색 | 쓰는 곳 |
+|---|---|---|---|---|---|---|
+| `headline` | 22 | 500 | 30 | -0.4 | `textStrong` | 화면의 핵심 메시지. 화면당 1개 |
+| `sectionTitle` | 16 | 500 | 24 | 0 | `textStrong` | 섹션 제목 |
+| `body` | 17 | 400 | 26 | 0 | `textStrong` | 리스트의 값, 본문 |
+| `bodySmall` | 15 | 400 | 23 | 0 | `textStrong` / `textWeak` | 리스트 라벨, 달력 날짜 |
+| `label` | 13 | 400 | 20 | 0 | `textWeak` | 게이지 캡션, 보조 설명 |
+| `caption` | 12 | 400 | 18 | 0 | `textWeak` | 요일, 최소 단위 메타 정보 |
+
+### 별도 취급하는 값
+
+| 용도 | 크기 | weight | 색 |
+|---|---|---|---|
+| 화면 핵심 숫자 (실수령액, 근무시간) | 26~28 | 500 | `primary` 또는 `textStrong` |
+| 버튼 글자 | 17 | 500 | 버튼 종류에 따름 |
+
+### 금지
+
+- **본문에 13px 이하를 쓰지 않는다.** 13 이하는 라벨·캡션 전용
+- 11px 미만 금지
+- weight 600, 700 금지
+- 굵기로 강조하지 않는다. 크기와 색으로 한다
+
+### 글꼴 확대 대응
+
+시스템 글꼴 크기를 키운 사용자가 있다. 고정 높이 안에 텍스트를 가두지 않는다.
+버튼과 달력처럼 높이가 고정된 요소는 `maxFontSizeMultiplier`를 준다 (버튼 1.4, 달력 1.3).
+
+---
+
+## 3. 여백과 라운드
+
+```ts
+import { spacing, radius } from '@hr/tokens';
+```
+
+375px 기준 고정값이다. **임의로 줄이지 않는다.** 답답해 보이는 화면의 원인은 대부분 여백 부족이다.
+
+| 토큰 | 값 | 쓰는 곳 |
+|---|---|---|
+| `screenX` | 24 | 화면 좌우 패딩 |
+| `sectionY` | 28 | 섹션 상하 패딩 |
+| `sectionTitleGap` | 20 | 섹션 제목 아래 여백 |
+| `rowGap` | 18 | 리스트 항목 사이 |
+| `ctaX` | 20 | 하단 CTA 영역 좌우 패딩 |
+| `navHeight` | 52 | 상단 네비게이션 높이 |
+| `dividerHeight` | 10 | 섹션 구분 띠 높이 |
+
+| 라운드 | 값 | 쓰는 곳 |
+|---|---|---|
+| `radius.button` | 14 | 버튼 |
+| `radius.gauge` | 5 | 게이지 |
+| `radius.chip` | 8 | 칩, 입력 필드 |
+| (달력 날짜) | 10 | Calendar 내부 고정 |
+
+---
+
+## 4. 화면 구조
+
+**흰 배경 위에 회색 띠로 섹션을 나눈다.** 카드를 회색 배경에 띄우지 않는다.
+
+```
+┌──────────────────────┐
+│ 상단 네비 (52)        │
+├──────────────────────┤
+│ Section              │  흰 배경, 좌우 24, 상하 28
+│   headline           │
+│   Gauge              │
+├──────────────────────┤
+│ SectionDivider (10)  │  회색 띠, 화면 전체 폭
+├──────────────────────┤
+│ Section              │
+│   SectionTitle       │
+│   ListRow            │
+│   ListRow            │
+├──────────────────────┤
+│ SectionDivider (10)  │
+├──────────────────────┤
+│ Section              │
+├──────────────────────┤
+│ 하단 CTA (좌우 20)    │  Button (primary, cta)
+└──────────────────────┘
+```
+
+### 금지
+
+- 그림자(`shadowColor`, `elevation`) 금지. 전부 0
+- 그라디언트, blur 금지
+- 카드 중첩 금지
+- 가로 스크롤, 캐러셀 금지
+- 한쪽 면 보더 + 라운드 조합 금지
+
+---
+
+## 5. 컴포넌트
+
+```ts
+import { Button, ListRow, SectionTitle, Section, SectionDivider, Gauge, StatusText, Calendar } from '@/components';
+```
+
+**새 컴포넌트를 즉석에서 만들지 않는다.** 아래를 조합한다. 없으면 사람에게 묻는다.
+
+### Button
+
+```tsx
+<Button label="퇴근하기" onPress={handlePress} />
+<Button label="PDF 저장" variant="secondary" onPress={save} />
+<Button label="신청하기" loading={isPending} onPress={submit} />
+```
+
+| prop | 값 | 기본 |
+|---|---|---|
+| `variant` | `primary` \| `secondary` | `primary` |
+| `size` | `cta` (높이 54) \| `inline` (높이 44) | `cta` |
+| `loading` | boolean | false |
+
+- **한 화면에 `primary`는 1개.** 두 번째 버튼은 반드시 `secondary`
+- `disabled` prop은 존재하지 않는다. 누를 수 없는 상황이면 눌렀을 때 인라인 에러로 알린다
+- 라벨은 동사로 끝낸다: `확인` (X) → `신청하기` (O)
+
+### ListRow
+
+```tsx
+<ListRow label="출근" value="08:52" />
+<ListRow label="퇴근" placeholder="아직이에요" />
+<ListRow label="계좌정보" value="국민 ****-**-**1234" onPress={goEdit} />
+```
+
+값이 없을 때 `placeholder`를 쓰면 `textDisabled` 색으로 표시된다.
+
+### Section / SectionDivider
+
+```tsx
+<Section>
+  <SectionTitle title="오늘" />
+  <ListRow label="출근" value="08:52" />
+</Section>
+<SectionDivider />
+<Section>...</Section>
+```
+
+### Gauge
+
+```tsx
+<Gauge ratio={0.73} caption="주 52시간까지 13시간 40분" captionRight="73%" />
+```
+
+`ratio`는 0~1. 1을 넘겨도 바가 깨지지 않는다. **비율 계산은 서버 값으로 하고 앱에서 근무시간을 합산하지 않는다.**
+
+### StatusText
+
+```tsx
+<StatusText label="확정" tone="done" />
+<StatusText label="근태 누락" tone="error" />
+<StatusText label="검토 대기" />
+```
+
+| tone | 색 | 쓰는 상태 |
+|---|---|---|
+| `done` | `primary` | 확정, 완료, 승인 |
+| `error` | `danger` | 오류, 누락, 반려 |
+| `neutral` (기본) | `textWeak` | **그 외 전부** — 대기, 검토중, 진행중, 미기록 |
+
+상태를 색으로 구분하려고 새 tone을 만들지 않는다. 뱃지(알약 배경)를 쓰지 않는다.
+
+### Calendar
+
+연차 신청(S-301)과 당직 스케줄(S-503)이 같이 쓴다.
+
+```tsx
+<Calendar
+  month={currentMonth}
+  markers={{ '2026-10-14': 'full', '2026-10-20': 'duty' }}
+  selected={selectedDates}
+  isDisabled={(iso) => iso < todayIso}
+  onPressDate={handleSelect}
+/>
+```
+
+| prop | 설명 |
+|---|---|
+| `markers` | `{ 'yyyy-MM-dd': MarkerType }`. 서버 데이터를 그대로 넣는다 |
+| `selected` | 선택된 날짜 배열. 선택된 날짜는 그린 배경이 되고 점은 숨겨진다 |
+| `isDisabled` | 누를 수 없는 날짜 판정. **잔여연차 초과 판단은 화면에서 서버 값으로 한다** |
+
+MarkerType: `full`(연차) / `half`(반차) / `duty`(당직) / `group`(단체연차)
+
+---
+
+## 6. 숫자 포맷
+
+```ts
+import { formatMinutes, formatAmount, formatLeaveDays, formatTime } from '@/lib/format';
+```
+
+**화면에 나가는 모든 숫자는 이 함수를 거친다.** 컴포넌트에서 직접 계산하거나 포맷하지 않는다.
+
+| 함수 | 입력 | 출력 |
+|---|---|---|
+| `formatMinutes(500)` | 분 단위 정수 | `8시간 20분` |
+| `formatAmount(3847200)` | 원 단위 정수 | `3,847,200` |
+| `formatLeaveDays(0.5)` | 일수 | `0.5일` |
+| `formatTime(iso)` | ISO 문자열 | `08:52` (KST 고정) |
+
+### 서버와의 약속
+
+- 근무시간은 **분 단위 정수**로 받는다. `8.33` 같은 소수를 받지 않는다
+- 금액은 **원 단위 정수**로 받는다
+- 날짜·시각은 ISO 8601, 표시는 **KST 고정**. 기기 타임존을 따라가지 않는다
+- `8.33시간` 같은 소수 표기를 화면에 쓰지 않는다
+
+---
+
+## 7. 문구
+
+전부 **해요체**. 자세한 규칙은 `DESIGN_RULES.md` 6장.
+
+| 상황 | 쓰지 않는다 | 쓴다 |
+|---|---|---|
+| 완료 | 신청되었습니다 | 신청했어요 |
+| 값 없음 | 미기록 / 데이터 없음 | 아직이에요 |
+| 불가 | 잔여 연차가 없어요 | 올해 연차를 다 썼어요. 다음 연차는 1월 1일에 생겨요 |
+| 다이얼로그 좌측 버튼 | 취소 | 닫기 |
+| 오류 | 조회 실패 | 지금은 불러올 수 없어요 |
+
+느낌표를 쓰지 않는다. "죄송합니다", "잠시만 기다려주세요" 대신 무엇을 하면 되는지 쓴다.

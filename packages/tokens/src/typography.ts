@@ -1,5 +1,12 @@
-// TODO: docs/DESIGN_SYSTEM.md 확정 후 값을 채운다.
-// 폰트 크기·굵기·행간을 컴포넌트에서 직접 정하지 않는다.
-export const typography = {} as const;
+export const typography = {
+  headline: { fontSize: 22, fontWeight: '500', lineHeight: 30, letterSpacing: -0.4 },
+  sectionTitle: { fontSize: 16, fontWeight: '500', lineHeight: 24 },
+  body: { fontSize: 17, fontWeight: '400', lineHeight: 26 },
+  bodySmall: { fontSize: 15, fontWeight: '400', lineHeight: 23 },
+  label: { fontSize: 13, fontWeight: '400', lineHeight: 20 },
+  caption: { fontSize: 12, fontWeight: '400', lineHeight: 18 },
+} as const;
+
+export const fontFamily = 'Pretendard';
 
 export type TypographyToken = keyof typeof typography;

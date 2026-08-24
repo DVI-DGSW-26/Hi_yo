@@ -1,5 +1,18 @@
-// TODO: docs/DESIGN_SYSTEM.md 확정 후 값을 채운다.
-// 값을 추측해서 넣지 않는다. 여기 없는 색은 컴포넌트에 직접 쓰지 않는다.
-export const colors = {} as const;
+export const colors = {
+  primary: '#00C471',
+  primaryPress: '#00B267',
+
+  textStrong: '#191F28',
+  textBody: '#4E5968',
+  textWeak: '#8B95A1',
+  textDisabled: '#D1D6DB',
+
+  white: '#FFFFFF',
+  divider: '#F2F4F6',
+  border: '#E5E8EB',
+  borderStrong: '#D1D6DB',
+
+  danger: '#E24B4A',
+} as const;
 
 export type ColorToken = keyof typeof colors;
