@@ -59,9 +59,47 @@ eas update --channel preview --message "..."
 
 `eas build:configure`를 돌리기 전까지 `app.json`에 `extra.eas.projectId`가 없어서 EAS 명령이 실패한다.
 
+### 번들 식별자
+
+```
+ios.bundleIdentifier  com.dvi.hr
+android.package       com.dvi.hr
+```
+
+**첫 TestFlight 업로드 전까지만 바꿀 수 있다.** 한 번 올라가면 고정이다.
+Apple Developer 등록 시 App ID와 맞춰야 하므로, 다른 값을 쓰기로 했다면 지금 `app.json`에서 고친다.
+
+## 폰트
+
+Pretendard Regular(400)·Medium(500)을 `assets/fonts/`에 두고 `expo-font` config plugin으로
+네이티브에 임베드한다. `fontFamily: Pretendard` 하나로 `fontWeight` 400/500이 갈린다.
+
+**Expo Go에서는 폰트가 적용되지 않는다.** 네이티브 임베드 방식이라 Development Build가 필요하다.
+
+```bash
+eas build --profile development --platform android
+```
+
+폰트 설정을 바꿨는지 로컬에서 확인만 하려면:
+
+```bash
+npx expo prebuild --platform android --no-install
+cat android/app/src/main/res/font/xml_pretendard.xml   # weight 400/500 매핑
+grep ReactFontManager android/app/src/main/java/com/dvi/hr/MainApplication.kt
+rm -rf android                                          # 확인 후 지운다
+```
+
+`android/`·`ios/`는 커밋하지 않는다(gitignore). 필요할 때 prebuild로 다시 만든다.
+prebuild는 `package.json`의 `android`·`ios` 스크립트를 `expo run:*`로 바꿔놓으므로
+지운 뒤 `expo start --*`로 되돌린다.
+
 ## 먼저 처리해야 할 것
 
 - [ ] **Apple Developer Program 조직 계정 등록** — D-U-N-S 번호 확인에 며칠~2주. 코드보다 먼저 시작한다.
-- [ ] `docs/DESIGN_SYSTEM.md` 작성 → `packages/tokens` 값 채우기 (지금 전부 비어 있음)
-- [ ] `docs/DESIGN_RULES.md` 2~9장 확정
-- [ ] API 명세 확정 → `apps/mobile/src/lib/api.ts` 베이스 URL·인증 방식
+- [ ] API 명세 + 인증 방식 확정 → `apps/mobile/src/lib/api.ts`
+- [ ] 전자서명 구현 방식 확정 → 연차 모듈 전체가 걸려 있다
+- [ ] `docs/DESIGN_RULES.md` 2~9장 확정 (특히 6장 문구 규칙)
+- [ ] S-101/302/501/502/601 화면 상세 스펙
+- [ ] 리포지터리 private 전환 — org owner(`dvi-admin`, `YoonJinPark`) 권한 필요
+
+완료: 디자인 토큰·공통 컴포넌트·Pretendard (2026-08-24)

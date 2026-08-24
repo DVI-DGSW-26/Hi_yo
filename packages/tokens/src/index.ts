@@ -1,3 +1,5 @@
-export { colors, type ColorToken } from './colors';
-export { spacing, type SpacingToken } from './spacing';
-export { typography, type TypographyToken } from './typography';
+export { colors } from './colors';
+export type { ColorToken } from './colors';
+export { typography, fontFamily } from './typography';
+export type { TypographyToken } from './typography';
+export { spacing, radius } from './spacing';
