@@ -1,5 +1,5 @@
 import { Pressable, Text, StyleSheet, ActivityIndicator } from 'react-native';
-import { colors, radius, typography } from '@hr/tokens';
+import { colors, fontFamily, radius, typography } from '@hr/tokens';
 
 type Variant = 'primary' | 'secondary';
 type Size = 'cta' | 'inline';
@@ -62,7 +62,7 @@ const styles = StyleSheet.create({
     borderColor: colors.borderStrong,
   },
   secondaryPressed: { backgroundColor: colors.divider },
-  label: { fontSize: 17, fontWeight: '500' },
+  label: { fontFamily, fontSize: 17, fontWeight: '500' },
   labelPrimary: { color: colors.white },
   labelSecondary: { color: colors.textBody },
 });

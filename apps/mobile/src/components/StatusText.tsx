@@ -1,5 +1,5 @@
 import { Text, StyleSheet } from 'react-native';
-import { colors } from '@hr/tokens';
+import { colors, fontFamily } from '@hr/tokens';
 
 type Tone = 'done' | 'error' | 'neutral';
 
@@ -17,7 +17,7 @@ export function StatusText({ label, tone = 'neutral' }: Props) {
 }
 
 const styles = StyleSheet.create({
-  base: { fontSize: 15 },
+  base: { fontFamily, fontSize: 15 },
   done: { color: colors.primary, fontWeight: '500' },
   error: { color: colors.danger },
   neutral: { color: colors.textWeak },

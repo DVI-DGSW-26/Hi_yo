@@ -1,5 +1,5 @@
 import { View, Text, StyleSheet } from 'react-native';
-import { colors, spacing } from '@hr/tokens';
+import { colors, fontFamily, spacing } from '@hr/tokens';
 
 interface Props {
   title: string;
@@ -22,5 +22,5 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: spacing.sectionTitleGap,
   },
-  title: { fontSize: 16, fontWeight: '500', color: colors.textStrong },
+  title: { fontFamily, fontSize: 16, fontWeight: '500', color: colors.textStrong },
 });
