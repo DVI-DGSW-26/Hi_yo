@@ -2,6 +2,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { colors, typography } from '@hr/tokens';
 import { ApiError } from '@/lib/apiError';
 
 const queryClient = new QueryClient({
@@ -26,7 +27,16 @@ export default function RootLayout() {
     <QueryClientProvider client={queryClient}>
       <SafeAreaProvider>
         <StatusBar style="dark" />
-        <Stack />
+        <Stack
+          screenOptions={{
+            // 그림자 금지 (DESIGN_RULES.md 1장 5번). 헤더 밑에 그림자를 두지 않는다.
+            headerShadowVisible: false,
+            headerStyle: { backgroundColor: colors.white },
+            headerTitleStyle: { ...typography.sectionTitle, color: colors.textStrong },
+            headerTintColor: colors.textStrong,
+            contentStyle: { backgroundColor: colors.white },
+          }}
+        />
       </SafeAreaProvider>
     </QueryClientProvider>
   );

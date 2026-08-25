@@ -37,7 +37,7 @@ import { colors } from '@hr/tokens';
 | 근태 현황 | 게이지 채움 | `퇴근하기` 버튼 |
 | 연차 신청 | 선택된 날짜 | `신청하기` 버튼 |
 | 마이페이지 | 근속일수 숫자 | `정보 수정 요청` 버튼 |
-| 재직증명서 | 선택된 용도 칩 | `발급받기` 버튼 |
+| 재직증명서 | `발급받기` 버튼 | **없음** |
 | 급여명세서 | 실수령액 숫자 | **없음** (`PDF 저장`은 secondary) |
 
 조회가 목적인 화면은 1곳 이하가 정상이다. 억지로 채우지 않는다.
@@ -149,7 +149,7 @@ import { spacing, radius } from '@hr/tokens';
 ## 5. 컴포넌트
 
 ```ts
-import { Button, ListRow, SectionTitle, Section, SectionDivider, Gauge, StatusText, Calendar } from '@/components';
+import { Button, ListRow, TextField, SectionTitle, Section, SectionDivider, Gauge, StatusText, Calendar } from '@/components';
 ```
 
 **새 컴포넌트를 즉석에서 만들지 않는다.** 아래를 조합한다. 없으면 사람에게 묻는다.
@@ -181,6 +181,22 @@ import { Button, ListRow, SectionTitle, Section, SectionDivider, Gauge, StatusTe
 ```
 
 값이 없을 때 `placeholder`를 쓰면 `textDisabled` 색으로 표시된다.
+
+### TextField
+
+```tsx
+<TextField label="용도" value={value} onChangeText={setValue} maxLength={100} />
+<TextField label="제출처" value={value} onChangeText={setValue} error="100자까지 쓸 수 있어요." />
+```
+
+| prop | 설명 |
+|---|---|
+| `maxLength` | 서버가 받는 한계를 그대로 넣는다. 넘겨서 422를 받게 두지 않는다 |
+| `error` | 인라인 오류. `Button`에 `disabled`가 없으므로 막힌 이유는 전부 이 자리로 온다 |
+
+라벨은 필드 위에 둔다. 높이를 고정하지 않는다 — `minHeight`만 버튼과 같은 54를 준다.
+
+TODO: 라벨 위치·오류 표기·비활성 상태는 `DESIGN_RULES.md` 7장이 비어 있어 확정되지 않았다.
 
 ### Section / SectionDivider
 

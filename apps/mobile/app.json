@@ -37,7 +37,8 @@
             ]
           }
         }
-      ]
+      ],
+      "expo-sharing"
     ],
     "ios": {
       "supportsTablet": false,

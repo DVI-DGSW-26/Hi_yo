@@ -22,12 +22,27 @@ export const api = axios.create({
 // 토큰은 expo-secure-store에만 저장한다. AsyncStorage를 쓰지 않는다.
 // 지금 붙는 것은 개발용 스텁 헤더뿐이다 (devAuth.ts). 릴리스 빌드에는 붙지 않는다.
 api.interceptors.request.use((config) => {
-  const devAuth = devAuthValue();
-  if (devAuth) {
-    config.headers.set(DEV_AUTH_HEADER, devAuth);
+  for (const [name, value] of Object.entries(authHeaders())) {
+    config.headers.set(name, value);
   }
   return config;
 });
+
+/**
+ * axios를 타지 않는 요청에 같은 인증을 붙이기 위한 헤더.
+ *
+ * 파일 내려받기(expo-file-system)는 자기 네트워크 계층을 쓴다. 인증을 두 군데에 적어두면
+ * 방식이 바뀔 때 한쪽이 남는다. 붙일 헤더는 이 함수 하나에서만 만든다.
+ */
+export function authHeaders(): Record<string, string> {
+  const devAuth = devAuthValue();
+  return devAuth ? { [DEV_AUTH_HEADER]: devAuth } : {};
+}
+
+/** 파일 내려받기처럼 절대 주소가 필요할 때 쓴다 */
+export function apiUrl(path: string): string {
+  return `${baseURL ?? ''}${path}`;
+}
 
 // 오류는 전부 ApiError 하나로 정규화된다. 화면은 axios 오류 형태를 알 필요가 없다.
 // 여기서 응답 본문을 로그에 남기지 않는다. 급여액·주민번호·계좌번호가 섞일 수 있다.
