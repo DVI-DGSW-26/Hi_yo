@@ -6,6 +6,8 @@ interface Props {
   value?: string;
   /** 값이 아직 없을 때 쓴다. textDisabled 색으로 표시된다. */
   placeholder?: string;
+  /** 값 자리에 StatusText 같은 요소를 넣을 때 쓴다. 주면 value·placeholder 대신 이게 그려진다. */
+  right?: React.ReactNode;
   onPress?: () => void;
 }
 
@@ -13,15 +15,17 @@ interface Props {
  * 라벨-값 한 줄. 섹션 안에 쌓아서 쓴다.
  * 값은 서버가 준 그대로 넣는다. 여기서 포맷하거나 마스킹하지 않는다.
  */
-export function ListRow({ label, value, placeholder, onPress }: Props) {
+export function ListRow({ label, value, placeholder, right, onPress }: Props) {
   const text = value ?? placeholder;
   const isPlaceholder = value === undefined && placeholder !== undefined;
 
   const content = (
     <>
       <Text style={styles.label}>{label}</Text>
-      {text !== undefined && (
-        <Text style={[styles.value, isPlaceholder && styles.placeholder]}>{text}</Text>
+      {right ?? (
+        text !== undefined && (
+          <Text style={[styles.value, isPlaceholder && styles.placeholder]}>{text}</Text>
+        )
       )}
     </>
   );

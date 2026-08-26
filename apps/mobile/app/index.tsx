@@ -26,7 +26,14 @@ export default function Index() {
           ) : me.error ? (
             <Text style={styles.error}>{me.error.message}</Text>
           ) : isActive ? (
-            <ListRow label="재직증명서" value="바로 발급" onPress={() => router.push('/certificate')} />
+            <>
+              <ListRow label="연차" value="현황·신청" onPress={() => router.push('/leave')} />
+              <ListRow
+                label="재직증명서"
+                value="바로 발급"
+                onPress={() => router.push('/certificate')}
+              />
+            </>
           ) : (
             <Text style={styles.empty}>지금 들어갈 수 있는 화면이 없어요.</Text>
           )}

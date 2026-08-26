@@ -178,9 +178,13 @@ import { Button, ListRow, TextField, SectionTitle, Section, SectionDivider, Gaug
 <ListRow label="출근" value="08:52" />
 <ListRow label="퇴근" placeholder="아직이에요" />
 <ListRow label="계좌정보" value="국민 ****-**-**1234" onPress={goEdit} />
+<ListRow label="8.24 ~ 8.26 · 연차휴가" right={<StatusText label="반려했어요" tone="error" />} />
 ```
 
 값이 없을 때 `placeholder`를 쓰면 `textDisabled` 색으로 표시된다.
+
+값 자리에 `StatusText` 같은 요소가 필요하면 `right`에 넣는다. `SectionTitle`의 `right`와 같은 방식이다.
+주면 `value`·`placeholder` 대신 그것이 그려진다.
 
 ### TextField
 
