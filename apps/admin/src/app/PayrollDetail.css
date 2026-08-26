@@ -1,26 +1,4 @@
-.back-link {
-  display: inline-block;
-  margin-bottom: var(--space-tight);
-  font-size: var(--font-size-label);
-  line-height: var(--line-height-label);
-  color: var(--color-text-body);
-  text-decoration: underline;
-}
-
-.section-title {
-  margin: var(--space-section-y) 0 var(--space-tight);
-  font-size: var(--font-size-section-title);
-  line-height: var(--line-height-section-title);
-  font-weight: var(--font-weight-section-title);
-  color: var(--color-text-strong);
-}
-
-.detail-actions {
-  display: flex;
-  gap: var(--space-tight);
-  margin-bottom: var(--space-tight);
-  flex-wrap: wrap;
-}
+/* 화면 공통 클래스(.back-link · .section-title · .detail-actions)는 index.css 에 있다. */
 
 /* 화면의 핵심 숫자. 그린을 쓰지 않는다 — 그린 예산 2곳은 버튼과 확정 상태가 쓴다. */
 .final-amount {
