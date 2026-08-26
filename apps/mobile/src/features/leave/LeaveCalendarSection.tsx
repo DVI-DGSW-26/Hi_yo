@@ -2,7 +2,6 @@ import { addMonths, endOfMonth, format, startOfMonth, subMonths } from 'date-fns
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import { colors, spacing, typography } from '@hr/tokens';
 import { Button, Calendar, SectionTitle, type MarkerType } from '@/components';
-import { formatInKst } from '@/lib/format';
 import { useLeaveCalendar } from './api';
 
 interface Props {
@@ -17,14 +16,15 @@ interface Props {
  * 연차 달력.
  *
  * 점은 서버가 준 달력 데이터를 그대로 찍는다. 앱에서 연차를 세거나 합치지 않는다.
- * 지난 날짜는 누를 수 없다 (DESIGN_SYSTEM.md 5장 Calendar 예시).
+ *
+ * **지난 날짜를 막지 않는다.** 사후 신청을 받는지는 도메인 규칙이고 문서에 없다.
+ * 앱이 미리 막으면 규칙이 다를 때 조용히 틀린다. S-301 확정 결정과 같은 원칙으로,
+ * 고르는 것은 열어두고 판정은 서버가 한다.
  */
 export function LeaveCalendarSection({ month, onChangeMonth, selected, onPressDate }: Props) {
   const from = format(startOfMonth(month), 'yyyy-MM-dd');
   const to = format(endOfMonth(month), 'yyyy-MM-dd');
   const { data, isPending, error } = useLeaveCalendar(from, to);
-
-  const today = formatInKst(new Date().toISOString(), 'yyyy-MM-dd');
 
   return (
     <View>
@@ -39,7 +39,6 @@ export function LeaveCalendarSection({ month, onChangeMonth, selected, onPressDa
           month={month}
           markers={toMarkers(data)}
           selected={selected}
-          isDisabled={(iso) => iso < today}
           onPressDate={onPressDate}
         />
       )}
