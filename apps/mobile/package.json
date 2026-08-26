@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@hookform/resolvers": "^5.9.1",
+    "@hr/api": "*",
     "@hr/tokens": "*",
     "@tanstack/react-query": "^5.102.2",
     "axios": "^1.19.0",
