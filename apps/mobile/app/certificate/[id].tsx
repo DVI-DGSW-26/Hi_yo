@@ -73,8 +73,8 @@ export default function CertificateDetailScreen() {
 const styles = StyleSheet.create({
   flex: { flex: 1, backgroundColor: colors.white },
   headline: { ...typography.headline, color: colors.textStrong },
-  note: { ...typography.label, color: colors.textWeak, marginTop: 8 },
-  error: { ...typography.bodySmall, color: colors.danger, marginBottom: 8 },
+  note: { ...typography.label, color: colors.textWeak, marginTop: spacing.tight },
+  error: { ...typography.bodySmall, color: colors.danger, marginBottom: spacing.tight },
   cta: {
     paddingHorizontal: spacing.ctaX,
     paddingTop: spacing.ctaX,

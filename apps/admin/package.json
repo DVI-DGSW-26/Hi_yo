@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@hr/api": "*",
+    "@hr/format": "*",
     "@hr/tokens": "*",
     "@tanstack/react-query": "^5.102.4",
     "axios": "^1.19.0",

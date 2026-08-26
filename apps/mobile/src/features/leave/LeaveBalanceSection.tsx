@@ -1,5 +1,5 @@
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
-import { colors, typography } from '@hr/tokens';
+import { colors, spacing, typography } from '@hr/tokens';
 import { ListRow } from '@/components';
 import { formatLeaveDays } from '@/lib/format';
 import { useLeaveBalance } from './api';
@@ -38,7 +38,7 @@ export function LeaveBalanceSection() {
 
 const styles = StyleSheet.create({
   headline: { ...typography.headline, color: colors.textStrong },
-  note: { ...typography.label, color: colors.textWeak, marginTop: 8 },
-  rows: { marginTop: 20 },
+  note: { ...typography.label, color: colors.textWeak, marginTop: spacing.tight },
+  rows: { marginTop: spacing.sectionTitleGap },
   error: { ...typography.bodySmall, color: colors.danger },
 });

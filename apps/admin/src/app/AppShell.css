@@ -2,7 +2,7 @@
 
 .shell {
   display: grid;
-  grid-template-columns: 200px 1fr;
+  grid-template-columns: var(--space-side-nav-width) 1fr;
   height: 100%;
 }
 

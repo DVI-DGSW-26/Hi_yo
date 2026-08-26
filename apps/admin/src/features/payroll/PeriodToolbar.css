@@ -1,0 +1,32 @@
+.toolbar {
+  margin-bottom: var(--space-section-title-gap);
+}
+
+.toolbar-row {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-section-y);
+  flex-wrap: wrap;
+}
+
+.toolbar-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-tight);
+  /* 라벨 한 줄만큼 내려서 입력칸과 밑선을 맞춘다. */
+  margin-top: calc(var(--line-height-label) + var(--space-tight));
+  flex-wrap: wrap;
+}
+
+.toolbar-meta {
+  margin: 0 0 var(--space-tight);
+  font-size: var(--font-size-label);
+  line-height: var(--line-height-label);
+  color: var(--color-text-weak);
+}
+
+.toolbar-error {
+  margin: 0;
+  font-size: var(--font-size-body-small);
+  color: var(--color-danger);
+}

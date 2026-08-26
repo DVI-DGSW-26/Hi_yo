@@ -1,0 +1,17 @@
+.status {
+  font-size: var(--font-size-body-small);
+  line-height: var(--line-height-body-small);
+}
+
+.status-done {
+  color: var(--color-primary);
+  font-weight: 500;
+}
+
+.status-error {
+  color: var(--color-danger);
+}
+
+.status-neutral {
+  color: var(--color-text-weak);
+}

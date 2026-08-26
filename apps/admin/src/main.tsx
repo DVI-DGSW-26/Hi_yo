@@ -7,6 +7,8 @@ import { applyTokens } from '@/lib/applyTokens';
 import { AppShell } from '@/app/AppShell';
 import { Home } from '@/app/Home';
 import { NotBuilt } from '@/app/NotBuilt';
+import { PayrollPage } from '@/app/PayrollPage';
+import { PayrollDetail } from '@/app/PayrollDetail';
 import './index.css';
 
 const queryClient = new QueryClient({
@@ -34,16 +36,8 @@ const router = createBrowserRouter([
       { index: true, element: <Home /> },
       { path: 'employees', element: <NotBuilt screenId="A-102" title="직원 등록·수정" /> },
       { path: 'approvals', element: <NotBuilt screenId="A-302" title="연차 신청 검토·승인" /> },
-      {
-        path: 'payroll',
-        element: (
-          <NotBuilt
-            screenId="A-601"
-            title="급여 계산 실행·수정"
-            blockedBy="API는 docs/API_급여.md에 정리돼 있어요. 관리팀 화면의 디자인 규칙이 정해지면 시작할 수 있어요."
-          />
-        ),
-      },
+      { path: 'payroll', element: <PayrollPage /> },
+      { path: 'payroll/:payrollId', element: <PayrollDetail /> },
     ],
   },
 ]);
