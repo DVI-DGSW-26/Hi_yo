@@ -1,0 +1,79 @@
+/* DESIGN_ADMIN.md 3장. 여기 값을 화면에서 다시 정의하지 않는다. */
+
+.table-scroll {
+  overflow: auto;
+  /* 헤더 고정이 먹으려면 스크롤 컨테이너에 높이 제한이 있어야 한다. */
+  max-height: calc(100vh - var(--space-section-y) * 6);
+}
+
+.table {
+  border-collapse: separate;
+  border-spacing: 0;
+  width: 100%;
+  /* 자릿수가 흔들리면 합계를 눈으로 못 맞춘다. */
+  font-variant-numeric: tabular-nums;
+}
+
+.table th,
+.table td {
+  /* 표 셀의 height 는 최솟값으로 동작한다. 내용이 길면 늘어난다 — 고정 높이가 아니다. */
+  height: var(--space-row-height);
+  padding: 0 var(--space-row-gap);
+  text-align: left;
+  white-space: nowrap;
+  /* 가로선만. 세로선을 긋지 않는다 — 열이 많을수록 격자가 시야를 막는다. */
+  border-bottom: 1px solid var(--color-border);
+}
+
+.table th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: var(--color-white);
+  border-bottom: 1px solid var(--color-border-strong);
+  font-size: var(--font-size-label);
+  line-height: var(--line-height-label);
+  font-weight: 400;
+  color: var(--color-text-weak);
+}
+
+.table td {
+  font-size: var(--font-size-body-small);
+  line-height: var(--line-height-body-small);
+  color: var(--color-text-strong);
+}
+
+.table .align-right {
+  text-align: right;
+}
+
+/* 20열을 훑다가 누구 급여인지 잃어버리면 안 된다. */
+.table .is-sticky {
+  position: sticky;
+  left: 0;
+  background: var(--color-white);
+  z-index: 1;
+  /* 고정 열의 경계에만 세로선 하나를 허용한다. */
+  border-right: 1px solid var(--color-border);
+}
+
+.table th.is-sticky {
+  z-index: 3;
+}
+
+.table tbody tr.is-clickable {
+  cursor: pointer;
+}
+
+.table tbody tr:hover td {
+  background: var(--color-divider);
+}
+
+.table-message {
+  color: var(--color-text-weak);
+  font-size: var(--font-size-body-small);
+}
+
+.table-message.danger {
+  color: var(--color-danger);
+}

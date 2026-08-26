@@ -1,0 +1,60 @@
+/* DESIGN_ADMIN.md 4장 */
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-tight);
+  margin-bottom: var(--space-row-gap);
+}
+
+.field-label {
+  font-size: var(--font-size-label);
+  line-height: var(--line-height-label);
+  color: var(--color-text-weak);
+}
+
+.field-required {
+  color: var(--color-danger);
+}
+
+.field-input {
+  /* 높이를 고정하지 않는다. 글꼴이 커지면 늘어나야 한다. */
+  min-height: var(--space-row-height);
+  padding: 0 var(--space-tight);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-chip);
+  background: var(--color-white);
+  font-family: inherit;
+  font-size: var(--font-size-body-small);
+  color: var(--color-text-strong);
+}
+
+.field-input::placeholder {
+  color: var(--color-text-disabled);
+}
+
+/* 배경을 칠하지 않는다. 테두리와 아래 문구로 알린다. */
+.field-input.has-error {
+  border-color: var(--color-danger);
+}
+
+.field-error {
+  font-size: var(--font-size-label);
+  line-height: var(--line-height-label);
+  color: var(--color-danger);
+}
+
+/* 자동으로 채워지는 값. 테두리 없이 글자만 둔다. */
+.field-readonly {
+  min-height: var(--space-row-height);
+  display: flex;
+  align-items: center;
+  font-size: var(--font-size-body-small);
+  color: var(--color-text-strong);
+}
+
+.field-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 320px));
+  gap: 0 var(--space-section-y);
+}

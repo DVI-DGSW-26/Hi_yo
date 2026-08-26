@@ -120,8 +120,8 @@ function selectedDates(range: { start?: string; end?: string }): string[] {
 const styles = StyleSheet.create({
   flex: { flex: 1, backgroundColor: colors.white },
   note: { ...typography.label, color: colors.textWeak },
-  hint: { ...typography.label, color: colors.textWeak, marginBottom: 8 },
-  error: { ...typography.bodySmall, color: colors.danger, marginBottom: 8 },
+  hint: { ...typography.label, color: colors.textWeak, marginBottom: spacing.tight },
+  error: { ...typography.bodySmall, color: colors.danger, marginBottom: spacing.tight },
   cta: {
     paddingHorizontal: spacing.ctaX,
     paddingTop: spacing.ctaX,

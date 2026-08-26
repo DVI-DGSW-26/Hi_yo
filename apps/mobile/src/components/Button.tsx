@@ -1,5 +1,5 @@
 import { Pressable, Text, StyleSheet, ActivityIndicator } from 'react-native';
-import { colors, fontFamily, radius, typography } from '@hr/tokens';
+import { colors, fontFamily, radius, spacing, typography } from '@hr/tokens';
 
 type Variant = 'primary' | 'secondary';
 type Size = 'cta' | 'inline';
@@ -53,7 +53,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   cta: { height: 54 },
-  inline: { height: 44, paddingHorizontal: 16 },
+  inline: { height: spacing.rowHeight, paddingHorizontal: 16 },
   primary: { backgroundColor: colors.primary },
   primaryPressed: { backgroundColor: colors.primaryPress },
   secondary: {
