@@ -16,11 +16,17 @@
     "noEmit": true,
     "jsx": "react-jsx",
 
+    /* 모바일과 같은 수준으로 맞춘다. 급여·주민번호를 다루는 화면이라 null 하나가 사고다. */
+    "strict": true,
+
     /* Linting */
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "erasableSyntaxOnly": true,
-    "noFallthroughCasesInSwitch": true
+    "noFallthroughCasesInSwitch": true,
+    "paths": {
+      "@/*": ["./src/*"]
+    }
   },
   "include": ["src"]
 }

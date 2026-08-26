@@ -1,4 +1,4 @@
-import { AxiosError } from 'axios';
+import type { AxiosError } from 'axios';
 
 /**
  * 서버 오류를 화면이 그대로 쓸 수 있는 하나의 형태로 바꾼다.
@@ -8,6 +8,8 @@ import { AxiosError } from 'axios';
  *
  * 응답 본문을 이 객체에 담지 않는다. 급여액·주민번호·계좌번호가 섞여 있을 수 있고
  * Error 객체는 크래시 리포트에 그대로 실린다. 담는 것은 status와 message뿐이다.
+ *
+ * 모바일과 관리팀 화면이 같은 서버를 본다. 오류 규칙이 바뀌면 여기 한 곳만 고친다.
  */
 
 /** 서버가 주는 오류 응답. 모든 엔드포인트가 같은 모양이다. */
@@ -31,7 +33,7 @@ export type ApiErrorKind =
   | 'notFound'
   /** 422. 값이 아니라 업무 규칙 위반이다 — 잔여 부족, 마감된 기간 수정 등 */
   | 'rule'
-  /** 그 밖의 4xx */
+  /** 그 밖의 4xx. 값 검증 실패(400)가 여기 들어온다 */
   | 'badRequest'
   /** 5xx */
   | 'server'
@@ -58,7 +60,7 @@ export class ApiError extends Error {
     this.status = status;
   }
 
-  /** 업무 규칙 위반(422)인가. 폼 검증 오류와 다르게 다뤄야 한다 */
+  /** 업무 규칙 위반(422)인가. 값 검증 실패(400)와 다르게 다뤄야 한다 */
   get isRuleViolation(): boolean {
     return this.kind === 'rule';
   }
@@ -69,7 +71,7 @@ export class ApiError extends Error {
   }
 }
 
-/** axios 오류를 ApiError로 바꾼다. api.ts의 응답 인터셉터에서만 부른다. */
+/** axios 오류를 ApiError로 바꾼다. 응답 인터셉터에서만 부른다. */
 export function toApiError(error: unknown): ApiError {
   if (error instanceof ApiError) return error;
 

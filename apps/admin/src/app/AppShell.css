@@ -1,0 +1,39 @@
+/* 틀만 잡는다. 화면용 스타일은 관리팀 디자인 규칙이 정해진 뒤에 넣는다. */
+
+.shell {
+  display: grid;
+  grid-template-columns: 200px 1fr;
+  height: 100%;
+}
+
+.shell-nav {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-row-gap);
+  padding: var(--space-section-y) var(--space-screen-x);
+  border-right: 1px solid var(--color-border);
+}
+
+.shell-brand {
+  font-size: var(--font-size-section-title);
+  line-height: var(--line-height-section-title);
+  font-weight: var(--font-weight-section-title);
+  color: var(--color-text-strong);
+  margin-bottom: var(--space-section-title-gap);
+}
+
+.shell-link {
+  font-size: var(--font-size-body-small);
+  line-height: var(--line-height-body-small);
+  color: var(--color-text-body);
+}
+
+.shell-link.is-active {
+  color: var(--color-text-strong);
+  font-weight: 500;
+}
+
+.shell-main {
+  padding: var(--space-section-y) var(--space-screen-x);
+  overflow: auto;
+}

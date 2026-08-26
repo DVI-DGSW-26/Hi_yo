@@ -3,7 +3,7 @@ import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider, initialWindowMetrics } from 'react-native-safe-area-context';
 import { colors, typography } from '@hr/tokens';
-import { ApiError } from '@/lib/apiError';
+import { ApiError } from '@hr/api';
 
 const queryClient = new QueryClient({
   defaultOptions: {
