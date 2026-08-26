@@ -54,7 +54,7 @@ const styles = StyleSheet.create({
   label: {
     ...typography.label,
     color: colors.textWeak,
-    marginBottom: 8,
+    marginBottom: spacing.tight,
   },
   input: {
     ...typography.body,
@@ -72,6 +72,6 @@ const styles = StyleSheet.create({
   error: {
     ...typography.label,
     color: colors.danger,
-    marginTop: 8,
+    marginTop: spacing.tight,
   },
 });

@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { addDays, endOfMonth, format, isSameMonth, startOfMonth, startOfWeek } from 'date-fns';
-import { colors, typography } from '@hr/tokens';
+import { colors, spacing, typography } from '@hr/tokens';
 
 /** 날짜 아래에 찍히는 점의 종류. 화면마다 의미가 다르므로 이름은 중립적으로 둔다. */
 export type MarkerType = 'full' | 'half' | 'duty' | 'group';
@@ -106,7 +106,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     ...typography.caption,
     color: colors.textWeak,
-    paddingBottom: 8,
+    paddingBottom: spacing.tight,
   },
   cell: { flex: 1, alignItems: 'center', paddingVertical: 2 },
   dayWrap: {

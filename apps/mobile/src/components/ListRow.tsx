@@ -77,7 +77,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     // 터치 영역 최소 44. 글꼴을 키우면 이보다 커진다 (고정 높이가 아니다).
-    minHeight: 44,
+    minHeight: spacing.rowHeight,
     marginBottom: spacing.rowGap,
   },
   pressed: { backgroundColor: colors.divider },

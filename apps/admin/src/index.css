@@ -55,6 +55,17 @@ a {
   text-decoration: none;
 }
 
+/*
+ * 키보드 포커스 (DESIGN_ADMIN.md 8장).
+ * 관리팀은 하루 종일 키보드로 입력한다. `outline: none` 을 쓰지 않는다.
+ * `:focus-visible` 이라 마우스 클릭에는 나오지 않는다.
+ */
+:focus-visible {
+  outline: 2px solid var(--color-focus-ring);
+  outline-offset: 2px;
+  border-radius: var(--radius-chip);
+}
+
 /* 그림자와 그라디언트를 쓰지 않는다 (DESIGN_RULES.md 1장 5번). */
 
 /*
