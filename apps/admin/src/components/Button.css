@@ -1,0 +1,74 @@
+.btn-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-tight);
+}
+
+.btn {
+  min-height: var(--space-row-height);
+  padding: 0 var(--space-cta-x);
+  border-radius: var(--radius-button);
+  border: 1px solid transparent;
+  font-family: inherit;
+  font-size: var(--font-size-body-small);
+  font-weight: 500;
+  cursor: pointer;
+  background: var(--color-white);
+}
+
+.btn-primary {
+  background: var(--color-primary);
+  color: var(--color-white);
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: var(--color-primary-press);
+}
+
+.btn-secondary {
+  border-color: var(--color-border-strong);
+  color: var(--color-text-body);
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background: var(--color-divider);
+}
+
+/* 되돌리기 어렵거나 업무상 영향이 큰 동작에만 (DESIGN_ADMIN.md 5장). */
+.btn-danger {
+  border-color: var(--color-danger);
+  color: var(--color-danger);
+}
+
+.btn-danger:hover:not(:disabled) {
+  background: var(--color-divider);
+}
+
+/* 비활성은 색만 죽인다. 왜 눌리지 않는지는 옆의 문구가 말한다. */
+.btn:disabled {
+  cursor: not-allowed;
+  background: var(--color-white);
+  border-color: var(--color-border);
+  color: var(--color-text-disabled);
+}
+
+.btn-reason {
+  font-size: var(--font-size-label);
+  line-height: var(--line-height-label);
+  color: var(--color-text-weak);
+}
+
+.row-link {
+  border: 0;
+  background: none;
+  padding: 0;
+  font-family: inherit;
+  font-size: var(--font-size-body-small);
+  color: var(--color-text-body);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.row-link:hover {
+  color: var(--color-text-strong);
+}

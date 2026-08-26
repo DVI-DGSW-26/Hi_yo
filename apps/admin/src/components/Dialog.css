@@ -1,0 +1,36 @@
+/* DESIGN_ADMIN.md 6장. 그림자를 쓰지 않는다 — 테두리로 띄운다. */
+
+.dialog {
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-button);
+  padding: var(--space-section-y);
+  max-width: 420px;
+  background: var(--color-white);
+  color: var(--color-text-strong);
+}
+
+/* 토큰에서 만든다. CSS 에 색값을 직접 적지 않는다 — 투명도만 얹는다. */
+.dialog::backdrop {
+  background: color-mix(in srgb, var(--color-text-strong) 40%, transparent);
+}
+
+.dialog-title {
+  margin: 0 0 var(--space-tight);
+  font-size: var(--font-size-section-title);
+  line-height: var(--line-height-section-title);
+  font-weight: var(--font-weight-section-title);
+}
+
+.dialog-description {
+  margin: 0 0 var(--space-section-title-gap);
+  font-size: var(--font-size-body-small);
+  line-height: var(--line-height-body-small);
+  color: var(--color-text-body);
+}
+
+.dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-tight);
+  margin-top: var(--space-section-title-gap);
+}

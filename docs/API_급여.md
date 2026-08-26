@@ -4,10 +4,10 @@ Swagger `7. 급여` 태그를 옮긴 것이다. 원본이 항상 우선한다.
 
 | | |
 |---|---|
-| 출처 | `http://112.146.55.78:3378/hi-yo/v3/api-docs` (Swagger UI `/hi-yo/swagger-ui/index.html`) |
+| 출처 | `https://api.dvi-ind.com/hi-yo/v3/api-docs` (Swagger UI `/hi-yo/swagger-ui/index.html`) |
 | API 버전 | `DVI 인사시스템 API` v1 |
 | 확인일 | 2026-08-26 |
-| 서버 | `http://112.146.55.78:3378/hi-yo` (개발) |
+| 서버 | `https://api.dvi-ind.com/hi-yo` (개발) |
 
 > 확인일 기준 개발 서버에 급여 데이터가 **하나도 없다.** `GET /payroll/periods`, `GET /payroll/employees/1`
 > 모두 빈 배열을 준다. 화면을 붙이면 빈 상태부터 만나게 된다.
