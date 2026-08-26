@@ -53,6 +53,13 @@
       },
       "predictiveBackGestureEnabled": false,
       "package": "com.dvi.hr"
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "206956d7-799b-4ba0-8c3e-541798bbd436"
+      }
+    },
+    "owner": "sehuiiiiiiii"
   }
 }
