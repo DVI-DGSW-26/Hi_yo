@@ -1,7 +1,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { SafeAreaProvider, initialWindowMetrics } from 'react-native-safe-area-context';
 import { colors, typography } from '@hr/tokens';
 import { ApiError } from '@/lib/apiError';
 
@@ -25,7 +25,8 @@ const queryClient = new QueryClient({
 export default function RootLayout() {
   return (
     <QueryClientProvider client={queryClient}>
-      <SafeAreaProvider>
+      {/* initialMetrics가 없으면 inset 측정이 끝날 때까지 children을 그리지 않는다. 첫 화면이 비어 보인다. */}
+      <SafeAreaProvider initialMetrics={initialWindowMetrics}>
         <StatusBar style="dark" />
         <Stack
           screenOptions={{
