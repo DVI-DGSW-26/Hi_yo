@@ -2,7 +2,7 @@ import { File, Paths } from 'expo-file-system';
 import { isAvailableAsync, shareAsync } from 'expo-sharing';
 import { useMutation } from '@tanstack/react-query';
 import { apiUrl, authHeaders } from '@/lib/api';
-import { ApiError } from '@/lib/apiError';
+import { ApiError } from '@hr/api';
 
 /**
  * 발급된 증명서를 PDF로 받아 연다. `GET /certificates/{id}/pdf`

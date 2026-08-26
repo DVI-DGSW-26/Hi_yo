@@ -1,111 +1,101 @@
-:root {
-  --text: #6b6375;
-  --text-h: #08060d;
-  --bg: #fff;
-  --border: #e5e4e7;
-  --code-bg: #f4f3ec;
-  --accent: #aa3bff;
-  --accent-bg: rgba(170, 59, 255, 0.1);
-  --accent-border: rgba(170, 59, 255, 0.5);
-  --social-bg: rgba(244, 243, 236, 0.5);
-  --shadow:
-    rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
+/*
+ * 관리팀 화면의 바탕.
+ *
+ * 색·여백·글자 크기는 전부 CSS 변수로 온다 (src/lib/applyTokens.ts).
+ * 여기에 hex 값이나 여백 숫자를 직접 적지 않는다.
+ *
+ * TODO: 관리팀 화면(테이블 6컬럼 이상)의 디자인 규칙은 아직 없다.
+ * DESIGN_SYSTEM.md 의 컴포넌트는 전부 React Native 기준이다.
+ * 규칙이 정해지기 전까지 여기에 화면용 스타일을 늘리지 않는다.
+ */
 
-  --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --heading: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --mono: ui-monospace, Consolas, monospace;
-
-  font: 18px/145% var(--sans);
-  letter-spacing: 0.18px;
-  color-scheme: light dark;
-  color: var(--text);
-  background: var(--bg);
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-
-  @media (max-width: 1024px) {
-    font-size: 16px;
-  }
+@font-face {
+  font-family: 'Pretendard';
+  src: url('/fonts/Pretendard-Regular.otf') format('opentype');
+  font-weight: 400;
+  font-display: swap;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --text: #9ca3af;
-    --text-h: #f3f4f6;
-    --bg: #16171d;
-    --border: #2e303a;
-    --code-bg: #1f2028;
-    --accent: #c084fc;
-    --accent-bg: rgba(192, 132, 252, 0.15);
-    --accent-border: rgba(192, 132, 252, 0.5);
-    --social-bg: rgba(47, 48, 58, 0.5);
-    --shadow:
-      rgba(0, 0, 0, 0.4) 0 10px 15px -3px, rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
-  }
-
-  #social .button-icon {
-    filter: invert(1) brightness(2);
-  }
+@font-face {
+  font-family: 'Pretendard';
+  src: url('/fonts/Pretendard-Medium.otf') format('opentype');
+  font-weight: 500;
+  font-display: swap;
 }
 
-#root {
-  width: 1126px;
-  max-width: 100%;
-  margin: 0 auto;
-  text-align: center;
-  border-inline: 1px solid var(--border);
-  min-height: 100svh;
-  display: flex;
-  flex-direction: column;
+*,
+*::before,
+*::after {
   box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
 }
 
 body {
   margin: 0;
+  font-family: 'Pretendard', system-ui, sans-serif;
+  font-size: var(--font-size-body);
+  line-height: var(--line-height-body);
+  color: var(--color-text-strong);
+  background: var(--color-white);
+  -webkit-font-smoothing: antialiased;
 }
 
-h1,
-h2 {
-  font-family: var(--heading);
-  font-weight: 500;
-  color: var(--text-h);
+/* 다크 모드를 쓰지 않는다. 모바일과 같이 라이트 고정이다 (app.json userInterfaceStyle). */
+:root {
+  color-scheme: light;
 }
 
-h1 {
-  font-size: 56px;
-  letter-spacing: -1.68px;
-  margin: 32px 0;
-  @media (max-width: 1024px) {
-    font-size: 36px;
-    margin: 20px 0;
-  }
+a {
+  color: inherit;
+  text-decoration: none;
 }
-h2 {
-  font-size: 24px;
-  line-height: 118%;
-  letter-spacing: -0.24px;
-  margin: 0 0 8px;
-  @media (max-width: 1024px) {
-    font-size: 20px;
-  }
+
+/* 그림자와 그라디언트를 쓰지 않는다 (DESIGN_RULES.md 1장 5번). */
+
+/*
+ * 아래는 화면이 없는 동안 쓰는 최소한의 글자 스타일이다.
+ * 관리팀 디자인 규칙이 정해지면 제대로 된 컴포넌트로 대체한다. 여기에 더 늘리지 않는다.
+ */
+
+.page-title {
+  font-size: var(--font-size-headline);
+  line-height: var(--line-height-headline);
+  font-weight: var(--font-weight-headline);
+  color: var(--color-text-strong);
+  margin: 0 0 var(--space-section-title-gap);
 }
-p {
+
+.muted {
+  font-size: var(--font-size-label);
+  line-height: var(--line-height-label);
+  color: var(--color-text-weak);
+}
+
+.danger {
+  font-size: var(--font-size-body-small);
+  line-height: var(--line-height-body-small);
+  color: var(--color-danger);
+}
+
+.rows {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: var(--space-row-gap);
+  margin: 0 0 var(--space-section-y);
+}
+
+.rows dt {
+  font-size: var(--font-size-body-small);
+  line-height: var(--line-height-body-small);
+  color: var(--color-text-weak);
+}
+
+.rows dd {
   margin: 0;
-}
-
-code,
-.counter {
-  font-family: var(--mono);
-  display: inline-flex;
-  border-radius: 4px;
-  color: var(--text-h);
-}
-
-code {
-  font-size: 15px;
-  line-height: 135%;
-  padding: 4px 8px;
-  background: var(--code-bg);
+  color: var(--color-text-strong);
 }

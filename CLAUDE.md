@@ -15,7 +15,15 @@
 apps/mobile     Expo (React Native). 본인용 화면 전부
 apps/admin      React + Vite. 관리팀 화면 (테이블 6컬럼 이상)
 packages/tokens 컬러/타이포/여백 토큰. 양쪽이 공유
+packages/api    HTTP 클라이언트·오류 정규화·목록 봉투 타입. 양쪽이 공유
 ```
+
+`packages/api`에는 **플랫폼과 무관한 것만** 둔다. 인증과 baseURL은 앱이 넣는다 —
+모바일은 `expo-secure-store`·`EXPO_PUBLIC_`, 관리팀 화면은 브라우저·`VITE_`로 사정이 다르다.
+서버 오류 규칙(422는 업무 규칙 위반 등)이 바뀌면 여기 한 곳만 고친다.
+
+`apps/admin`은 라우팅에 **react-router**를 쓴다. 토큰은 `src/lib/applyTokens.ts`가
+CSS 변수로 심는다. CSS에 hex나 여백 숫자를 직접 적지 않는다.
 
 ---
 
