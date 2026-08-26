@@ -27,10 +27,16 @@ export default function Index() {
             <Text style={styles.error}>{me.error.message}</Text>
           ) : isActive ? (
             <>
-              <ListRow label="연차" value="현황·신청" onPress={() => router.push('/leave')} />
+              <ListRow
+                label="연차"
+                value="현황·신청"
+                variant="nav"
+                onPress={() => router.push('/leave')}
+              />
               <ListRow
                 label="재직증명서"
                 value="바로 발급"
+                variant="nav"
                 onPress={() => router.push('/certificate')}
               />
             </>
