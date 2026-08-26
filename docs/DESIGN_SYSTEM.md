@@ -37,7 +37,7 @@ import { colors } from '@hr/tokens';
 | 근태 현황 | 게이지 채움 | `퇴근하기` 버튼 |
 | 연차 신청 | 선택된 날짜 | `신청하기` 버튼 |
 | 마이페이지 | 근속일수 숫자 | `정보 수정 요청` 버튼 |
-| 재직증명서 | 선택된 용도 칩 | `발급받기` 버튼 |
+| 재직증명서 | `발급받기` 버튼 | **없음** |
 | 급여명세서 | 실수령액 숫자 | **없음** (`PDF 저장`은 secondary) |
 
 조회가 목적인 화면은 1곳 이하가 정상이다. 억지로 채우지 않는다.
@@ -149,7 +149,7 @@ import { spacing, radius } from '@hr/tokens';
 ## 5. 컴포넌트
 
 ```ts
-import { Button, ListRow, SectionTitle, Section, SectionDivider, Gauge, StatusText, Calendar } from '@/components';
+import { Button, ListRow, TextField, SectionTitle, Section, SectionDivider, Gauge, StatusText, Calendar } from '@/components';
 ```
 
 **새 컴포넌트를 즉석에서 만들지 않는다.** 아래를 조합한다. 없으면 사람에게 묻는다.
@@ -178,9 +178,39 @@ import { Button, ListRow, SectionTitle, Section, SectionDivider, Gauge, StatusTe
 <ListRow label="출근" value="08:52" />
 <ListRow label="퇴근" placeholder="아직이에요" />
 <ListRow label="계좌정보" value="국민 ****-**-**1234" onPress={goEdit} />
+<ListRow label="8.24 ~ 8.26 · 연차휴가" right={<StatusText label="반려했어요" tone="error" />} />
+<ListRow label="연차" value="현황·신청" variant="nav" onPress={goLeave} />
 ```
 
 값이 없을 때 `placeholder`를 쓰면 `textDisabled` 색으로 표시된다.
+
+값 자리에 `StatusText` 같은 요소가 필요하면 `right`에 넣는다. `SectionTitle`의 `right`와 같은 방식이다.
+주면 `value`·`placeholder` 대신 그것이 그려진다.
+
+### 강약은 두 종류다
+
+| `variant` | 라벨 | 값 | 쓰는 곳 |
+|---|---|---|---|
+| `value` (기본) | `bodySmall` / `textWeak` | `body` / `textStrong` | 데이터를 보여주는 줄. `계좌정보 → 국민 ****-**-**1234` |
+| `nav` | `body` / `textStrong` | `bodySmall` / `textWeak` | 눌러서 이동하는 줄. 갈 곳의 이름이 주인공이다 |
+
+**메뉴 줄에 기본값을 쓰지 않는다.** 갈 곳의 이름이 흐려지고 설명이 진해져서 거꾸로 읽힌다.
+
+### TextField
+
+```tsx
+<TextField label="용도" value={value} onChangeText={setValue} maxLength={100} />
+<TextField label="제출처" value={value} onChangeText={setValue} error="100자까지 쓸 수 있어요." />
+```
+
+| prop | 설명 |
+|---|---|
+| `maxLength` | 서버가 받는 한계를 그대로 넣는다. 넘겨서 422를 받게 두지 않는다 |
+| `error` | 인라인 오류. `Button`에 `disabled`가 없으므로 막힌 이유는 전부 이 자리로 온다 |
+
+라벨은 필드 위에 둔다. 높이를 고정하지 않는다 — `minHeight`만 버튼과 같은 54를 준다.
+
+TODO: 라벨 위치·오류 표기·비활성 상태는 `DESIGN_RULES.md` 7장이 비어 있어 확정되지 않았다.
 
 ### Section / SectionDivider
 
@@ -236,6 +266,10 @@ import { Button, ListRow, SectionTitle, Section, SectionDivider, Gauge, StatusTe
 | `markers` | `{ 'yyyy-MM-dd': MarkerType }`. 서버 데이터를 그대로 넣는다 |
 | `selected` | 선택된 날짜 배열. 선택된 날짜는 그린 배경이 되고 점은 숨겨진다 |
 | `isDisabled` | 누를 수 없는 날짜 판정. **잔여연차 초과 판단은 화면에서 서버 값으로 한다** |
+
+**`isDisabled`에 확정되지 않은 도메인 규칙을 넣지 않는다.** 위 예시의 `iso < todayIso`는
+"지난 날짜에는 신청할 수 없다"는 규칙을 전제하는데, 그건 문서에 없다. 근거 없이 막으면
+달력의 대부분이 죽어 보이고, 규칙이 다를 때 조용히 틀린다. 고르는 것은 열어두고 판정은 서버가 한다.
 
 MarkerType: `full`(연차) / `half`(반차) / `duty`(당직) / `group`(단체연차)
 

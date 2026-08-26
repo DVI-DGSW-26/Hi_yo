@@ -1,27 +1,56 @@
 import { Pressable, Text, View, StyleSheet } from 'react-native';
 import { colors, spacing, typography } from '@hr/tokens';
 
+type Variant = 'value' | 'nav';
+
 interface Props {
   label: string;
   value?: string;
   /** 값이 아직 없을 때 쓴다. textDisabled 색으로 표시된다. */
   placeholder?: string;
+  /** 값 자리에 StatusText 같은 요소를 넣을 때 쓴다. 주면 value·placeholder 대신 이게 그려진다. */
+  right?: React.ReactNode;
+  /**
+   * `value`(기본) — 라벨이 항목 이름, 값이 데이터다. 값을 진하게 읽힌다.
+   * `nav` — 눌러서 이동하는 줄. 갈 곳의 이름인 라벨을 진하게 읽힌다.
+   */
+  variant?: Variant;
   onPress?: () => void;
 }
 
 /**
  * 라벨-값 한 줄. 섹션 안에 쌓아서 쓴다.
  * 값은 서버가 준 그대로 넣는다. 여기서 포맷하거나 마스킹하지 않는다.
+ *
+ * 강약이 두 종류다. 데이터를 보여주는 줄은 값이 주인공이고(`value`),
+ * 눌러서 이동하는 줄은 갈 곳의 이름이 주인공이다(`nav`).
  */
-export function ListRow({ label, value, placeholder, onPress }: Props) {
+export function ListRow({
+  label,
+  value,
+  placeholder,
+  right,
+  variant = 'value',
+  onPress,
+}: Props) {
   const text = value ?? placeholder;
   const isPlaceholder = value === undefined && placeholder !== undefined;
+  const isNav = variant === 'nav';
 
   const content = (
     <>
-      <Text style={styles.label}>{label}</Text>
-      {text !== undefined && (
-        <Text style={[styles.value, isPlaceholder && styles.placeholder]}>{text}</Text>
+      <Text style={isNav ? styles.navLabel : styles.label}>{label}</Text>
+      {right ?? (
+        text !== undefined && (
+          <Text
+            style={[
+              isNav ? styles.navValue : styles.value,
+              isPlaceholder && styles.placeholder,
+            ]}
+          >
+            {text}
+          </Text>
+        )
       )}
     </>
   );
@@ -60,6 +89,17 @@ const styles = StyleSheet.create({
   value: {
     ...typography.body,
     color: colors.textStrong,
+    flexShrink: 1,
+    textAlign: 'right',
+  },
+  navLabel: {
+    ...typography.body,
+    color: colors.textStrong,
+    marginRight: spacing.rowGap,
+  },
+  navValue: {
+    ...typography.bodySmall,
+    color: colors.textWeak,
     flexShrink: 1,
     textAlign: 'right',
   },

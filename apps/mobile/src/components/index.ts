@@ -1,5 +1,6 @@
 export { Button } from './Button';
 export { ListRow } from './ListRow';
+export { TextField } from './TextField';
 export { SectionTitle } from './SectionTitle';
 export { Section, SectionDivider } from './Section';
 export { Gauge } from './Gauge';

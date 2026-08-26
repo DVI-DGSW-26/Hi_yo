@@ -52,19 +52,23 @@ export function Calendar({ month, markers = {}, selected = [], isDisabled, onPre
                 accessibilityState={{ selected: isSelected, disabled }}
                 style={styles.cell}
               >
-                <View style={[styles.dayWrap, isSelected && styles.daySelected]}>
-                  <Text
-                    maxFontSizeMultiplier={1.3}
-                    style={[
-                      styles.day,
-                      i === 0 && styles.sunday,
-                      outside && styles.outside,
-                      disabled && !outside && styles.disabled,
-                      isSelected && styles.daySelectedText,
-                    ]}
-                  >
-                    {date.getDate()}
-                  </Text>
+                <View style={[styles.dayWrap, isSelected && !outside && styles.daySelected]}>
+                  {/* 다른 달 날짜는 아예 그리지 않는다. 투명색으로 숨기면 시스템의
+                      고대비 글꼴 설정이 색을 덮어써서 그대로 드러난다. 칸은 dayWrap
+                      크기로 남으므로 격자는 어긋나지 않는다. */}
+                  {outside ? null : (
+                    <Text
+                      maxFontSizeMultiplier={1.3}
+                      style={[
+                        styles.day,
+                        i === 0 && styles.sunday,
+                        disabled && styles.disabled,
+                        isSelected && styles.daySelectedText,
+                      ]}
+                    >
+                      {date.getDate()}
+                    </Text>
+                  )}
                 </View>
                 <View style={styles.dotSlot}>
                   {marker && !outside && !isSelected ? (
@@ -119,7 +123,6 @@ const styles = StyleSheet.create({
   day: { ...typography.bodySmall, lineHeight: undefined, color: colors.textStrong },
   daySelectedText: { color: colors.white, fontWeight: '500' },
   sunday: { color: colors.textWeak },
-  outside: { color: 'transparent' },
   disabled: { color: colors.textDisabled },
   dotSlot: { height: 10, justifyContent: 'center' },
   dot: { width: 4, height: 4, borderRadius: 2, backgroundColor: colors.primary },
