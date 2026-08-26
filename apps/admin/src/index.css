@@ -110,3 +110,29 @@ a {
   margin: 0;
   color: var(--color-text-strong);
 }
+
+/* 화면 공통 — 여러 화면이 같이 쓴다. 화면별 CSS 에 다시 적지 않는다. */
+
+.back-link {
+  display: inline-block;
+  margin-bottom: var(--space-tight);
+  font-size: var(--font-size-label);
+  line-height: var(--line-height-label);
+  color: var(--color-text-body);
+  text-decoration: underline;
+}
+
+.section-title {
+  margin: var(--space-section-y) 0 var(--space-tight);
+  font-size: var(--font-size-section-title);
+  line-height: var(--line-height-section-title);
+  font-weight: var(--font-weight-section-title);
+  color: var(--color-text-strong);
+}
+
+.detail-actions {
+  display: flex;
+  gap: var(--space-tight);
+  margin: var(--space-section-title-gap) 0 var(--space-tight);
+  flex-wrap: wrap;
+}

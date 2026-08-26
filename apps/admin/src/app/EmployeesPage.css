@@ -1,0 +1,31 @@
+.filters {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-row-gap);
+  flex-wrap: wrap;
+  margin-bottom: var(--space-tight);
+}
+
+.filters > .field {
+  min-width: 160px;
+  margin-bottom: 0;
+}
+
+.filters-action {
+  /* 라벨 한 줄만큼 내려서 입력칸과 밑선을 맞춘다. */
+  margin-top: calc(var(--line-height-label) + var(--space-tight));
+  margin-left: auto;
+}
+
+.pager {
+  display: flex;
+  align-items: center;
+  gap: var(--space-row-gap);
+  margin-top: var(--space-row-gap);
+}
+
+.pager-text {
+  font-size: var(--font-size-label);
+  line-height: var(--line-height-label);
+  color: var(--color-text-weak);
+}

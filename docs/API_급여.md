@@ -9,8 +9,13 @@ Swagger `7. 급여` 태그를 옮긴 것이다. 원본이 항상 우선한다.
 | 확인일 | 2026-08-26 |
 | 서버 | `https://api.dvi-ind.com/hi-yo` (개발) |
 
-> 확인일 기준 개발 서버에 급여 데이터가 **하나도 없다.** `GET /payroll/periods`, `GET /payroll/employees/1`
-> 모두 빈 배열을 준다. 화면을 붙이면 빈 상태부터 만나게 된다.
+> **서버 주소가 바뀌었다 (2026-08-26).** 옛 주소 `http://112.146.55.78:3378`은 새 주소로
+> **301 리다이렉트**한다. 브라우저는 리다이렉트된 preflight를 따라가지 않으므로 관리팀 화면에서는
+> 옛 주소를 쓰면 요청이 통째로 막힌다. `.env`를 갱신해야 한다.
+
+> **급여 데이터는 거의 없다.** A-601을 붙이며 테스트 기간 1건(`2026년 8월`, `id=1`)을 만들었다.
+> 계산된 급여 건은 **0개**다 — 근태 데이터가 없어 전원 `skipped`로 돌아온다.
+> 화면을 붙이면 빈 상태부터 만나게 된다.
 
 ---
 
@@ -34,6 +39,24 @@ X-Debug-Employee-No: employee:1
 
 이건 최종 인증 방식이 아니다. `src/lib/api.ts` 인터셉터를 이 헤더에 맞춰 확정하지 않는다.
 개발 중 임시 연결에만 쓰고, 실제 인증 방식은 확정되면 그때 반영한다.
+
+### CORS — 관리팀 화면(브라우저)에 필요한 것
+
+스텁 인증이 **커스텀 헤더**라 브라우저는 매 요청 앞에 preflight(`OPTIONS`)를 보낸다.
+새 주소는 설정돼 있다.
+
+```
+Access-Control-Allow-Origin:    http://localhost:5173
+Access-Control-Allow-Methods:   GET,POST,PUT,PATCH,DELETE,OPTIONS
+Access-Control-Allow-Headers:   x-debug-employee-no, content-type
+Access-Control-Expose-Headers:  Location, Content-Disposition
+Access-Control-Allow-Credentials: true
+Access-Control-Max-Age:         3600
+```
+
+- `Content-Disposition`이 노출돼 있어 브라우저에서 PDF 파일명을 읽을 수 있다
+- 허용 오리진이 `localhost:5173`뿐이다. **관리팀 화면을 다른 포트나 실제 도메인에 올리면
+  서버에 오리진을 추가해야 한다**
 
 ### 응답 형식
 
@@ -143,6 +166,23 @@ POST periods  POST calculate  POST adjustments  PATCH confirm  PATCH close
 
 `skipped`가 비어 있지 않으면 화면에서 반드시 명단을 보여줘야 한다. 성공 개수만 보여주면 급여가
 빠진 채로 이체된다.
+
+실제 응답 (2026-08-26, 기간 `id=1`):
+
+```json
+{
+  "periodId": 1, "targetYm": 202608,
+  "targets": 12, "calculated": 0,
+  "skipped": [
+    { "employeeId": 19, "employeeName": "사원019",
+      "reason": "근태 데이터 없음 — 세콤 수집과 사번 매칭을 확인하세요" }
+  ]
+}
+```
+
+- **대상은 12명이다.** 직무마스터의 급여계산대상 여부로 서버가 거른다 (명세서 A-601)
+- `reason`은 **사용자에게 그대로 보여줘도 되는 한국어**다. 화면에서 문구를 만들지 않는다
+- 근태가 하나도 없으면 `calculated`가 0이고 전원이 `skipped`로 온다. 오류가 아니다
 
 ---
 
@@ -348,9 +388,10 @@ POST periods  POST calculate  POST adjustments  PATCH confirm  PATCH close
 | 3 | **오류 응답 미문서화** | 401/403/404/422가 스펙에 선언돼 있지 않다. 어떤 규칙 위반에 422가 오는지 목록이 필요하다 |
 | 4 | **명세서 발송** | "확정된 급여가 명세서 발송 대상"이라고만 돼 있고 발송 API가 없다. PDF·알림 엔드포인트 없음 |
 | 5 | **페이지네이션 없음** | 급여대장·명세서 목록이 배열을 통째로 준다. 인원이 늘면 대응이 필요하다 |
-| 6 | **급여 데이터 없음** | 개발 서버에 기간·급여가 하나도 없다. 실제 응답 형태를 눈으로 확인하지 못했다 |
+| 6 | **근태 데이터 없음** | 계산이 전원 `skipped`로 끝난다. `PayrollResponse`·`Item`·수정 이력의 실제 응답을 아직 눈으로 보지 못했다 |
 | 7 | **S-601 화면 상세 스펙** | 명세서 8장 5번. 필드·정렬·버튼 동작이 정의돼 있지 않다 |
 | 8 | **항목 코드 뜻** | 25개 중 3개만 문서에 근거가 있다 (5장) |
+| 9 | **CORS 오리진** | `http://localhost:5173` 하나만 허용돼 있다. 관리팀 화면을 배포하면 서버에 추가해야 한다 |
 
 API 소개문에는 급여가 아직 "없는 것"으로 적혀 있다. 태그는 이미 구현돼 있으므로 소개문이
 갱신되지 않은 것으로 보이나, 안정화 여부는 확인이 필요하다.

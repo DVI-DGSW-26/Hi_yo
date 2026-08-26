@@ -9,6 +9,9 @@ import { Home } from '@/app/Home';
 import { NotBuilt } from '@/app/NotBuilt';
 import { PayrollPage } from '@/app/PayrollPage';
 import { PayrollDetail } from '@/app/PayrollDetail';
+import { EmployeesPage } from '@/app/EmployeesPage';
+import { EmployeeNew } from '@/app/EmployeeNew';
+import { EmployeeDetail } from '@/app/EmployeeDetail';
 import './index.css';
 
 const queryClient = new QueryClient({
@@ -34,7 +37,9 @@ const router = createBrowserRouter([
     element: <AppShell />,
     children: [
       { index: true, element: <Home /> },
-      { path: 'employees', element: <NotBuilt screenId="A-102" title="직원 등록·수정" /> },
+      { path: 'employees', element: <EmployeesPage /> },
+      { path: 'employees/new', element: <EmployeeNew /> },
+      { path: 'employees/:employeeId', element: <EmployeeDetail /> },
       { path: 'approvals', element: <NotBuilt screenId="A-302" title="연차 신청 검토·승인" /> },
       { path: 'payroll', element: <PayrollPage /> },
       { path: 'payroll/:payrollId', element: <PayrollDetail /> },
