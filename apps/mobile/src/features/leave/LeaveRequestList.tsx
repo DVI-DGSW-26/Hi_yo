@@ -1,6 +1,6 @@
-import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { colors, typography } from '@hr/tokens';
-import { ListRow, SectionTitle, StatusText } from '@/components';
+import { ListRow, QueryState, SectionTitle, StatusText } from '@/components';
 import { formatInKst, formatLeaveDays } from '@/lib/format';
 import { useMyRequests, type LeaveRequest, type RequestStatus } from './api';
 
@@ -11,31 +11,30 @@ import { useMyRequests, type LeaveRequest, type RequestStatus } from './api';
  * (DESIGN_SYSTEM.md 5장 StatusText).
  */
 export function LeaveRequestList() {
-  const { data, isPending, error } = useMyRequests();
+  const requests = useMyRequests();
 
   return (
     <View>
       <SectionTitle title="낸 신청" />
-      {isPending ? (
-        <ActivityIndicator color={colors.textDisabled} />
-      ) : error ? (
-        <Text style={styles.error}>{error.message}</Text>
-      ) : data.content.length === 0 ? (
-        <Text style={styles.empty}>아직 낸 신청이 없어요.</Text>
-      ) : (
-        data.content.map((request) => (
-          <ListRow
-            key={request.id}
-            label={`${period(request)} · ${request.typeName ?? request.typeCode}`}
-            right={
-              <View style={styles.right}>
-                <Text style={styles.days}>{formatLeaveDays(request.leaveDays)}</Text>
-                <StatusText label={statusLabel(request.status)} tone={statusTone(request.status)} />
-              </View>
-            }
-          />
-        ))
-      )}
+      <QueryState query={requests} empty="아직 낸 신청이 없어요.">
+        {(data) =>
+          data.content.map((request) => (
+            <ListRow
+              key={request.id}
+              label={`${period(request)} · ${request.typeName ?? request.typeCode}`}
+              right={
+                <View style={styles.right}>
+                  <Text style={styles.days}>{formatLeaveDays(request.leaveDays)}</Text>
+                  <StatusText
+                    label={statusLabel(request.status)}
+                    tone={statusTone(request.status)}
+                  />
+                </View>
+              }
+            />
+          ))
+        }
+      </QueryState>
     </View>
   );
 }
@@ -72,6 +71,4 @@ function statusTone(status: RequestStatus): 'done' | 'error' | 'neutral' {
 const styles = StyleSheet.create({
   right: { alignItems: 'flex-end', flexShrink: 1 },
   days: { ...typography.body, color: colors.textStrong },
-  empty: { ...typography.bodySmall, color: colors.textWeak },
-  error: { ...typography.bodySmall, color: colors.danger },
 });
