@@ -1,8 +1,15 @@
 import { Stack, useLocalSearchParams } from 'expo-router';
-import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, spacing, typography } from '@hr/tokens';
-import { Button, ListRow, Section, SectionDivider, SectionTitle } from '@/components';
+import {
+  Button,
+  ListRow,
+  QueryState,
+  Section,
+  SectionDivider,
+  SectionTitle,
+} from '@/components';
 import { useCertificate } from '@/features/certificates/api';
 import { useShareCertificatePdf } from '@/features/certificates/pdf';
 import { formatInKst } from '@/lib/format';
@@ -23,34 +30,28 @@ export default function CertificateDetailScreen() {
     <>
       <Stack.Screen options={{ title: '재직증명서' }} />
       <ScrollView style={styles.flex}>
-        {certificate.isPending ? (
-          <Section>
-            <ActivityIndicator color={colors.textDisabled} />
-          </Section>
-        ) : certificate.error ? (
-          <Section>
-            <Text style={styles.error}>{certificate.error.message}</Text>
-          </Section>
-        ) : (
-          <>
-            <Section>
-              <Text style={styles.headline}>발급했어요</Text>
-              <Text style={styles.note}>
-                {formatInKst(certificate.data.issuedAt, 'yyyy년 M월 d일')} 기준으로 만들어졌어요.
-              </Text>
-            </Section>
-            <SectionDivider />
-            <Section>
-              <SectionTitle title="증명서" />
-              <ListRow label="문서번호" value={certificate.data.docNo ?? undefined} placeholder="아직이에요" />
-              <ListRow label="재직기간" value={certificate.data.tenureText ?? undefined} placeholder="아직이에요" />
-              <ListRow label="부서" value={certificate.data.departmentName ?? undefined} placeholder="아직이에요" />
-              <ListRow label="직급" value={certificate.data.jobGrade ?? undefined} placeholder="아직이에요" />
-              <ListRow label="용도" value={certificate.data.purpose ?? undefined} placeholder="안 적었어요" />
-              <ListRow label="제출처" value={certificate.data.submitTo ?? undefined} placeholder="안 적었어요" />
-            </Section>
-          </>
-        )}
+        <QueryState query={certificate} wrapState={(state) => <Section>{state}</Section>}>
+          {(data) => (
+            <>
+              <Section>
+                <Text style={styles.headline}>발급했어요</Text>
+                <Text style={styles.note}>
+                  {formatInKst(data.issuedAt, 'yyyy년 M월 d일')} 기준으로 만들어졌어요.
+                </Text>
+              </Section>
+              <SectionDivider />
+              <Section>
+                <SectionTitle title="증명서" />
+                <ListRow label="문서번호" value={data.docNo ?? undefined} placeholder="아직이에요" />
+                <ListRow label="재직기간" value={data.tenureText ?? undefined} placeholder="아직이에요" />
+                <ListRow label="부서" value={data.departmentName ?? undefined} placeholder="아직이에요" />
+                <ListRow label="직급" value={data.jobGrade ?? undefined} placeholder="아직이에요" />
+                <ListRow label="용도" value={data.purpose ?? undefined} placeholder="안 적었어요" />
+                <ListRow label="제출처" value={data.submitTo ?? undefined} placeholder="안 적었어요" />
+              </Section>
+            </>
+          )}
+        </QueryState>
       </ScrollView>
 
       {certificate.data && (

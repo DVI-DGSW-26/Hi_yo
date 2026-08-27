@@ -1,7 +1,7 @@
 import { addMonths, endOfMonth, format, startOfMonth, subMonths } from 'date-fns';
-import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
-import { colors, spacing, typography } from '@hr/tokens';
-import { Button, Calendar, SectionTitle, type MarkerType } from '@/components';
+import { StyleSheet, View } from 'react-native';
+import { spacing } from '@hr/tokens';
+import { Button, Calendar, QueryState, SectionTitle, type MarkerType } from '@/components';
 import { useLeaveCalendar } from './api';
 
 interface Props {
@@ -24,24 +24,23 @@ interface Props {
 export function LeaveCalendarSection({ month, onChangeMonth, selected, onPressDate }: Props) {
   const from = format(startOfMonth(month), 'yyyy-MM-dd');
   const to = format(endOfMonth(month), 'yyyy-MM-dd');
-  const { data, isPending, error } = useLeaveCalendar(from, to);
+  const calendar = useLeaveCalendar(from, to);
 
   return (
     <View>
       <SectionTitle title={format(month, 'yyyy년 M월')} />
 
-      {isPending ? (
-        <ActivityIndicator color={colors.textDisabled} />
-      ) : error ? (
-        <Text style={styles.error}>{error.message}</Text>
-      ) : (
-        <Calendar
-          month={month}
-          markers={toMarkers(data)}
-          selected={selected}
-          onPressDate={onPressDate}
-        />
-      )}
+      {/* 달이 비어 있는 것은 정상이라 빈 상태를 두지 않는다. 빈 달력을 그대로 그린다 */}
+      <QueryState query={calendar}>
+        {(data) => (
+          <Calendar
+            month={month}
+            markers={toMarkers(data)}
+            selected={selected}
+            onPressDate={onPressDate}
+          />
+        )}
+      </QueryState>
 
       <View style={styles.monthNav}>
         <View style={styles.navButton}>
@@ -86,5 +85,4 @@ const styles = StyleSheet.create({
     gap: spacing.rowGap,
   },
   navButton: { flex: 1 },
-  error: { ...typography.bodySmall, color: colors.danger },
 });
