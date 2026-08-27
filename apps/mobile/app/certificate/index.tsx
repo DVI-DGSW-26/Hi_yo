@@ -12,7 +12,14 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { z } from 'zod';
 import { colors, spacing, typography } from '@hr/tokens';
-import { Button, QueryState, Section, SectionDivider, TextField } from '@/components';
+import {
+  Button,
+  MutationError,
+  QueryState,
+  Section,
+  SectionDivider,
+  TextField,
+} from '@/components';
 import { CertificateHistory } from '@/features/certificates/CertificateHistory';
 import { useIssueCertificate } from '@/features/certificates/api';
 import { useMe } from '@/features/employees/api';
@@ -123,7 +130,7 @@ export default function CertificateScreen() {
 
         {me.data?.summary.employmentStatus === 'ACTIVE' && (
           <View style={[styles.cta, { paddingBottom: insets.bottom + spacing.ctaX }]}>
-            {issue.error && <Text style={styles.error}>{issue.error.message}</Text>}
+            <MutationError mutation={issue} />
             <Button label="발급받기" loading={issue.isPending} onPress={submit} />
           </View>
         )}
@@ -137,7 +144,6 @@ const styles = StyleSheet.create({
   headline: { ...typography.headline, color: colors.textStrong },
   note: { ...typography.label, color: colors.textWeak, marginTop: spacing.tight },
   fields: { marginTop: spacing.sectionTitleGap },
-  error: { ...typography.bodySmall, color: colors.danger, marginBottom: spacing.tight },
   cta: {
     paddingHorizontal: spacing.ctaX,
     paddingTop: spacing.ctaX,

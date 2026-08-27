@@ -5,6 +5,7 @@ import { colors, spacing, typography } from '@hr/tokens';
 import {
   Button,
   ListRow,
+  MutationError,
   QueryState,
   Section,
   SectionDivider,
@@ -56,7 +57,7 @@ export default function CertificateDetailScreen() {
 
       {certificate.data && (
         <View style={[styles.cta, { paddingBottom: insets.bottom + spacing.ctaX }]}>
-          {share.error && <Text style={styles.error}>{share.error.message}</Text>}
+          <MutationError mutation={share} />
           <Button
             label="PDF로 받기"
             variant="secondary"
@@ -75,7 +76,6 @@ const styles = StyleSheet.create({
   flex: { flex: 1, backgroundColor: colors.white },
   headline: { ...typography.headline, color: colors.textStrong },
   note: { ...typography.label, color: colors.textWeak, marginTop: spacing.tight },
-  error: { ...typography.bodySmall, color: colors.danger, marginBottom: spacing.tight },
   cta: {
     paddingHorizontal: spacing.ctaX,
     paddingTop: spacing.ctaX,

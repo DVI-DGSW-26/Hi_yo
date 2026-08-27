@@ -7,4 +7,5 @@ export { Gauge } from './Gauge';
 export { StatusText } from './StatusText';
 export { Calendar } from './Calendar';
 export { QueryState } from './QueryState';
+export { MutationError } from './MutationError';
 export type { MarkerType } from './Calendar';

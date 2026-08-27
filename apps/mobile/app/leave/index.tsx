@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, spacing, typography } from '@hr/tokens';
-import { Button, Section, SectionDivider, TextField } from '@/components';
+import { Button, MutationError, Section, SectionDivider, TextField } from '@/components';
 import { LeaveBalanceSection } from '@/features/leave/LeaveBalanceSection';
 import { LeaveCalendarSection } from '@/features/leave/LeaveCalendarSection';
 import { LeaveRequestList } from '@/features/leave/LeaveRequestList';
@@ -97,7 +97,7 @@ export default function LeaveScreen() {
         </ScrollView>
 
         <View style={[styles.cta, { paddingBottom: insets.bottom + spacing.ctaX }]}>
-          {create.error && <Text style={styles.error}>{create.error.message}</Text>}
+          <MutationError mutation={create} />
           {!create.error && selected.length === 0 && (
             <Text style={styles.hint}>달력에서 날짜를 골라주세요.</Text>
           )}
@@ -121,7 +121,6 @@ const styles = StyleSheet.create({
   flex: { flex: 1, backgroundColor: colors.white },
   note: { ...typography.label, color: colors.textWeak },
   hint: { ...typography.label, color: colors.textWeak, marginBottom: spacing.tight },
-  error: { ...typography.bodySmall, color: colors.danger, marginBottom: spacing.tight },
   cta: {
     paddingHorizontal: spacing.ctaX,
     paddingTop: spacing.ctaX,
