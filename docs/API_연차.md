@@ -1,0 +1,340 @@
+# 연차 API 명세
+
+Swagger `6. 연차` 태그를 옮긴 것이다. 원본이 항상 우선한다.
+
+| | |
+|---|---|
+| 출처 | `https://api.dvi-ind.com/hi-yo/v3/api-docs` (Swagger UI `/hi-yo/swagger-ui/index.html`) |
+| API 버전 | `DVI 인사시스템 API` v1 |
+| 확인일 | 2026-08-27 |
+| 서버 | `https://api.dvi-ind.com/hi-yo` (개발) |
+
+**잔여 · 대장 · 달력 · 발생 입력**이다. 신청과 결재는 별도 태그이며
+`docs/API_신청결재.md`에 있다.
+
+> **연차 발생은 자동으로 생기지 않는다.** 관리팀이 손으로 넣는다.
+> 스펙이 이유를 적어두었다 — **입사 첫 해 규칙이 확정되지 않아 자동화하면 틀린 값이
+> 조용히 쌓인다.** `CLAUDE.md` 3장이 "연차 발생·소멸 기준"을 추측 금지 항목으로 둔 것과 같은 이야기다.
+> 앱은 발생일수를 만들어내지 않는다.
+
+> **확인일 기준 연차 데이터가 전부 0이다.** 발생 0건, 대장 38명 전원 `noGrant`,
+> 잔여 전부 0, 달력 0건. 화면을 붙이면 빈 상태부터 만난다.
+
+> **공휴일이 9건뿐이고 설날·추석이 없다.** 음력 공휴일과 대체공휴일이 등록돼 있지 않다.
+> 연차 차감은 공휴일을 세지 않는데 서버가 아는 공휴일이 이게 전부라, 지금 상태로 설 연휴에
+> 연차를 신청하면 **연휴가 연차에서 깎인다.** 8장에 목록이 있다.
+
+---
+
+## 1. 공통
+
+### 인증 · CORS
+
+급여와 같다. `docs/API_급여.md` 1장을 본다.
+
+### 응답 형식
+
+**목록이 배열로 온다. 봉투가 아니다.** 신청·결재(`content`/`totalElements`)와 다르고
+급여와 같다.
+
+- 페이지네이션이 없다. **연차관리대장은 전 직원이 한 번에 온다** (확인일 기준 38명)
+- 날짜에 타임존이 붙지 않는다. 서버는 한국 시간으로 돈다
+- 일수는 소수를 쓴다 (`0.5`, `0.25`). 표기는 `@hr/format`의 `formatLeaveDays`를 거친다
+
+### 오류
+
+급여·신청결재와 같은 모양이다. `message`는 **사용자에게 그대로 보여줘도 되는 한국어**다.
+
+`422`는 값 오류가 아니라 **업무 규칙 위반**이다. 이 태그에서 확실한 예가 둘 있다 —
+발생 **수정·삭제로 잔여가 음수가 되는 경우**다 (3장).
+
+> 오류 응답이 스펙에 선언돼 있지 않다. 9개 엔드포인트 전부 200만 문서화돼 있다.
+
+---
+
+## 2. 잔여는 어떻게 만들어지는가
+
+```
+발생(grant)  ─┐
+              ├─→  잔여(remaining)
+사용·대기    ─┘
+POST /requests (신청·결재 태그)
+```
+
+- **발생**은 관리팀이 `POST /leave/grants`로 넣는다. 자동 부여가 없다
+- **사용·대기**는 신청·결재에서 온다. 승인된 것이 `used`, 대기중인 것이 `pending`
+- **잔여는 서버가 계산한다.** `granted - used - pending`을 앱에서 하지 않는다
+
+같은 직원·같은 연도에 발생을 **여러 건** 넣을 수 있다. 정기 발생과 별도 부여를
+나눠 기록하기 위해서다.
+
+---
+
+## 3. 엔드포인트
+
+| 메서드 | 경로 | 권한 | 용도 |
+|---|---|---|---|
+| GET | `/leave/balance` | 본인 | 내 연차 잔여 |
+| GET | `/leave/balance/{employeeId}` | **본인 또는 관리팀** | 특정 직원 잔여 |
+| GET | `/leave/calendar` | 본인 | 내 달력 |
+| GET | `/leave/calendar/all` | 관리팀 | 전 직원 달력 |
+| GET | `/leave/ledger` | 관리팀 | 연차관리대장 |
+| GET | `/leave/grants` | | 연차 발생 내역 |
+| POST | `/leave/grants` | 관리팀 | 연차 발생 등록 |
+| PUT | `/leave/grants/{id}` | 관리팀 | 연차 발생 수정 |
+| DELETE | `/leave/grants/{id}` | 관리팀 | 연차 발생 삭제 |
+
+---
+
+### GET /leave/balance
+
+| 파라미터 | 위치 | 필수 | 설명 |
+|---|---|---|---|
+| `year` | query | | 비우면 올해 |
+
+**응답** `200` — `LeaveBalanceResponse`
+
+### GET /leave/balance/{employeeId} — 본인 또는 관리팀
+
+같은 응답이다. `year` 쿼리도 같다.
+
+> 본인용 화면에서는 **로그인한 본인의 `employeeId`만** 넣는다. 서버 권한 검증 여부는 7장 참고.
+
+---
+
+### GET /leave/calendar
+
+| 파라미터 | 위치 | 필수 |
+|---|---|---|
+| `from` | query | ✅ |
+| `to` | query | ✅ |
+
+**응답** `200` — `CalendarEntryResponse[]`
+
+`from`·`to`가 **둘 다 필수**다. 기본값이 없다.
+
+### GET /leave/calendar/all — 관리팀
+
+같은 파라미터. 전 직원 것이 온다. `employeeName`으로 누구 것인지 구분한다.
+
+---
+
+### GET /leave/ledger — 관리팀
+
+연차관리대장. **발생이 0인 직원도 포함한다** — `noGrant`가 `true`로 온다.
+발생을 아직 안 넣은 사람이 목록에서 빠지면 누락을 발견할 수 없기 때문이다.
+
+| 파라미터 | 위치 | 필수 | 설명 |
+|---|---|---|---|
+| `year` | query | | 비우면 올해 |
+
+**응답** `200` — `LeaveLedgerRowResponse[]` (페이지네이션 없음)
+
+---
+
+### GET /leave/grants
+
+누구에게 몇 일이 언제 생겼는지.
+
+| 파라미터 | 위치 | 필수 | 설명 |
+|---|---|---|---|
+| `employeeId` | query | ✅ | |
+| `year` | query | | |
+
+**응답** `200` — `LeaveGrantResponse[]`
+
+---
+
+### POST /leave/grants — 관리팀
+
+**같은 직원·같은 연도에 여러 건을 넣을 수 있다.** 정기 발생과 별도 부여를 나눠 기록하기 위해서다.
+
+**요청** `LeaveGrantCreateRequest`
+**응답** `200` — `LeaveGrantResponse`
+
+---
+
+### PUT /leave/grants/{id} — 관리팀
+
+**일수를 줄일 때 이미 쓴 연차보다 적어지면 잔여가 음수가 되므로 막힌다.**
+
+**요청** `LeaveGrantCreateRequest`
+**응답** `200` — `LeaveGrantResponse`
+
+---
+
+### DELETE /leave/grants/{id} — 관리팀
+
+잘못 넣은 건을 지우는 용도다. **이미 사용된 연차가 있으면 잔여가 음수가 돼 막힌다.**
+
+**응답** `200` — 본문 없음
+
+되돌릴 수 없다. `danger` 버튼 + 확인 대화상자로 다룬다 (`DESIGN_ADMIN.md` 5 · 6장).
+
+---
+
+## 4. 스키마
+
+### LeaveBalanceResponse
+
+| 필드 | 타입 | 설명 |
+|---|---|---|
+| `employeeId` | int64 | |
+| `employeeName` | string | |
+| `fiscalYear` | int32 | |
+| `granted` | number | 발생 총 일수 |
+| `used` | number | 사용 |
+| `pending` | number | 대기중인 신청 |
+| `remaining` | number | 잔여 |
+| `confirmedRemaining` | number | |
+| `grantedByType` | `map<string, number>` | 발생 종류별 일수 |
+| `grants` | `GrantDetail[]` | 발생 건별 내역 |
+
+**`remaining`과 `confirmedRemaining`을 서버가 둘 다 준다.** 둘의 차이가 무엇인지는
+스펙에 설명이 없다 (7장 2번). **어느 쪽을 화면에 쓸지 정해지기 전까지 잔여를 표시하지 않는다.**
+둘을 앱에서 빼거나 더해 만들어내지 않는다.
+
+`GrantDetail` = `id`, `grantType`, `grantedDays`, `grantedOn`, `expiresOn`, `note`
+
+### LeaveGrantCreateRequest
+
+| 필드 | 타입 | 필수 | 설명 |
+|---|---|---|---|
+| `employeeId` | int64 | ✅ | |
+| `fiscalYear` | int32 | ✅ | |
+| `grantType` | enum | ✅ | 5장 |
+| `grantedDays` | number | ✅ | |
+| `grantedOn` | date | | 발생일 |
+| `expiresOn` | date | | 소멸일 |
+| `note` | string(≤255) | | |
+
+`expiresOn`이 **필수가 아니다.** 비우면 소멸이 없는 것인지 서버가 정하는 것인지 모른다 (7장 3번).
+
+### LeaveGrantResponse
+
+`LeaveGrantCreateRequest`의 필드에 `id`, `employeeName`, `createdByName`이 붙는다.
+
+**`createdByName`이 "누가 넣었나"에 답한다.** 발생 일수 분쟁에 필요한 값이다.
+
+### LeaveLedgerRowResponse
+
+| 필드 | 타입 | 설명 |
+|---|---|---|
+| `employeeId` | int64 | |
+| `employeeNo` | string | |
+| `employeeName` | string | |
+| `corporation` | string | 법인 |
+| `departmentName` | string | |
+| `fiscalYear` | int32 | |
+| `granted` / `used` / `pending` / `remaining` | number | |
+| `noGrant` | boolean | **발생을 아직 넣지 않은 직원** |
+
+`noGrant`가 `true`인 줄은 "연차가 0일"이 아니라 **"아직 안 넣었다"**는 뜻이다.
+화면에서 `0일`로만 보여주면 누락과 실제 0일을 구분할 수 없다.
+
+### CalendarEntryResponse
+
+| 필드 | 타입 | 설명 |
+|---|---|---|
+| `date` | date | |
+| `employeeId` / `employeeName` | | |
+| `typeCode` / `typeName` | string | 신청 종류. **표시명은 `typeName`** |
+| `days` | number | |
+| `requestId` | int64 | 신청서로 이어진다 |
+
+---
+
+## 5. 발생 종류 (`grantType`)
+
+| 코드 | 스펙의 설명 |
+|---|---|
+| `MONTHLY` | 없음 |
+| `REGULAR` | 없음 |
+| `SENIORITY` | 없음 |
+| `NEW_HIRE` | 없음 |
+| `CARRY_DEDUCT` | 없음 |
+
+**다섯 개 모두 설명이 없다.** 이름에서 뜻을 짐작할 수는 있으나 확정된 근거가 아니다.
+특히 `CARRY_DEDUCT`(이월인지 차감인지, 둘 다인지)가 모호하다.
+
+**등록 화면에서 종류를 고르게 하려면 각각이 무엇인지 정해져야 한다.** 잘못 고르면
+발생 일수가 틀리게 쌓인다. 7장 4번.
+
+---
+
+## 6. 앱 관점 정리
+
+### S-301 연차 현황 및 신청 (`apps/mobile`)
+
+| 단계 | 호출 |
+|---|---|
+| 잔여 | `GET /leave/balance` |
+| 달력 | `GET /leave/calendar?from=&to=` |
+| 신청 | `docs/API_신청결재.md` |
+
+- 잔여를 앱에서 계산하지 않는다. `granted - used - pending`을 쓰지 않는다
+- **`remaining`과 `confirmedRemaining` 중 무엇을 보여줄지 정해지기 전까지 숫자를 띄우지 않는다**
+- 달력은 `from`·`to`가 필수다. 화면이 보는 범위를 그대로 넣는다
+- **본인 것만 부른다.** `/leave/calendar/all`과 `/leave/ledger`를 `apps/mobile`에 넣지 않는다
+
+### 관리팀 화면 (`apps/admin`)
+
+| 화면 | 호출 |
+|---|---|
+| 연차관리대장 | `GET /leave/ledger?year=` |
+| 발생 등록·수정·삭제 | `POST` / `PUT` / `DELETE /leave/grants` |
+| 전 직원 달력 | `GET /leave/calendar/all?from=&to=` |
+
+- 대장은 전 직원이 한 번에 온다. 표 정렬은 **서버가 지원하는 열에만** 넣는다 (지금은 없다)
+- **`noGrant`를 반드시 구분해 보여준다.** 발생 누락을 발견하는 것이 이 대장의 목적이다
+- 발생 삭제·수정은 잔여가 음수가 되면 서버가 막는다. 그 `message`를 그대로 보여준다
+
+---
+
+## 7. 미확정 — 확인이 필요한 것
+
+| # | 항목 | 왜 문제인가 |
+|---|---|---|
+| 1 | **연차 발생 규칙** | 서버가 자동 계산하지 않는다. 입사 첫 해 규칙이 확정되지 않았기 때문이다. **관리팀이 무엇을 몇 일 넣어야 하는지가 정해져야** 등록 화면이 의미를 갖는다 |
+| 2 | **`remaining` vs `confirmedRemaining`** | 둘의 차이가 스펙에 없다. 화면에 "남은 연차"로 무엇을 쓸지 정할 수 없다. **정해지기 전까지 잔여 숫자를 띄우지 않는다** |
+| 3 | **`expiresOn` 없이 등록하면** | 필수가 아니다. 비우면 소멸이 없는 것인지 서버가 채우는 것인지 모른다. 소멸 기준 자체가 `CLAUDE.md` 3장의 추측 금지 항목이다 |
+| 4 | **`grantType` 5개의 뜻** | 전부 설명이 없다. `CARRY_DEDUCT`가 특히 모호하다. 잘못 고르면 발생 일수가 틀리게 쌓인다 |
+| 5 | **공휴일이 실제로 빠져 있다** | 2026년에 등록된 공휴일이 **9건뿐이고 전부 양력 고정일**이다 (8장). **설날 · 추석 · 부처님오신날 · 대체공휴일이 전부 없다.** 지금 상태로 연차를 신청하면 설 연휴가 연차에서 깎인다. 확인이 아니라 **입력이 필요한 항목**이다 |
+| 6 | **오류 응답 미문서화** | 9개 전부 200만 선언돼 있다. 잔여 음수 차단이 422인지 400인지 모른다 |
+| 7 | **권한의 서버 검증 여부** | `GET /leave/balance/{employeeId}`에 남의 id를 넣으면 막히는지 확인되지 않았다. 급여 쪽과 같은 문제다 |
+| 8 | **페이지네이션 없음** | 대장이 전 직원을 한 번에 준다. 지금은 38명이지만 늘면 대응이 필요하다 |
+| 9 | **데이터 없음** | 발생 0건, 대장 38명 전원 `noGrant`, 잔여 전부 0, 달력 0건. 실제 응답을 아직 보지 못했다 |
+| 10 | **A-301 화면 상세 스펙** | 연차관리대장·발생 등록 화면의 필드·정렬·버튼 동작이 정의돼 있지 않다 |
+
+1번과 2번이 화면을 막고 있다. 발생 규칙 없이는 등록 화면이, 잔여 정의 없이는
+S-301의 잔여 표시가 나올 수 없다.
+
+---
+
+## 8. 이 문서가 다루지 않는 것
+
+같은 모듈이지만 **태그가 다르다.** 아직 문서화되지 않았다.
+
+| 태그 | 경로 | 왜 연차와 얽히는가 |
+|---|---|---|
+| `7. 단체연차` | `GET`·`POST /company-leaves`, `POST /company-leaves/{id}/apply` | 여름휴가 등 일괄 차감. **잔여가 모자란 직원은 차감하지 않고 명단으로 돌려준다** — 급여 계산의 `skipped`와 같은 구조다 |
+| `8. 공휴일` | `GET`·`POST /holidays`, `DELETE /holidays/{id}` | **음력 · 대체공휴일이 시드에 없다. 넣지 않으면 연차가 실제보다 더 깎인다** |
+| `4. 신청 · 결재` | `/requests/*` | `docs/API_신청결재.md` |
+
+### 공휴일은 지금 빠져 있다 (2026-08-27 확인)
+
+`GET /holidays?year=2026`이 **9건**을 준다. 전부 `holidayType`이 `PUBLIC`인 양력 고정일이다.
+
+```
+01-01 신정      03-01 삼일절    05-01 근로자의 날
+05-05 어린이날  06-06 현충일    08-15 광복절
+10-03 개천절    10-09 한글날    12-25 성탄절
+```
+
+**설날 · 추석 · 부처님오신날이 없다.** 음력이라 시드에 들어가지 않았다.
+**대체공휴일도 없다.**
+
+연차 차감은 주말·공휴일을 세지 않는데(`docs/API_신청결재.md` 1장), 서버가 아는 공휴일이
+이게 전부다. 지금 상태로 설 연휴에 연차를 신청하면 **연휴가 연차에서 깎인다.**
+
+연차 화면보다 이 입력이 먼저다.
