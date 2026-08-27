@@ -166,7 +166,8 @@ rm -rf android                                          # 확인 후 지운다
 2. `docs/DESIGN_RULES.md` — UI 코드를 한 줄이라도 쓰기 전에
 3. `docs/DESIGN_SYSTEM.md` — 값과 컴포넌트 (React Native 기준)
 4. `docs/DESIGN_ADMIN.md` — 관리팀 화면 규칙 (표·폼·버튼·대화상자)
-5. `docs/API_급여.md` — 급여 엔드포인트
+5. `docs/API_급여.md` — 급여 · 보험 요율 엔드포인트
+6. `docs/API_신청결재.md` — 연차 · 반차 · 조퇴 등 신청과 결재 엔드포인트
 
 ## 먼저 처리해야 할 것
 
