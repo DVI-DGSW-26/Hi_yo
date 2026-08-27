@@ -1,12 +1,12 @@
 # 급여 API 명세
 
-Swagger `7. 급여` 태그를 옮긴 것이다. 원본이 항상 우선한다.
+Swagger `7. 급여`와 `8. 보험 요율` 태그를 옮긴 것이다. 원본이 항상 우선한다.
 
 | | |
 |---|---|
 | 출처 | `https://api.dvi-ind.com/hi-yo/v3/api-docs` (Swagger UI `/hi-yo/swagger-ui/index.html`) |
 | API 버전 | `DVI 인사시스템 API` v1 |
-| 확인일 | 2026-08-26 |
+| 확인일 | 2026-08-27 |
 | 서버 | `https://api.dvi-ind.com/hi-yo` (개발) |
 
 > **서버 주소가 바뀌었다 (2026-08-26).** 옛 주소 `http://112.146.55.78:3378`은 새 주소로
@@ -85,7 +85,7 @@ Access-Control-Max-Age:         3600
 `422`는 값 오류가 아니라 **업무 규칙 위반**이다 (마감된 기간 수정 등). 폼 검증 에러와 다르게 다뤄야 한다.
 
 > OpenAPI 스펙에 급여 엔드포인트의 오류 응답(401/403/404/422)이 선언돼 있지 않다. 200만 문서화돼 있다.
-> 어떤 상황에 어떤 코드가 오는지는 7장 참고.
+> 어떤 상황에 어떤 코드가 오는지는 8장 참고.
 
 ---
 
@@ -120,6 +120,8 @@ POST periods  POST calculate  POST adjustments  PATCH confirm  PATCH close
 | GET | `/payroll/employees/{employeeId}` | **본인 또는 관리팀** | 내 명세서 목록 (최근 달부터) |
 
 `apps/mobile`(S-601)이 쓰는 것은 굵게 표시한 2개뿐이다. 나머지는 `apps/admin` 전용이다.
+
+`/payroll/insurance-rates/*`(보험 요율)는 태그가 달라 **6장**에 따로 정리했다.
 
 ---
 
@@ -246,7 +248,7 @@ POST periods  POST calculate  POST adjustments  PATCH confirm  PATCH close
 **응답** `200` — `PayrollResponse[]`
 
 > 본인용 화면에서는 **로그인한 본인의 `employeeId`만** 넣는다. 다른 직원 id를 넣는 코드를
-> `apps/mobile`에 두지 않는다. 서버 권한 검증 여부는 7장 참고.
+> `apps/mobile`에 두지 않는다. 서버 권한 검증 여부는 8장 참고.
 
 ---
 
@@ -356,7 +358,116 @@ POST periods  POST calculate  POST adjustments  PATCH confirm  PATCH close
 
 ---
 
-## 6. 앱 관점 정리
+## 6. 보험 요율
+
+Swagger `8. 보험 요율` 태그다. 경로가 `/payroll/` 아래라 급여와 같이 둔다.
+**4대보험 요율을 연도별로 등록해 두면 급여 계산이 그 해 요율을 가져다 쓴다.**
+요율 자체는 관리팀이 넣는 데이터지 앱이 계산하는 값이 아니다.
+
+전부 `apps/admin` 전용이다. `apps/mobile`에 넣지 않는다.
+
+### 엔드포인트
+
+| 메서드 | 경로 | 권한 | 용도 |
+|---|---|---|---|
+| GET | `/payroll/insurance-rates?year=` | — | 그 해의 요율 목록 |
+| GET | `/payroll/insurance-rates/years` | — | 요율이 등록된 연도 목록 (최근 해부터) |
+| POST | `/payroll/insurance-rates` | 관리팀 | 요율 등록 |
+| PUT | `/payroll/insurance-rates/{id}` | 관리팀 | 요율 수정 |
+| POST | `/payroll/insurance-rates/copy?fromYear=&toYear=` | 관리팀 | 지난해 요율을 새해로 복사 |
+
+`year`, `fromYear`, `toYear`는 **모두 필수 쿼리 파라미터**다. 기본값이 없다.
+`/years`의 응답은 정수 배열(`int32[]`)이고, 나머지는 `InsuranceRateResponse`다.
+
+급여와 마찬가지로 **오류 응답이 스펙에 선언돼 있지 않다.** 200만 문서화돼 있다.
+
+---
+
+### POST /payroll/insurance-rates — 관리팀
+
+> **`baseItemCode`를 비우면 사고가 난다.** 장기요양처럼 **다른 공제 금액이 기준인 항목**은
+> `baseItemCode`를 반드시 지정해야 한다. 비우면 지급총액에 곱해져 **금액이 30배**가 된다.
+> (스펙 원문의 경고다. 화면에서 이 항목을 빈 채로 저장할 수 있게 두면 안 된다.)
+
+**요청** `InsuranceRateRequest`
+**응답** `200` — `InsuranceRateResponse`
+
+---
+
+### POST /payroll/insurance-rates/copy — 관리팀
+
+연초에 네 건을 손으로 다시 넣는 대신 복사하고 바뀐 것만 고친다.
+**이미 등록된 항목은 덮어쓰지 않는다.**
+
+| 파라미터 | 위치 | 필수 | 설명 |
+|---|---|---|---|
+| `fromYear` | query | ✅ | 복사 원본 연도 |
+| `toYear` | query | ✅ | 복사 대상 연도 |
+
+**응답** `200` — `InsuranceRateResponse[]`
+
+> **복사만 하고 두면 작년 요율로 급여가 나간다.** 고시된 새 요율과 대조해야 한다.
+> 화면에서 복사 직후 "새 요율과 대조하세요"를 반드시 띄운다. 성공 토스트만 띄우면
+> 바뀐 요율을 아무도 확인하지 않은 채 급여가 계산된다.
+
+---
+
+### 스키마
+
+#### InsuranceRateRequest
+
+| 필드 | 타입 | 필수 | 설명 |
+|---|---|---|---|
+| `applyYear` | int32 | ✅ | `2000`~`2999` |
+| `itemCode` | enum | ✅ | 5장 항목 코드 (급여와 같은 25개) |
+| `rate` | number | ✅ | **`0`~`1` 사이의 비율이다.** `0.045`이지 `4.5`가 아니다 |
+| `baseItemCode` | enum | | 이 금액을 기준으로 곱한다. 비우면 지급총액 기준 |
+| `autoCalculate` | boolean | | |
+| `roundUnit` | int32 | | `1` 이상 |
+
+#### InsuranceRateResponse
+
+| 필드 | 타입 | 설명 |
+|---|---|---|
+| `id` | int64 | |
+| `applyYear` | int32 | |
+| `itemCode` | string | |
+| `itemName` | string | **표시명. 화면에 그대로 쓴다** |
+| `rate` | number | 비율 (`0.045`) |
+| `ratePercent` | number | 퍼센트 표기용 값 |
+| `baseItemCode` | string | |
+| `baseItemName` | string | 기준 항목의 표시명 |
+| `autoCalculate` | boolean | |
+| `roundUnit` | int32 | |
+
+**`rate`와 `ratePercent`를 서버가 둘 다 준다. 화면에서 `rate * 100`을 계산하지 않는다.**
+항목 이름도 `itemName`·`baseItemName`을 그대로 쓴다. 코드로 매핑 테이블을 만들지 않는다.
+
+### 실제 응답 (2026-08-27, 조회 화면으로 확인)
+
+`GET /payroll/insurance-rates?year=2026` — **4건.** 등록된 해는 2026년 하나뿐이다.
+
+| 항목 | `ratePercent` | 곱하는 기준 | `autoCalculate` | `roundUnit` |
+|---|---|---|---|---|
+| 장기요양 | `13.14` | **건강보험** (`baseItemCode`) | false | 10 |
+| 고용보험 | `0.9` | 지급총액 (비어 있음) | **true** | 10 |
+| 건강보험 | `3.595` | 지급총액 (비어 있음) | false | 10 |
+| 국민연금 | `4.5` | 지급총액 (비어 있음) | false | 10 |
+
+여기서 확인된 것.
+
+- **`baseItemCode`를 쓰는 항목은 장기요양 하나였다.** 건강보험 금액에 곱한다.
+  4대보험 중 나머지 셋은 지급총액 기준이다
+- **`ratePercent`는 퍼센트 값이 맞다.** `rate`는 같은 값의 `0`~`1` 비율이다
+- `autoCalculate`가 true인 것은 고용보험 하나다. **무엇이 자동 계산된다는 뜻인지는 여전히 모른다**
+- `roundUnit`은 넷 다 `10`이다. **절사인지 반올림인지는 여전히 모른다**
+
+요율 자체는 그 해 고시값과 대조해야 한다. 이 표는 "무엇이 등록돼 있는가"이지
+"맞는 값인가"가 아니다.
+
+---
+
+## 7. 앱 관점 정리
 
 ### S-601 급여명세서 조회 (`apps/mobile`)
 
@@ -375,11 +486,18 @@ POST periods  POST calculate  POST adjustments  PATCH confirm  PATCH close
 기간 등록 → 계산 → 항목 수정 → 확정 → 마감. `closed`가 true면 계산·수정이 서버에서 막힌다.
 계산 결과의 `skipped` 명단은 반드시 노출한다.
 
+보험 요율(6장)은 이 흐름과 별개로 **연초에 한 번** 손대는 화면이다. 요율이 그 해에 등록돼 있지
+않으면 계산이 어떻게 도는지는 확인되지 않았다 — 계산 전에 `GET /payroll/insurance-rates?year=`로
+그 해 요율이 있는지 먼저 보여주는 편이 안전하다.
+
+**조회 화면은 만들었다** (`apps/admin` `/insurance-rates`). 등록·수정·연도 복사는 붙이지 않았다 —
+8장 10·12번이 풀려야 입력칸을 열 수 있다.
+
 **관리팀 급여 API를 `apps/mobile`에 넣지 않는다.**
 
 ---
 
-## 7. 미확정 — 확인이 필요한 것
+## 8. 미확정 — 확인이 필요한 것
 
 | # | 항목 | 왜 문제인가 |
 |---|---|---|
@@ -392,6 +510,9 @@ POST periods  POST calculate  POST adjustments  PATCH confirm  PATCH close
 | 7 | **S-601 화면 상세 스펙** | 명세서 8장 5번. 필드·정렬·버튼 동작이 정의돼 있지 않다 |
 | 8 | **항목 코드 뜻** | 25개 중 3개만 문서에 근거가 있다 (5장) |
 | 9 | **CORS 오리진** | `http://localhost:5173` 하나만 허용돼 있다. 관리팀 화면을 배포하면 서버에 추가해야 한다 |
+| 10 | **`autoCalculate`·`roundUnit`의 뜻** | 두 필드에 설명이 없다. 실제 값은 봤다 — `autoCalculate`는 고용보험만 true, `roundUnit`은 넷 다 `10`이다. 그래도 **무엇이 자동 계산되는지, 절사인지 반올림인지는 모른다.** 등록 화면에서 기본값을 임의로 정하지 않는다 |
+| 11 | **요율이 없는 해의 계산** | 등록된 해가 **2026년 하나뿐이다.** 다른 해 기간을 계산하면 어떻게 되는지(막히는지, 0원으로 도는지) 확인되지 않았다 |
+| 12 | **`baseItemCode`가 필요한 항목** | 지금 등록된 것 중에는 장기요양 하나다(6장). 다만 이건 관측이지 규칙이 아니다 — **새 항목을 등록할 때 기준이 필요한지 판단할 근거가 없다.** 비우면 금액이 30배가 되므로 등록 화면은 이게 풀려야 만들 수 있다 |
 
 API 소개문에는 급여가 아직 "없는 것"으로 적혀 있다. 태그는 이미 구현돼 있으므로 소개문이
 갱신되지 않은 것으로 보이나, 안정화 여부는 확인이 필요하다.
