@@ -4,13 +4,15 @@ import './AppShell.css';
 /**
  * 관리팀 화면의 바깥 틀. 좌측 메뉴 + 본문.
  *
- * 아직 화면이 하나도 없다. 메뉴는 명세서에 상세 스펙이 있는 세 개만 걸어두고,
- * 스펙이 없는 화면은 올리지 않는다.
+ * 메뉴는 명세서에 상세 스펙이 있는 세 개에 보험 요율을 더한 것이다.
+ * 보험 요율은 화면 스펙이 없지만 서버 API 가 확정돼 있고 조회만 하므로 올렸다.
+ * 그 외에 스펙이 없는 화면은 올리지 않는다.
  */
 const MENU = [
   { to: '/employees', label: '직원' },
   { to: '/approvals', label: '연차 결재' },
   { to: '/payroll', label: '급여' },
+  { to: '/insurance-rates', label: '보험 요율' },
 ] as const;
 
 export function AppShell() {

@@ -67,6 +67,21 @@ export function formatTargetYm(targetYm: number): string {
   return `${year}년 ${month}월`;
 }
 
+/**
+ * 요율. 서버가 `rate`(0~1)와 함께 퍼센트 값 `ratePercent`를 준다.
+ *
+ *   4.5  → "4.5%"
+ *   0.9  → "0.9%"
+ *   12   → "12%"
+ *
+ * **`rate`에 100을 곱하지 않는다.** 서버가 준 퍼센트 값을 그대로 표기한다.
+ * 자릿수를 임의로 맞추거나 반올림하지 않는다 — 요율은 급여 금액을 만드는 값이다.
+ */
+export function formatRatePercent(ratePercent: number): string {
+  assertFinite(ratePercent, 'formatRatePercent');
+  return `${trimZeros(ratePercent)}%`;
+}
+
 /** Hermes의 Intl 지원 편차를 타지 않도록 세 자리 구분을 직접 처리한다. */
 function groupDigits(value: number): string {
   const sign = value < 0 ? '-' : '';
