@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Dialog, Field, Select } from '@/components';
 import { useEmployees } from '@/features/employees/api';
+import { MAX_PAGE_SIZE } from '@/lib/api';
 import { useAddMember, type DutyMember } from './api';
 
 interface Props {
@@ -17,8 +18,14 @@ interface Props {
   onClose: () => void;
 }
 
-/** 목록을 한 번에 받는다. 대상자를 고르는 자리라 페이지를 넘기게 하지 않는다 */
-const PAGE_SIZE = 200;
+/**
+ * 고를 목록은 한 번에 받는다. 대상자를 고르는 자리라 쪽을 넘기게 하지 않는다.
+ *
+ * **서버가 100에서 자른다.** 더 큰 값을 보내도 오류 없이 조용히 깎여서 온다
+ * (`MAX_PAGE_SIZE` 주석). 그래서 재직 직원이 100명을 넘으면 뒤가 안 보인다 —
+ * 그 경우를 아래에서 문구로 알린다. 지금은 재직 직원이 100명 아래다 (2026-08-28 기준 47명).
+ */
+const PAGE_SIZE = MAX_PAGE_SIZE;
 
 /**
  * 명단에 대상자를 넣는다.
@@ -76,6 +83,14 @@ export function AddMemberDialog({ open, rosterId, members, onClose }: Props) {
         placeholder={placeholder(employees.isPending, employees.error, options.length)}
       />
       <Field label="순번" value={rotationSeq} onChange={setRotationSeq} type="number" required />
+      {/* 서버가 100에서 자른다. 잘렸으면 조용히 넘어가지 않고 알린다 —
+          목록에 없는 사람을 "명단에 못 넣는다" 고 오해하게 두면 안 된다. */}
+      {employees.data && employees.data.totalElements > PAGE_SIZE && (
+        <p className="danger">
+          재직 직원이 {employees.data.totalElements}명이라 {PAGE_SIZE}명까지만 보여요. 찾는
+          사람이 없으면 알려주세요 — 목록을 나눠 받도록 고쳐야 해요.
+        </p>
+      )}
       {employees.error && <p className="danger">{employees.error.message}</p>}
       {add.error && <p className="danger">{add.error.message}</p>}
     </Dialog>

@@ -1,6 +1,6 @@
 import { StyleSheet, Text, View } from 'react-native';
 import { colors, typography } from '@hr/tokens';
-import { ListRow, QueryState, SectionTitle, StatusText } from '@/components';
+import { ListRow, MoreButton, QueryState, SectionTitle, StatusText } from '@/components';
 import { formatInKst, formatLeaveDays } from '@/lib/format';
 import { useMyRequests, type LeaveRequest, type RequestStatus } from './api';
 
@@ -9,31 +9,48 @@ import { useMyRequests, type LeaveRequest, type RequestStatus } from './api';
  *
  * 상태를 색으로 구분하려 하지 않는다. 반려만 빨강, 승인만 그린, 나머지는 무채색이다
  * (DESIGN_SYSTEM.md 5장 StatusText).
+ *
+ * 한 쪽씩 받아 이어 붙인다. 전에는 첫 20건에서 잘렸고 잘렸다는 표시도 없었다.
  */
 export function LeaveRequestList() {
   const requests = useMyRequests();
 
+  // 받은 쪽들을 한 줄로 편다. QueryState 는 배열을 그대로 받아 빈 상태를 판정한다.
+  const items = requests.data?.pages.flatMap((page) => page.content);
+
   return (
     <View>
       <SectionTitle title="낸 신청" />
-      <QueryState query={requests} empty="아직 낸 신청이 없어요.">
-        {(data) =>
-          data.content.map((request) => (
-            <ListRow
-              key={request.id}
-              label={`${period(request)} · ${request.typeName ?? request.typeCode}`}
-              right={
-                <View style={styles.right}>
-                  <Text style={styles.days}>{formatLeaveDays(request.leaveDays)}</Text>
-                  <StatusText
-                    label={statusLabel(request.status)}
-                    tone={statusTone(request.status)}
-                  />
-                </View>
-              }
-            />
-          ))
-        }
+      <QueryState
+        query={{
+          isPending: requests.isPending,
+          // 첫 쪽부터 실패한 경우만 여기서 그린다. 뒤쪽이 실패한 것은 MoreButton 이 맡는다 —
+          // 이미 받은 줄까지 지울 이유가 없다.
+          error: items === undefined ? requests.error : null,
+          data: items,
+        }}
+        empty="아직 낸 신청이 없어요."
+      >
+        {(data) => (
+          <>
+            {data.map((request) => (
+              <ListRow
+                key={request.id}
+                label={`${period(request)} · ${request.typeName ?? request.typeCode}`}
+                right={
+                  <View style={styles.right}>
+                    <Text style={styles.days}>{formatLeaveDays(request.leaveDays)}</Text>
+                    <StatusText
+                      label={statusLabel(request.status)}
+                      tone={statusTone(request.status)}
+                    />
+                  </View>
+                }
+              />
+            ))}
+            <MoreButton query={requests} hasItems={data.length > 0} />
+          </>
+        )}
       </QueryState>
     </View>
   );

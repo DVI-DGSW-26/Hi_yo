@@ -1,5 +1,5 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { api, type PageParams, type PageResponse } from '@/lib/api';
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { LIST_PAGE_SIZE, api, type PageParams, type PageResponse } from '@/lib/api';
 
 /**
  * 재직증명서 (S-401). `GET/POST /certificates`
@@ -55,17 +55,26 @@ export const certificateKeys = {
   detail: (id: number) => [...certificateKeys.all, 'detail', id] as const,
 };
 
-/** 내 발급 이력. 본인 것만 온다 */
-export function useCertificates(params: PageParams = { page: 0, size: 20 }) {
-  return useQuery({
-    queryKey: certificateKeys.list(params),
-    queryFn: async ({ signal }) => {
+/**
+ * 내 발급 이력. 본인 것만 온다. **쪽을 이어 붙인다.**
+ *
+ * 재직증명서는 지우거나 취소할 수 없어서 이력이 계속 쌓인다
+ * (`docs/00_문서_인덱스.md` — S-401 발급 이력은 지우지 않는다).
+ * 첫 20건만 받고 끝내면 오래 다닌 사람은 옛 발급 건을 볼 방법이 없다.
+ */
+export function useCertificates(size: number = LIST_PAGE_SIZE) {
+  return useInfiniteQuery({
+    queryKey: certificateKeys.list({ size }),
+    initialPageParam: 0,
+    queryFn: async ({ pageParam, signal }) => {
       const { data } = await api.get<PageResponse<Certificate>>('/certificates', {
-        params,
+        params: { page: pageParam, size },
         signal,
       });
       return data;
     },
+    // 서버가 `last`로 끝을 알려준다. 화면에서 개수를 세어 판단하지 않는다.
+    getNextPageParam: (lastPage) => (lastPage.last ? undefined : lastPage.page + 1),
   });
 }
 

@@ -1,5 +1,5 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { api, type PageParams, type PageResponse } from '@/lib/api';
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { LIST_PAGE_SIZE, api, type PageParams, type PageResponse } from '@/lib/api';
 
 /**
  * 연차 (S-301). `GET /leave/balance`, `GET /leave/calendar`, `POST /requests`
@@ -141,13 +141,27 @@ export function useRequestTypes() {
   });
 }
 
-export function useMyRequests(params: PageParams = { page: 0, size: 20 }) {
-  return useQuery({
-    queryKey: leaveKeys.requests(params),
-    queryFn: async ({ signal }) => {
-      const { data } = await api.get<PageResponse<LeaveRequest>>('/requests', { params, signal });
+/**
+ * 내 신청 목록. **쪽을 이어 붙인다.**
+ *
+ * 전에는 첫 20건만 받고 끝이었다 — 그보다 많이 낸 사람은 나머지를 볼 방법이 없었고,
+ * 잘렸다는 것조차 화면에 나오지 않았다.
+ *
+ * `size`를 키우는 방식은 쓰지 않는다. 서버가 `MAX_PAGE_SIZE`(100)에서 조용히 자른다.
+ */
+export function useMyRequests(size: number = LIST_PAGE_SIZE) {
+  return useInfiniteQuery({
+    queryKey: leaveKeys.requests({ size }),
+    initialPageParam: 0,
+    queryFn: async ({ pageParam, signal }) => {
+      const { data } = await api.get<PageResponse<LeaveRequest>>('/requests', {
+        params: { page: pageParam, size },
+        signal,
+      });
       return data;
     },
+    // 서버가 `last`로 끝을 알려준다. 화면에서 개수를 세어 판단하지 않는다.
+    getNextPageParam: (lastPage) => (lastPage.last ? undefined : lastPage.page + 1),
   });
 }
 

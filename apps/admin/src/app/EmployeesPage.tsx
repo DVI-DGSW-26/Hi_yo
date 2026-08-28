@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router';
-import { Button, Field, Select, StatusText, Table, type Column } from '@/components';
+import { Button, Field, Pager, Select, StatusText, Table, type Column } from '@/components';
 import {
   useDepartments,
   useEmployees,
@@ -129,24 +129,7 @@ export function EmployeesPage() {
         onRowClick={(row) => navigate(`/employees/${row.id}`)}
       />
 
-      {employees.data && employees.data.totalElements > 0 && (
-        <div className="pager">
-          <Button
-            label="이전"
-            disabledReason={employees.data.first ? '첫 쪽이에요.' : undefined}
-            onClick={() => setPage((current) => Math.max(0, current - 1))}
-          />
-          <span className="pager-text">
-            {employees.data.page + 1} / {employees.data.totalPages} · 전체{' '}
-            {employees.data.totalElements}명
-          </span>
-          <Button
-            label="다음"
-            disabledReason={employees.data.last ? '마지막 쪽이에요.' : undefined}
-            onClick={() => setPage((current) => current + 1)}
-          />
-        </div>
-      )}
+      <Pager page={employees.data} onChange={setPage} unit="명" />
     </section>
   );
 }

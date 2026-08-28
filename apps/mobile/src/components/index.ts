@@ -8,6 +8,7 @@ export { StatusText } from './StatusText';
 export { Calendar } from './Calendar';
 export { QueryState } from './QueryState';
 export { MutationError } from './MutationError';
+export { MoreButton } from './MoreButton';
 export { Sheet } from './Sheet';
 export { ConfirmSheet } from './ConfirmSheet';
 export { SelectSheet } from './SelectSheet';
