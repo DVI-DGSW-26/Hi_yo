@@ -6,11 +6,14 @@ import './AppShell.css';
  *
  * 메뉴는 명세서에 상세 스펙이 있는 세 개에 보험 요율을 더한 것이다.
  * 보험 요율은 화면 스펙이 없지만 서버 API 가 확정돼 있고 조회만 하므로 올렸다.
+ * 당직(A-504)도 같다 — 명세서는 인벤토리에만 있고 상세 스펙이 없으나 데이터 모델과
+ * API 가 확정돼 있다 (명세서 3장 '그 외 화면은 데이터 모델 및 화면 인벤토리를 기준으로 준용').
  * 그 외에 스펙이 없는 화면은 올리지 않는다.
  */
 const MENU = [
   { to: '/employees', label: '직원' },
   { to: '/approvals', label: '연차 결재' },
+  { to: '/duty', label: '당직' },
   { to: '/payroll', label: '급여' },
   { to: '/insurance-rates', label: '보험 요율' },
 ] as const;

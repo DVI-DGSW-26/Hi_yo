@@ -13,6 +13,8 @@ import { EmployeesPage } from '@/app/EmployeesPage';
 import { EmployeeNew } from '@/app/EmployeeNew';
 import { EmployeeDetail } from '@/app/EmployeeDetail';
 import { InsuranceRatesPage } from '@/app/InsuranceRatesPage';
+import { DutyRostersPage } from '@/app/DutyRostersPage';
+import { DutyRosterDetail } from '@/app/DutyRosterDetail';
 import './index.css';
 
 const queryClient = new QueryClient({
@@ -44,6 +46,8 @@ const router = createBrowserRouter([
       { path: 'approvals', element: <NotBuilt screenId="A-302" title="연차 신청 검토·승인" /> },
       { path: 'payroll', element: <PayrollPage /> },
       { path: 'payroll/:payrollId', element: <PayrollDetail /> },
+      { path: 'duty', element: <DutyRostersPage /> },
+      { path: 'duty/:rosterId', element: <DutyRosterDetail /> },
       { path: 'insurance-rates', element: <InsuranceRatesPage /> },
     ],
   },
