@@ -46,22 +46,10 @@ export function slotText(slotCode: string | null): string {
   return slotCode;
 }
 
-const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토'];
-
-/**
- * `yyyy-MM-dd`의 요일. 당직은 무슨 요일인지가 중요하다.
- *
- * `Date.UTC`로 계산해 **기기 타임존을 타지 않는다.** 날짜 문자열의 요일은 달력의 성질이라
- * 시각·타임존과 무관하다. `new Date('2026-08-29')`는 UTC 자정으로 읽혀 한국에서 하루가 밀린다.
- *
- * `DutyScheduleResponse.dayOfWeek`도 있지만 `SATURDAY`인지 `토`인지 확인하지 못했다 —
- * 개발 서버에 배정이 한 건도 없다. 확인되면 서버 값을 쓰도록 바꾼다.
- */
-export function weekdayText(isoDate: string): string {
-  const [year, month, day] = isoDate.split('-').map(Number);
-  if (year === undefined || month === undefined || day === undefined) return '—';
-  return WEEKDAYS[new Date(Date.UTC(year, month - 1, day)).getUTCDay()] ?? '—';
-}
+// 요일은 `lib/datetime.ts`의 `weekdayText`를 쓴다. 당직만 쓰는 값이 아니라 올렸다.
+//
+// `DutyScheduleResponse.dayOfWeek`도 있지만 `SATURDAY`인지 `토`인지 확인하지 못했다 —
+// 개발 서버에 배정이 한 건도 없다. 확인되면 서버 값을 쓰도록 바꾼다.
 
 /**
  * `08:00 ~ 17:00` — 서버가 주는 시각은 `08:00:00` 형태다.
