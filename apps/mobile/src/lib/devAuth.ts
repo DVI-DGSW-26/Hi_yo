@@ -16,7 +16,10 @@ export const DEV_AUTH_HEADER = 'X-Debug-Employee-No';
 /**
  * 붙일 헤더 값. 개발 빌드가 아니거나 설정이 없으면 undefined다.
  *
- * 개발 서버 계정 — `1` 관리팀 / `2` 일반 직원 / `3` 관리팀(결재 2단계)
+ * 본인용 앱이므로 **재직 중인 일반 직원의 id**를 쓴다. 퇴사자 id면 홈이 비어 보인다.
+ *
+ * **id를 이 파일에 적지 않는다.** 시드 데이터라서 서버를 다시 심으면 바뀐다 —
+ * 2026-08-28에 실제로 바뀌어 그전에 쓰던 `2`가 퇴사 상태가 됐다. 고르는 방법은 `.env.example`에 있다.
  */
 export function devAuthValue(): string | undefined {
   if (!__DEV__) return undefined;
