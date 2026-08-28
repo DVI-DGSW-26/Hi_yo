@@ -35,6 +35,12 @@ export default function Index() {
                     variant="nav"
                     onPress={() => router.push('/certificate')}
                   />
+                  <ListRow
+                    label="당직"
+                    value="일정·교체"
+                    variant="nav"
+                    onPress={() => router.push('/duty')}
+                  />
                 </>
               ) : (
                 <Text style={styles.empty}>지금 들어갈 수 있는 화면이 없어요.</Text>
