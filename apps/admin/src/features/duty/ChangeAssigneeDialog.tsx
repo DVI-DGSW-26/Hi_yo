@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { Dialog, Field, Select } from '@/components';
 import { useChangeAssignee, type DutyMember, type DutySchedule } from './api';
-import { slotText, weekdayText } from './labels';
+import { weekdayText } from '@/lib/datetime';
+import { slotText } from './labels';
 
 interface Props {
   /**

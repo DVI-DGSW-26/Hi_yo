@@ -14,6 +14,7 @@ const MENU = [
   { to: '/employees', label: '직원' },
   { to: '/approvals', label: '연차 결재' },
   { to: '/duty', label: '당직' },
+  { to: '/weekly-hours', label: '52시간' },
   { to: '/payroll', label: '급여' },
   { to: '/insurance-rates', label: '보험 요율' },
 ] as const;
