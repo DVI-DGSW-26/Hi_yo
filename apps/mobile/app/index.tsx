@@ -1,7 +1,7 @@
 import { Stack, useRouter } from 'expo-router';
-import { ActivityIndicator, ScrollView, StyleSheet, Text } from 'react-native';
+import { ScrollView, StyleSheet, Text } from 'react-native';
 import { colors, typography } from '@hr/tokens';
-import { ListRow, Section, SectionTitle } from '@/components';
+import { ListRow, QueryState, Section, SectionTitle } from '@/components';
 import { useMe } from '@/features/employees/api';
 
 /**
@@ -12,37 +12,41 @@ export default function Index() {
   const router = useRouter();
   const me = useMe();
 
-  // 명세서 S-401: 재직중이 아니면 재직증명서 메뉴를 노출하지 않는다.
-  const isActive = me.data?.summary.employmentStatus === 'ACTIVE';
-
   return (
     <>
       <Stack.Screen options={{ title: 'HR' }} />
       <ScrollView style={styles.flex}>
         <Section>
           <SectionTitle title="바로가기" />
-          {me.isPending ? (
-            <ActivityIndicator color={colors.textDisabled} />
-          ) : me.error ? (
-            <Text style={styles.error}>{me.error.message}</Text>
-          ) : isActive ? (
-            <>
-              <ListRow
-                label="연차"
-                value="현황·신청"
-                variant="nav"
-                onPress={() => router.push('/leave')}
-              />
-              <ListRow
-                label="재직증명서"
-                value="바로 발급"
-                variant="nav"
-                onPress={() => router.push('/certificate')}
-              />
-            </>
-          ) : (
-            <Text style={styles.empty}>지금 들어갈 수 있는 화면이 없어요.</Text>
-          )}
+          <QueryState query={me}>
+            {(data) =>
+              // 명세서 S-401: 재직중이 아니면 재직증명서 메뉴를 노출하지 않는다.
+              data.summary.employmentStatus === 'ACTIVE' ? (
+                <>
+                  <ListRow
+                    label="연차"
+                    value="현황·신청"
+                    variant="nav"
+                    onPress={() => router.push('/leave')}
+                  />
+                  <ListRow
+                    label="재직증명서"
+                    value="바로 발급"
+                    variant="nav"
+                    onPress={() => router.push('/certificate')}
+                  />
+                  <ListRow
+                    label="당직"
+                    value="일정·교체"
+                    variant="nav"
+                    onPress={() => router.push('/duty')}
+                  />
+                </>
+              ) : (
+                <Text style={styles.empty}>지금 들어갈 수 있는 화면이 없어요.</Text>
+              )
+            }
+          </QueryState>
         </Section>
       </ScrollView>
     </>
@@ -51,6 +55,5 @@ export default function Index() {
 
 const styles = StyleSheet.create({
   flex: { flex: 1, backgroundColor: colors.white },
-  error: { ...typography.bodySmall, color: colors.danger },
   empty: { ...typography.bodySmall, color: colors.textWeak },
 });
