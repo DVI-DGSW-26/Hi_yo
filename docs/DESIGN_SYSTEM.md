@@ -28,6 +28,7 @@ import { colors } from '@hr/tokens';
 | `borderStrong` | `#D1D6DB` | Secondary 버튼 보더 |
 | `danger` | `#E24B4A` | 오류, 누락, 반려, `danger` 버튼 (`DESIGN_ADMIN.md` 5장) |
 | `focusRing` | `#191F28` | 키보드 포커스 표시 **전용**. `:focus-visible`에만 쓴다 |
+| `scrim` | `rgba(25,31,40,0.4)` | 모달 뒤를 덮는 막. 하단 시트와 관리팀 `Dialog`가 같이 쓴다 |
 
 `focusRing`에 `primary`를 쓰지 않는다. 흰 배경 대비가 **2.3:1**이라 포커스 표시에 필요한
 3:1에 못 미치고, 포커스는 화면 어디에나 생겨서 그린 예산이 의미를 잃는다.
@@ -166,7 +167,7 @@ import { spacing, radius } from '@hr/tokens';
 ## 5. 컴포넌트
 
 ```ts
-import { Button, ListRow, TextField, SectionTitle, Section, SectionDivider, Gauge, StatusText, Calendar } from '@/components';
+import { Button, ListRow, TextField, SectionTitle, Section, SectionDivider, Gauge, StatusText, Calendar, Sheet, ConfirmSheet, SelectSheet, QueryState, MutationError } from '@/components';
 ```
 
 **새 컴포넌트를 즉석에서 만들지 않는다.** 아래를 조합한다. 없으면 사람에게 묻는다.
@@ -263,6 +264,52 @@ TODO: 라벨 위치·오류 표기·비활성 상태는 `DESIGN_RULES.md` 7장�
 | `neutral` (기본) | `textWeak` | **그 외 전부** — 대기, 검토중, 진행중, 미기록 |
 
 상태를 색으로 구분하려고 새 tone을 만들지 않는다. 뱃지(알약 배경)를 쓰지 않는다.
+
+### Sheet / ConfirmSheet / SelectSheet
+
+**화면 위에 겹치는 것은 전부 아래에서 올라오는 시트다** (2026-08-28 확정).
+가운데 대화상자를 쓰지 않는다 — 엄지가 닿아야 하고, iPhone SE(375×667)에서 가운데 상자는
+화면을 거의 다 먹는다.
+
+```tsx
+<ConfirmSheet
+  open={canceling !== undefined}
+  title="부탁을 취소할까요"
+  description="민수님에게 간 부탁이 사라져요. 그 날 당직은 그대로 내가 서요."
+  confirmLabel="취소하기"
+  mutation={cancel}
+  onConfirm={submit}
+  onClose={close}
+/>
+
+<SelectSheet
+  open={picking}
+  title="어떤 근태인가요"
+  options={[{ value: 'HALF_DAY', label: '반차', hint: '0.5일' }]}
+  selected={typeCode}
+  onSelect={setTypeCode}
+  onClose={close}
+/>
+```
+
+| | 쓰는 곳 |
+|---|---|
+| `Sheet` | 바탕. 직접 쓰는 일은 드물다. 두 시트가 이 위에 선다 |
+| `ConfirmSheet` | 되돌릴 수 없는 동작을 한 번 더 묻는다 |
+| `SelectSheet` | 목록에서 하나 고른다. **고르면 바로 닫힌다** — 확인 버튼을 두지 않는다 |
+
+- **그림자를 쓰지 않는다.** 떠 있는 느낌은 뒤를 덮는 `colors.scrim`이 낸다
+- 위쪽 두 귀만 둥글다(16). 아래는 화면 끝에 붙는다
+- **높이를 고정하지 않는다.** 내용만큼 자라고 화면의 80%를 넘으면 그 안에서 스크롤한다
+- 하단 여백은 `useSafeAreaInsets`로 받는다
+- **`danger` 버튼이 없다.** 실행 버튼은 `primary`이고, 무엇이 사라지는지는 `description`이 적는다.
+  시트가 이미 그 동작 하나만 놓고 묻는 자리라 색을 더 쓰지 않는다
+- 왼쪽은 `닫기`다. `취소`가 아니다 (7장)
+- **그린 예산은 시트를 따로 센다.** 시트가 떠 있는 동안 뒤 화면은 누를 수 없어서
+  한 번에 보이는 `primary`는 여전히 하나다
+
+`description`은 **무엇이 일어나는지 구체적으로** 적는다. `정말 하시겠어요?` (X)
+되돌릴 수 없으면 그 사실을 적는다.
 
 ### Calendar
 

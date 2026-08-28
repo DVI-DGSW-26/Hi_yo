@@ -8,4 +8,8 @@ export { StatusText } from './StatusText';
 export { Calendar } from './Calendar';
 export { QueryState } from './QueryState';
 export { MutationError } from './MutationError';
+export { Sheet } from './Sheet';
+export { ConfirmSheet } from './ConfirmSheet';
+export { SelectSheet } from './SelectSheet';
 export type { MarkerType } from './Calendar';
+export type { SelectOption } from './SelectSheet';
