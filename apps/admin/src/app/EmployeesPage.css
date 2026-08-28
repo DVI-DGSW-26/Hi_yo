@@ -17,15 +17,4 @@
   margin-left: auto;
 }
 
-.pager {
-  display: flex;
-  align-items: center;
-  gap: var(--space-row-gap);
-  margin-top: var(--space-row-gap);
-}
-
-.pager-text {
-  font-size: var(--font-size-label);
-  line-height: var(--line-height-label);
-  color: var(--color-text-weak);
-}
+/* 쪽 넘김 스타일은 components/Pager.css 에 있다. */
