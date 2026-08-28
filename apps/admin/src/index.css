@@ -136,3 +136,12 @@ a {
   margin: var(--space-section-title-gap) 0 var(--space-tight);
   flex-wrap: wrap;
 }
+
+/* 표 안의 행별 동작. 버튼이 아니라 글자 링크로 둔다 (DESIGN_ADMIN.md 5장).
+   대상자 표와 당직표가 같이 쓴다. */
+.row-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-row-gap);
+  white-space: nowrap;
+}
