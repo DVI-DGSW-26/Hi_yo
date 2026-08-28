@@ -1,0 +1,14 @@
+.pager {
+  display: flex;
+  align-items: center;
+  gap: var(--space-row-gap);
+  margin-top: var(--space-row-gap);
+}
+
+.pager-text {
+  font-size: var(--font-size-label);
+  line-height: var(--line-height-label);
+  color: var(--color-text-weak);
+  /* 쪽을 넘겨도 숫자 폭이 흔들리지 않는다. */
+  font-variant-numeric: tabular-nums;
+}

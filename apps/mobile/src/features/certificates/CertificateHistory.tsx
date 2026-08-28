@@ -1,5 +1,5 @@
 import { View } from 'react-native';
-import { ListRow, QueryState, SectionTitle } from '@/components';
+import { ListRow, MoreButton, QueryState, SectionTitle } from '@/components';
 import { formatInKst } from '@/lib/format';
 import { useCertificates } from './api';
 
@@ -12,21 +12,36 @@ import { useCertificates } from './api';
 export function CertificateHistory({ onSelect }: { onSelect: (id: number) => void }) {
   const certificates = useCertificates();
 
+  // 받은 쪽들을 한 줄로 편다. QueryState 는 배열을 그대로 받아 빈 상태를 판정한다.
+  const items = certificates.data?.pages.flatMap((page) => page.content);
+
   return (
     <View>
       <SectionTitle title="발급 이력" />
-      <QueryState query={certificates} empty="아직 발급한 증명서가 없어요.">
-        {(data) =>
-          data.content.map((certificate) => (
-            <ListRow
-              key={certificate.id}
-              label={formatInKst(certificate.issuedAt, 'yyyy.MM.dd')}
-              value={certificate.purpose ?? undefined}
-              placeholder="용도 없이 발급했어요"
-              onPress={() => onSelect(certificate.id)}
-            />
-          ))
-        }
+      <QueryState
+        query={{
+          isPending: certificates.isPending,
+          // 첫 쪽부터 실패한 경우만 여기서 그린다. 뒤쪽이 실패한 것은 MoreButton 이 맡는다 —
+          // 이미 받은 줄까지 지울 이유가 없다.
+          error: items === undefined ? certificates.error : null,
+          data: items,
+        }}
+        empty="아직 발급한 증명서가 없어요."
+      >
+        {(data) => (
+          <>
+            {data.map((certificate) => (
+              <ListRow
+                key={certificate.id}
+                label={formatInKst(certificate.issuedAt, 'yyyy.MM.dd')}
+                value={certificate.purpose ?? undefined}
+                placeholder="용도 없이 발급했어요"
+                onPress={() => onSelect(certificate.id)}
+              />
+            ))}
+            <MoreButton query={certificates} hasItems={data.length > 0} />
+          </>
+        )}
       </QueryState>
     </View>
   );
