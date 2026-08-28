@@ -1,5 +1,5 @@
+import { weekdayText } from '@/lib/datetime';
 import type { DutyGenerateResult } from './api';
-import { weekdayText } from './labels';
 import './GenerateResultNotice.css';
 
 /**

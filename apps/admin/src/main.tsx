@@ -15,6 +15,7 @@ import { EmployeeDetail } from '@/app/EmployeeDetail';
 import { InsuranceRatesPage } from '@/app/InsuranceRatesPage';
 import { DutyRostersPage } from '@/app/DutyRostersPage';
 import { DutyRosterDetail } from '@/app/DutyRosterDetail';
+import { WeeklyHoursPage } from '@/app/WeeklyHoursPage';
 import './index.css';
 
 const queryClient = new QueryClient({
@@ -48,6 +49,7 @@ const router = createBrowserRouter([
       { path: 'payroll/:payrollId', element: <PayrollDetail /> },
       { path: 'duty', element: <DutyRostersPage /> },
       { path: 'duty/:rosterId', element: <DutyRosterDetail /> },
+      { path: 'weekly-hours', element: <WeeklyHoursPage /> },
       { path: 'insurance-rates', element: <InsuranceRatesPage /> },
     ],
   },
