@@ -11,7 +11,8 @@ import {
   type DutyRoster,
   type DutySchedule,
 } from './api';
-import { scheduleStatusText, slotText, timeRangeText, weekdayText } from './labels';
+import { scheduleStatusText, slotText, timeRangeText } from './labels';
+import { monthRange, todayInKst, weekdayText } from '@/lib/datetime';
 import './DutyScheduleSection.css';
 
 interface Props {
@@ -27,8 +28,8 @@ interface Props {
  * 대신 결과를 표 위에 남긴다. 연차와 겹친 건이 조용히 지나가면 안 된다.
  */
 export function DutyScheduleSection({ roster, members }: Props) {
-  const [from, setFrom] = useState(() => monthStart());
-  const [to, setTo] = useState(() => monthEnd());
+  const [from, setFrom] = useState(() => thisMonth().from);
+  const [to, setTo] = useState(() => thisMonth().to);
 
   const schedules = useDutySchedules(roster.id, from, to);
   const generate = useGenerateSchedules(roster.id);
@@ -164,21 +165,7 @@ function generateBlockedReason(roster: DutyRoster, members: DutyMember[]): strin
   return undefined;
 }
 
-/**
- * 이번 달. **KST 기준으로 오늘을 잡는다** — 기기 타임존을 따라가면 월말·월초에 한 달이 밀린다.
- * `en-CA` 로캘이 `yyyy-MM-dd` 를 준다.
- */
-function todayInKst(): string {
-  return new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Seoul' }).format(new Date());
-}
-
-function monthStart(): string {
-  return `${todayInKst().slice(0, 7)}-01`;
-}
-
-function monthEnd(): string {
-  const [year, month] = todayInKst().split('-').map(Number);
-  // 다음 달 0일 = 이번 달 마지막 날.
-  const last = new Date(Date.UTC(year!, month!, 0)).getUTCDate();
-  return `${todayInKst().slice(0, 7)}-${String(last).padStart(2, '0')}`;
+/** 이번 달. KST 기준으로 오늘을 잡는다 — `lib/datetime.ts` 참고 */
+function thisMonth(): { from: string; to: string } {
+  return monthRange(todayInKst());
 }
