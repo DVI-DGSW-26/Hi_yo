@@ -1,0 +1,17 @@
+.duty-toolbar {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-section-y);
+  flex-wrap: wrap;
+  margin-bottom: var(--space-section-title-gap);
+}
+
+.duty-toolbar-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-tight);
+  /* 라벨 한 줄만큼 내려서 입력칸과 밑선을 맞춘다. */
+  margin-top: calc(var(--line-height-label) + var(--space-tight));
+  flex-wrap: wrap;
+}
+
