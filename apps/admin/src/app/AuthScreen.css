@@ -1,0 +1,29 @@
+/*
+ * 로그인 전 화면. 좌측 메뉴 없이 이것만 보인다.
+ * 상자 모양은 .panel 과 같다 (DESIGN_ADMIN.md 11장).
+ */
+
+.auth-screen {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100%;
+  padding: var(--space-main-pad-y) var(--space-main-pad-x);
+}
+
+.auth-box {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-tight);
+  max-width: var(--space-read-width);
+  padding: var(--space-block-gap);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-chip);
+}
+
+/* 로그인은 이 화면의 주 동작이다. 그린은 여기 한 곳뿐이다. */
+.auth-actions {
+  display: flex;
+  gap: var(--space-tight);
+  margin-top: var(--space-row-gap);
+}
