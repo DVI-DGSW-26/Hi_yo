@@ -1,5 +1,5 @@
 import { createApiClient } from '@hr/api';
-import { DEV_AUTH_HEADER, devAuthValue } from './devAuth';
+import { getToken } from './auth';
 
 // 관리팀 화면의 유일한 HTTP 클라이언트. fetch를 직접 쓰지 않는다.
 // 오류 정규화와 인터셉터는 @hr/api 가 한다. 모바일과 같은 규칙을 쓴다.
@@ -11,13 +11,17 @@ if (import.meta.env.DEV && !baseURL) {
   );
 }
 
-// TODO: 인증 방식이 확정되면 authHeaders 를 그것으로 바꾼다.
-// 지금 붙는 것은 개발용 스텁 헤더뿐이다 (devAuth.ts). 운영 빌드에는 붙지 않는다.
 export const api = createApiClient({ baseURL, authHeaders });
 
+/**
+ * DVI 통합 로그인이 준 액세스 토큰을 붙인다 (`lib/auth.ts`).
+ *
+ * 토큰이 없으면 헤더를 붙이지 않는다 — 서버가 401을 주고, 화면이 로그인으로 안내한다.
+ * 여기서 로그인으로 보내지 않는다. 리다이렉트는 화면의 일이다.
+ */
 export function authHeaders(): Record<string, string> {
-  const devAuth = devAuthValue();
-  return devAuth ? { [DEV_AUTH_HEADER]: devAuth } : {};
+  const token = getToken();
+  return token ? { Authorization: `Bearer ${token}` } : {};
 }
 
 export type { PageResponse, PageParams } from '@hr/api';

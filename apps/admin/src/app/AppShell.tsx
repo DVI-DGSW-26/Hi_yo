@@ -1,4 +1,6 @@
 import { NavLink, Outlet } from 'react-router';
+import { AuthGate } from '@/app/AuthGate';
+import { clearToken } from '@/lib/auth';
 import './AppShell.css';
 
 /**
@@ -44,32 +46,55 @@ const MENU = [
 
 export function AppShell() {
   return (
-    <div className="shell">
-      {/* 스크린리더가 "주요 메뉴"로 읽는다. 본문과 구분되는 랜드마크가 된다. */}
-      <nav className="shell-nav" aria-label="주요 메뉴">
-        <div className="shell-brand">
-          <NavLink to="/">HR 관리</NavLink>
-        </div>
+    <AuthGate>
+      {(me) => (
+        <div className="shell">
+          {/* 스크린리더가 "주요 메뉴"로 읽는다. 본문과 구분되는 랜드마크가 된다. */}
+          <nav className="shell-nav" aria-label="주요 메뉴">
+            <div className="shell-brand">
+              <NavLink to="/">HR 관리</NavLink>
+            </div>
 
-        {MENU.map((group) => (
-          <div key={group.module} className="shell-group">
-            {/* 모듈 이름은 누를 수 없다. 갈 곳이 아니라 묶음의 이름이다. */}
-            <h2 className="shell-module">{group.module}</h2>
-            {group.items.map((item) => (
-              <NavLink
-                key={item.to}
-                to={item.to}
-                className={({ isActive }) => (isActive ? 'shell-link is-active' : 'shell-link')}
-              >
-                {item.label}
-              </NavLink>
+            {MENU.map((group) => (
+              <div key={group.module} className="shell-group">
+                {/* 모듈 이름은 누를 수 없다. 갈 곳이 아니라 묶음의 이름이다. */}
+                <h2 className="shell-module">{group.module}</h2>
+                {group.items.map((item) => (
+                  <NavLink
+                    key={item.to}
+                    to={item.to}
+                    className={({ isActive }) => (isActive ? 'shell-link is-active' : 'shell-link')}
+                  >
+                    {item.label}
+                  </NavLink>
+                ))}
+              </div>
             ))}
-          </div>
-        ))}
-      </nav>
-      <main className="shell-main">
-        <Outlet />
-      </main>
-    </div>
+
+            {/*
+              누구로 보고 있는지를 메뉴 맨 아래에 둔다. 관리팀 화면은 권한에 따라
+              보이는 것이 달라서, 계정을 모르면 화면을 잘못 읽는다.
+              로그아웃은 토큰을 지우는 것이 전부다 — 전 서비스 동시 로그아웃은 아직 없다.
+            */}
+            <div className="shell-account">
+              <span className="shell-account-name">{me.name}</span>
+              <button
+                type="button"
+                className="shell-logout"
+                onClick={() => {
+                  clearToken();
+                  window.location.assign('/');
+                }}
+              >
+                로그아웃
+              </button>
+            </div>
+          </nav>
+          <main className="shell-main">
+            <Outlet />
+          </main>
+        </div>
+      )}
+    </AuthGate>
   );
 }
