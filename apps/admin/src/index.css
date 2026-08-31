@@ -69,16 +69,57 @@ a {
 /* 그림자와 그라디언트를 쓰지 않는다 (DESIGN_RULES.md 1장 5번). */
 
 /*
- * 아래는 화면이 없는 동안 쓰는 최소한의 글자 스타일이다.
- * 관리팀 디자인 규칙이 정해지면 제대로 된 컴포넌트로 대체한다. 여기에 더 늘리지 않는다.
+ * 화면의 글자 위계. 값의 근거는 DESIGN_ADMIN.md 11장에 있다.
+ * 여기에 크기를 새로 적지 않는다 — 토큰을 늘리고 그것을 참조한다.
  */
 
 .page-title {
-  font-size: var(--font-size-headline);
-  line-height: var(--line-height-headline);
-  font-weight: var(--font-weight-headline);
+  font-size: var(--font-size-page-title);
+  line-height: var(--line-height-page-title);
+  font-weight: var(--font-weight-page-title);
+  letter-spacing: -0.4px;
   color: var(--color-text-strong);
-  margin: 0 0 var(--space-section-title-gap);
+  margin: 0;
+}
+
+/*
+ * 제목 아래에서 이 화면이 무엇인지 말하는 줄.
+ *
+ * 최대 너비를 여기에만 건다. 한 줄이 화면 폭만큼 길면 눈이 다음 줄 첫 글자를 못 찾는다.
+ * 표는 폭을 전부 쓴다 (DESIGN_ADMIN.md 2장).
+ */
+.page-lead {
+  margin: 0;
+  max-width: var(--space-read-width);
+  font-size: var(--font-size-lead);
+  line-height: var(--line-height-lead);
+  color: var(--color-text-weak);
+  text-wrap: pretty;
+}
+
+/* 제목·리드·요약·표를 한 흐름으로 쌓는다. 화면마다 여백을 다시 정하지 않는다. */
+.page-blocks {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-block-gap);
+}
+
+.page-head {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-block-gap);
+}
+
+.page-head-text {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-tight);
+}
+
+/* 화면의 주 동작. 제목 줄 오른쪽 끝에 붙는다. */
+.page-head-action {
+  margin-left: auto;
+  flex-shrink: 0;
 }
 
 .muted {

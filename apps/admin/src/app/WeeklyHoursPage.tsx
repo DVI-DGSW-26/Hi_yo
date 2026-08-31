@@ -4,7 +4,6 @@ import { Field, Select, StatusText, Table, type Column } from '@/components';
 import { useWeeklyWork, type WeeklyWorkSummary } from '@/features/attendance/api';
 import { alertLevelText, alertLevelTone } from '@/features/attendance/labels';
 import { dateRangeText, formatKstDateTime, todayInKst } from '@/lib/datetime';
-import './WeeklyHoursPage.css';
 
 /**
  * A-503 52시간 근접 알림 현황
@@ -93,24 +92,14 @@ export function WeeklyHoursPage() {
   ];
 
   return (
-    <section>
-      <h1 className="page-title">52시간 현황</h1>
-
-      <p className="muted">
-        고른 날짜가 속한 주를 봐요. 단계는 서버가 정해요 — 화면에서 시간을 다시 재지 않아요.
-      </p>
-
-      <div className="weekly-toolbar">
-        <Field label="기준일" value={date} onChange={setDate} type="date" required />
-        <Select
-          label="보기"
-          value={onlyAlerted ? 'alerted' : 'all'}
-          onChange={(value) => setOnlyAlerted(value === 'alerted')}
-          options={[
-            { value: 'alerted', label: '알림 대상만' },
-            { value: 'all', label: '전 직원' },
-          ]}
-        />
+    <section className="page-blocks">
+      <div className="page-head">
+        <div className="page-head-text">
+          <h1 className="page-title">52시간 현황</h1>
+          <p className="page-lead">
+            고른 날짜가 속한 주를 봐요. 단계는 서버가 정해요 — 화면에서 시간을 다시 재지 않아요.
+          </p>
+        </div>
       </div>
 
       <Table
@@ -123,6 +112,20 @@ export function WeeklyHoursPage() {
           onlyAlerted
             ? '이 주에 48시간을 넘긴 사람이 없어요.'
             : '이 주에 집계된 근무 기록이 없어요.'
+        }
+        toolbar={
+          <>
+            <Field label="기준일" value={date} onChange={setDate} type="date" required />
+            <Select
+              label="보기"
+              value={onlyAlerted ? 'alerted' : 'all'}
+              onChange={(value) => setOnlyAlerted(value === 'alerted')}
+              options={[
+                { value: 'alerted', label: '알림 대상만' },
+                { value: 'all', label: '전 직원' },
+              ]}
+            />
+          </>
         }
       />
     </section>

@@ -4,6 +4,16 @@
   height: 100%;
 }
 
+/*
+ * 본문. 여기에 여백이 없어서 화면이 좌측 메뉴에 붙어 있었다 (2026-08-31).
+ * 최대 너비는 두지 않는다 — 20열짜리 표를 좁은 칸에 넣지 않기 위해서다 (DESIGN_ADMIN.md 2장).
+ * 읽는 문장의 너비는 `.page-lead` 가 따로 잡는다.
+ */
+.shell-main {
+  padding: var(--space-main-pad-y) var(--space-main-pad-x);
+  overflow: auto;
+}
+
 .shell-nav {
   display: flex;
   flex-direction: column;

@@ -9,8 +9,9 @@ import { colors, typography } from '@hr/tokens';
  * 실제로 같은 스타일 정의가 파일마다 복사돼 있었다. 여기 한 곳만 고치면 전부 같이 바뀐다.
  *
  * 오류 문구는 **서버가 준 한국어를 그대로 쓴다.** 앱에서 문구를 새로 만들지 않는다 —
- * `ApiError`가 서버 `message`를 꺼내고, 없으면 `지금은 불러올 수 없어요.`로 떨어진다
- * (`packages/api`의 `FALLBACK_ERROR_MESSAGE`).
+ * `ApiError`가 서버 `message`를 꺼내고, 없으면 기본 문구로 떨어진다
+ * (`packages/api`의 `FALLBACK_ERROR_MESSAGE`). 401처럼 상황이 분명한 것만
+ * 따로 적혀 있다 — `로그인이 필요해요.`
  */
 interface Props<T> {
   /** TanStack Query 결과를 그대로 넘긴다 */

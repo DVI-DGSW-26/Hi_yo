@@ -1,5 +1,14 @@
 import { useState } from 'react';
-import { Button, Dialog, RowLink, Select, StatusText, Table, type Column } from '@/components';
+import {
+  Button,
+  Dialog,
+  RowLink,
+  Select,
+  StatusText,
+  Summary,
+  Table,
+  type Column,
+} from '@/components';
 import { currentYear, formatKstDateTime, weekdayText } from '@/lib/datetime';
 import { ApplyResultNotice } from '@/features/companyLeaves/ApplyResultNotice';
 import { CompanyLeaveCreateDialog } from '@/features/companyLeaves/CompanyLeaveCreateDialog';
@@ -78,26 +87,31 @@ export function CompanyLeavePage() {
   ];
 
   return (
-    <section>
-      <h1 className="page-title">단체연차</h1>
-
-      <p className="muted company-leave-meta">
-        전 직원이 같은 날 쉬는 일정이에요. 등록만으로는 아무의 연차도 줄지 않고,{' '}
-        <strong>차감하기</strong>를 눌러야 전 직원의 신청서가 만들어지고 잔여에서 빠져요.
-        차감은 한 번만 할 수 있고 되돌릴 수 없어요.
-      </p>
-
-      <div className="company-leave-toolbar">
-        <Select
-          label="연도"
-          value={String(year)}
-          onChange={(value) => setYear(Number(value))}
-          options={yearOptions.map((value) => ({ value: String(value), label: `${value}년` }))}
-        />
-        <div className="company-leave-action">
+    <section className="page-blocks">
+      <div className="page-head">
+        <div className="page-head-text">
+          <h1 className="page-title">단체연차</h1>
+          <p className="page-lead">
+            전 직원이 같은 날 쉬는 일정이에요. 등록만으로는 아무의 연차도 줄지 않아요.
+          </p>
+        </div>
+        <div className="page-head-action">
           <Button label="단체연차 등록하기" variant="primary" onClick={() => setAdding(true)} />
         </div>
       </div>
+
+      {companyLeaves.data && (
+        <Summary
+          items={[
+            { label: `${year}년 등록`, value: `${companyLeaves.data.length}건` },
+            {
+              label: '차감 완료',
+              value: `${companyLeaves.data.filter((row) => row.applied).length}건`,
+            },
+          ]}
+          note="차감하기를 눌러야 전 직원의 신청서가 만들어지고 잔여에서 빠져요. 한 번만 할 수 있고 되돌릴 수 없어요."
+        />
+      )}
 
       {/* 차감 결과는 표 위에 남긴다. 빠진 사람이 여기 말고는 드러날 곳이 없다. */}
       {apply.data && <ApplyResultNotice result={apply.data} />}
@@ -109,6 +123,14 @@ export function CompanyLeavePage() {
         isPending={companyLeaves.isPending}
         error={companyLeaves.error}
         emptyText={`${year}년에 등록된 단체연차가 없어요.`}
+        toolbar={
+          <Select
+            label="연도"
+            value={String(year)}
+            onChange={(value) => setYear(Number(value))}
+            options={yearOptions.map((value) => ({ value: String(value), label: `${value}년` }))}
+          />
+        }
       />
 
       {/* 열 때마다 다시 만든다. 날짜 기본값이 그때의 오늘이어야 한다. */}
