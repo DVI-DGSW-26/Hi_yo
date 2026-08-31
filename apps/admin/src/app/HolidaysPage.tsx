@@ -1,10 +1,9 @@
 import { useState } from 'react';
 import { Button, Dialog, RowLink, Select, Table, type Column } from '@/components';
-import { weekdayText } from '@/lib/datetime';
+import { currentYear, weekdayText } from '@/lib/datetime';
 import { HolidayCreateDialog } from '@/features/holidays/HolidayCreateDialog';
 import { holidayTypeText } from '@/features/holidays/labels';
 import {
-  currentYear,
   selectableYears,
   useDeleteHoliday,
   useHolidays,

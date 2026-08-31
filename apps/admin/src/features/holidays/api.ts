@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
-import { todayInKst } from '@/lib/datetime';
+import { currentYear } from '@/lib/datetime';
 
 /**
  * 공휴일 (Swagger `8. 공휴일`). 명세는 `docs/API_연차.md` 9장에 있다.
@@ -65,11 +65,6 @@ export function useHolidays(year: number) {
 export function selectableYears(): number[] {
   const thisYear = currentYear();
   return [thisYear + 1, thisYear];
-}
-
-/** 올해, **KST 기준**. 연말에 기기 타임존을 따라가면 한 해가 밀린다 */
-export function currentYear(): number {
-  return Number(todayInKst().slice(0, 4));
 }
 
 /** 넣는 즉시 이후 연차 계산에 반영된다 */

@@ -22,6 +22,7 @@ const MENU = [
     module: '연차',
     items: [
       { to: '/approvals', label: '연차 결재' },
+      { to: '/company-leaves', label: '단체연차' },
       { to: '/holidays', label: '공휴일' },
     ],
   },

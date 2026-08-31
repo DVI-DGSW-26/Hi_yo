@@ -23,6 +23,14 @@ export function todayInKst(): string {
 }
 
 /**
+ * 올해, **KST 기준**. 연말에 기기 타임존을 따라가면 한 해가 밀린다.
+ * 공휴일·단체연차처럼 연도로 거르는 화면이 같이 쓴다.
+ */
+export function currentYear(): number {
+  return Number(todayInKst().slice(0, 4));
+}
+
+/**
  * `yyyy-MM-dd`가 속한 달의 첫날과 마지막 날.
  * 달의 길이는 `Date.UTC`로 구한다 — 다음 달 0일이 이번 달 마지막 날이다.
  */
