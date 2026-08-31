@@ -1,27 +1,12 @@
-.filters {
-  display: flex;
-  align-items: flex-start;
-  gap: var(--space-row-gap);
-  flex-wrap: wrap;
-  margin-bottom: var(--space-tight);
-}
-
-.filters > .field {
-  min-width: 160px;
-  margin-bottom: 0;
-}
-
-.filters-action {
-  /* 라벨 한 줄만큼 내려서 입력칸과 밑선을 맞춘다. */
-  margin-top: calc(var(--line-height-label) + var(--space-tight));
-  margin-left: auto;
-}
+/*
+ * 화면 뼈대와 도구줄은 index.css 의 .page-* 와 Table 의 .table-toolbar 가 잡는다.
+ * 여기에는 이 화면에만 있는 것만 둔다 (DESIGN_ADMIN.md 11장).
+ */
 
 .pager {
   display: flex;
   align-items: center;
   gap: var(--space-row-gap);
-  margin-top: var(--space-row-gap);
 }
 
 .pager-text {

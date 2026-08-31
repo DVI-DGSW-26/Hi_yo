@@ -30,6 +30,27 @@ export const spacing = {
   rowHeight: 44,
   /** 섹션 구분 띠 높이 */
   dividerHeight: 10,
+
+  /*
+   * 아래 다섯은 관리팀 화면(웹)의 값이다. 모바일은 쓰지 않는다.
+   * 근거는 `docs/DESIGN_ADMIN.md` 11장에 있다.
+   */
+
+  /** 본문 좌우 패딩. 화면 좌우(`screenX` 24)보다 넓다 — 좌측 메뉴와 표 사이가 붙으면 답답하다 */
+  mainPadX: 32,
+  /** 본문 상하 패딩 */
+  mainPadY: 36,
+  /** 화면 안 블록 사이 — 제목 ↔ 요약 ↔ 표 */
+  blockGap: 24,
+  /**
+   * 읽는 문장의 최대 너비. **표에는 주지 않는다.**
+   *
+   * 한 줄이 화면 폭만큼 길면 눈이 다음 줄 첫 글자를 못 찾는다. 그래서 설명·안내문에만
+   * 건다 — 본문 전체에 최대 너비를 두지 않는다는 규칙(`DESIGN_ADMIN.md` 2장)은 표 이야기다.
+   */
+  readWidth: 620,
+  /** 표 행의 최소 높이. 최소 터치 영역(`rowHeight` 44)보다 한 칸 여유를 준다 */
+  tableRowHeight: 48,
 } as const;
 
 export const radius = {

@@ -85,39 +85,23 @@ export function EmployeesPage() {
   }
 
   return (
-    <section>
-      <h1 className="page-title">직원</h1>
-
-      <div className="filters">
-        <Field
-          label="검색"
-          value={keyword}
-          onChange={resetPage(setKeyword)}
-          placeholder="성명·사번"
-        />
-        <Select
-          label="재직상태"
-          value={status}
-          onChange={resetPage((value: string) => setStatus(value as EmploymentStatus | ''))}
-          options={STATUS_OPTIONS.map((option) => ({
-            value: option.value,
-            label: option.label,
-          }))}
-        />
-        <Select
-          label="부서"
-          value={departmentId}
-          onChange={resetPage(setDepartmentId)}
-          placeholder="전체"
-          options={(departments.data ?? []).map((department) => ({
-            value: String(department.id),
-            label: department.name,
-          }))}
-        />
-        <div className="filters-action">
-          <Button label="직원 등록하기" variant="primary" onClick={() => navigate('/employees/new')} />
+    <section className="page-blocks">
+      <div className="page-head">
+        <div className="page-head-text">
+          <h1 className="page-title">직원</h1>
+          <p className="page-lead">
+            퇴사자도 지우지 않고 재직 상태로만 관리해요. 목록에서 사라지지 않아요.
+          </p>
+        </div>
+        <div className="page-head-action">
+          <Button
+            label="직원 등록하기"
+            variant="primary"
+            onClick={() => navigate('/employees/new')}
+          />
         </div>
       </div>
+
 
       <Table
         columns={columns}
@@ -127,6 +111,35 @@ export function EmployeesPage() {
         error={employees.error}
         emptyText="조건에 맞는 직원이 없어요."
         onRowClick={(row) => navigate(`/employees/${row.id}`)}
+        toolbar={
+          <>
+            <Field
+              label="검색"
+              value={keyword}
+              onChange={resetPage(setKeyword)}
+              placeholder="성명·사번"
+            />
+            <Select
+              label="재직상태"
+              value={status}
+              onChange={resetPage((value: string) => setStatus(value as EmploymentStatus | ''))}
+              options={STATUS_OPTIONS.map((option) => ({
+                value: option.value,
+                label: option.label,
+              }))}
+            />
+            <Select
+              label="부서"
+              value={departmentId}
+              onChange={resetPage(setDepartmentId)}
+              placeholder="전체"
+              options={(departments.data ?? []).map((department) => ({
+                value: String(department.id),
+                label: department.name,
+              }))}
+            />
+          </>
+        }
       />
 
       {employees.data && employees.data.totalElements > 0 && (

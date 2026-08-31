@@ -1,0 +1,54 @@
+/*
+ * DESIGN_ADMIN.md 11장.
+ * 상자 모양은 Dialog·SkippedNotice·GenerateResultNotice 와 같다 — 테두리로 띄우고
+ * 그림자를 쓰지 않는다.
+ */
+
+.summary {
+  display: flex;
+  align-items: stretch;
+  flex-wrap: wrap;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-chip);
+}
+
+.summary-cell {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-tight);
+  padding: var(--space-row-gap) var(--space-block-gap);
+}
+
+/* 칸 사이에만 선을 긋는다. 첫 칸 앞에는 없다. */
+.summary-cell + .summary-cell {
+  border-left: 1px solid var(--color-border);
+}
+
+.summary-label {
+  font-size: var(--font-size-caption);
+  line-height: var(--line-height-caption);
+  color: var(--color-text-weak);
+}
+
+/* 값은 크게. 이 줄을 두는 이유가 이 숫자다. */
+.summary-value {
+  font-size: var(--font-size-headline);
+  line-height: var(--line-height-headline);
+  font-weight: 600;
+  color: var(--color-text-strong);
+  font-variant-numeric: tabular-nums;
+}
+
+/* 안내문은 남는 폭을 쓰되 읽는 너비를 넘지 않는다. */
+.summary-note {
+  margin: 0;
+  align-self: center;
+  flex: 1 1 var(--space-read-width);
+  max-width: var(--space-read-width);
+  padding: var(--space-row-gap) var(--space-block-gap);
+  border-left: 1px solid var(--color-border);
+  font-size: var(--font-size-lead);
+  line-height: var(--line-height-lead);
+  color: var(--color-text-body);
+  text-wrap: pretty;
+}

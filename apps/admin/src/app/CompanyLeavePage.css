@@ -1,28 +1,7 @@
-/* DESIGN_ADMIN.md 2장 — 도구줄은 제목과 표 사이에 둔다. */
-
-.company-leave-meta {
-  margin: 0 0 var(--space-tight);
-  max-width: 60ch;
-}
-
-.company-leave-toolbar {
-  display: flex;
-  align-items: flex-start;
-  gap: var(--space-row-gap);
-  flex-wrap: wrap;
-  margin-bottom: var(--space-tight);
-}
-
-.company-leave-toolbar > .field {
-  min-width: 160px;
-  margin-bottom: 0;
-}
-
-.company-leave-action {
-  /* 라벨 한 줄만큼 내려서 입력칸과 밑선을 맞춘다 (EmployeesPage 와 같다). */
-  margin-top: calc(var(--line-height-label) + var(--space-tight));
-  margin-left: auto;
-}
+/*
+ * 화면 뼈대(제목·리드·블록 간격)는 index.css 의 .page-* 가 잡는다.
+ * 여기에는 이 화면에만 있는 것만 둔다 (DESIGN_ADMIN.md 11장).
+ */
 
 /* 등록 대화상자 — 고른 날짜의 요일. 날짜칸 바로 아래에 붙인다. */
 .company-leave-weekday {

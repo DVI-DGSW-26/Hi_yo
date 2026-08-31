@@ -1,7 +1,0 @@
-.weekly-toolbar {
-  display: flex;
-  align-items: flex-start;
-  gap: var(--space-section-y);
-  flex-wrap: wrap;
-  margin-bottom: var(--space-section-title-gap);
-}

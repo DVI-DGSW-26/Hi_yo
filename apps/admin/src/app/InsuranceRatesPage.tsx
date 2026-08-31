@@ -6,7 +6,6 @@ import {
   useInsuranceYears,
   type InsuranceRate,
 } from '@/features/insurance/api';
-import './InsuranceRatesPage.css';
 
 /**
  * 보험 요율 — 조회
@@ -58,32 +57,20 @@ export function InsuranceRatesPage() {
   ];
 
   return (
-    <section>
-      <h1 className="page-title">보험 요율</h1>
-
-      <p className="muted rates-meta">
-        급여를 계산할 때 이 요율을 그대로 써요. 지난해에서 복사해 온 요율이면 고시된 값과 맞는지
-        확인해주세요.
-      </p>
+    <section className="page-blocks">
+      <div className="page-head">
+        <div className="page-head-text">
+          <h1 className="page-title">보험 요율</h1>
+          <p className="page-lead">
+            급여를 계산할 때 이 요율을 그대로 써요. 지난해에서 복사해 온 요율이면 고시된 값과
+            맞는지 확인해주세요.
+          </p>
+        </div>
+      </div>
 
       {years.error ? (
         <p className="danger">{years.error.message}</p>
-      ) : (
-        <div className="rates-toolbar">
-          <Select
-            label="적용 연도"
-            value={year === undefined ? '' : String(year)}
-            onChange={(value) => setPicked(Number(value))}
-            placeholder={yearPlaceholder(years.isPending, years.data)}
-            options={(years.data ?? []).map((value) => ({
-              value: String(value),
-              label: `${value}년`,
-            }))}
-          />
-        </div>
-      )}
-
-      {years.error ? null : years.isPending ? (
+      ) : years.isPending ? (
         <p className="muted">불러오는 중이에요.</p>
       ) : year === undefined ? (
         <p className="muted">요율이 등록된 해가 아직 없어요.</p>
@@ -95,15 +82,19 @@ export function InsuranceRatesPage() {
           isPending={rates.isPending}
           error={rates.error}
           emptyText={`${year}년에 등록된 요율이 없어요.`}
+          toolbar={
+            <Select
+              label="적용 연도"
+              value={String(year)}
+              onChange={(value) => setPicked(Number(value))}
+              options={(years.data ?? []).map((value) => ({
+                value: String(value),
+                label: `${value}년`,
+              }))}
+            />
+          }
         />
       )}
     </section>
   );
-}
-
-/** 고를 것이 없을 때만 문구를 둔다. 해가 있으면 첫 항목(최근 해)이 선택된다. */
-function yearPlaceholder(isPending: boolean, years: number[] | undefined): string | undefined {
-  if (isPending) return '불러오는 중이에요';
-  if (!years || years.length === 0) return '등록된 해가 없어요';
-  return undefined;
 }
