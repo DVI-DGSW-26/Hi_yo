@@ -56,12 +56,15 @@ export function DutyRostersPage() {
   ];
 
   return (
-    <section>
-      <h1 className="page-title">당직</h1>
-
-      <p className="muted">
-        명단에 대상자를 넣고 순번을 정해요. 그 순번대로 당직표를 편성해요.
-      </p>
+    <section className="page-blocks">
+      <div className="page-head">
+        <div className="page-head-text">
+          <h1 className="page-title">당직</h1>
+          <p className="page-lead">
+            명단에 대상자를 넣고 순번을 정해요. 그 순번대로 당직표를 편성해요.
+          </p>
+        </div>
+      </div>
 
       <Table
         columns={columns}

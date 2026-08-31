@@ -70,8 +70,15 @@ export function PayrollPage() {
   ];
 
   return (
-    <section>
-      <h1 className="page-title">급여</h1>
+    <section className="page-blocks">
+      <div className="page-head">
+        <div className="page-head-text">
+          <h1 className="page-title">급여</h1>
+          <p className="page-lead">
+            기간을 고르고 계산을 실행해요. 마감하면 금액을 고칠 수 없어요.
+          </p>
+        </div>
+      </div>
 
       {periods.error ? (
         <p className="danger">{periods.error.message}</p>

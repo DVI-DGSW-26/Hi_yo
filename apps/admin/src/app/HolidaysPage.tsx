@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Button, Dialog, RowLink, Select, Table, type Column } from '@/components';
+import { Button, Dialog, RowLink, Select, Summary, Table, type Column } from '@/components';
 import { currentYear, weekdayText } from '@/lib/datetime';
 import { HolidayCreateDialog } from '@/features/holidays/HolidayCreateDialog';
 import { holidayTypeText } from '@/features/holidays/labels';
@@ -53,32 +53,32 @@ export function HolidaysPage() {
   ];
 
   return (
-    <section>
-      <h1 className="page-title">공휴일</h1>
-
-      <p className="muted holidays-meta">
-        연차 차감일이 이 목록을 봐요. 넣지 않은 날은 근무일로 계산돼서 연차가 실제보다 더
-        깎여요. 설날·추석 같은 음력 공휴일과 대체공휴일은 해마다 날짜가 달라 서버에 미리
-        들어 있지 않아요.
-      </p>
-
-      <div className="holidays-toolbar">
-        <Select
-          label="연도"
-          value={String(year)}
-          onChange={(value) => setYear(Number(value))}
-          options={yearOptions.map((value) => ({ value: String(value), label: `${value}년` }))}
-        />
-        <div className="holidays-action">
+    <section className="page-blocks">
+      <div className="page-head">
+        <div className="page-head-text">
+          <h1 className="page-title">공휴일</h1>
+          <p className="page-lead">
+            연차 차감일이 이 목록을 봐요. 넣지 않은 날은 근무일로 계산돼서 연차가 실제보다 더
+            깎여요.
+          </p>
+        </div>
+        <div className="page-head-action">
           <Button label="공휴일 등록하기" variant="primary" onClick={() => setAdding(true)} />
         </div>
       </div>
 
-      {/* 건수를 적어둔다. 열다섯 날쯤 되는 해에 아홉 줄만 있으면 그 자리에서 보인다. */}
+      {/* 건수를 표 위에 둔다. 열다섯 날쯤 되는 해에 아홉 줄만 있으면 그 자리에서 보인다. */}
       {holidays.data && (
-        <p className="muted holidays-count">
-          {year}년에 {holidays.data.length}일 등록돼 있어요.
-        </p>
+        <Summary
+          items={[
+            { label: `${year}년 등록된 날`, value: `${holidays.data.length}일` },
+            {
+              label: '회사 지정',
+              value: `${holidays.data.filter((row) => row.holidayType === 'COMPANY').length}일`,
+            },
+          ]}
+          note="설날·추석 같은 음력 공휴일과 대체공휴일은 해마다 날짜가 달라 서버에 미리 들어 있지 않아요."
+        />
       )}
 
       <Table
@@ -88,6 +88,14 @@ export function HolidaysPage() {
         isPending={holidays.isPending}
         error={holidays.error}
         emptyText={`${year}년에 등록된 공휴일이 없어요. 넣지 않으면 그날이 근무일로 계산돼요.`}
+        toolbar={
+          <Select
+            label="연도"
+            value={String(year)}
+            onChange={(value) => setYear(Number(value))}
+            options={yearOptions.map((value) => ({ value: String(value), label: `${value}년` }))}
+          />
+        }
       />
 
       {/* 열 때마다 다시 만든다. 지난번에 넣다 만 값이 남아 있으면 엉뚱한 날이 등록된다. */}
