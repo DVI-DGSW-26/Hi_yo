@@ -7,7 +7,6 @@ import { applyTokens } from '@/lib/applyTokens';
 import { AppShell } from '@/app/AppShell';
 import { AuthCallback } from '@/app/AuthCallback';
 import { Home } from '@/app/Home';
-import { NotBuilt } from '@/app/NotBuilt';
 import { PayrollPage } from '@/app/PayrollPage';
 import { PayrollDetail } from '@/app/PayrollDetail';
 import { EmployeesPage } from '@/app/EmployeesPage';
@@ -19,6 +18,8 @@ import { DutyRosterDetail } from '@/app/DutyRosterDetail';
 import { WeeklyHoursPage } from '@/app/WeeklyHoursPage';
 import { HolidaysPage } from '@/app/HolidaysPage';
 import { CompanyLeavePage } from '@/app/CompanyLeavePage';
+import { ApprovalsPage } from '@/app/ApprovalsPage';
+import { ApprovalDetail } from '@/app/ApprovalDetail';
 import './index.css';
 
 const queryClient = new QueryClient({
@@ -49,7 +50,8 @@ const router = createBrowserRouter([
       { path: 'employees', element: <EmployeesPage /> },
       { path: 'employees/new', element: <EmployeeNew /> },
       { path: 'employees/:employeeId', element: <EmployeeDetail /> },
-      { path: 'approvals', element: <NotBuilt screenId="A-302" title="연차 신청 검토·승인" /> },
+      { path: 'approvals', element: <ApprovalsPage /> },
+      { path: 'approvals/:requestId', element: <ApprovalDetail /> },
       { path: 'company-leaves', element: <CompanyLeavePage /> },
       { path: 'holidays', element: <HolidaysPage /> },
       { path: 'payroll', element: <PayrollPage /> },
