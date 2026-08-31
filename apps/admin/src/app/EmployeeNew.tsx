@@ -63,84 +63,105 @@ export function EmployeeNew() {
   }
 
   return (
-    <section>
-      <h1 className="page-title">직원 등록</h1>
-
-      <FieldGrid>
-        <Field label="성명" value={name} onChange={setName} required error={errors.name} maxLength={50} />
-        <Field
-          label="법인"
-          value={corporation}
-          onChange={setCorporation}
-          required
-          error={errors.corporation}
-          maxLength={30}
-        />
-        <Field
-          label="사번"
-          value={employeeNo}
-          onChange={setEmployeeNo}
-          maxLength={20}
-          placeholder="나중에 부여해도 돼요"
-        />
-        <Select
-          label="부서"
-          value={departmentId}
-          onChange={setDepartmentId}
-          placeholder="고르지 않음"
-          options={(departments.data ?? []).map((department) => ({
-            value: String(department.id),
-            label: department.name,
-          }))}
-        />
-        <Select
-          label="직무"
-          value={jobId}
-          onChange={setJobId}
-          placeholder="고르지 않음"
-          options={(jobs.data ?? []).map((item) => ({
-            value: String(item.id),
-            label: item.name,
-          }))}
-        />
-        <Field
-          label="입사일"
-          value={hireDate}
-          onChange={setHireDate}
-          type="date"
-          required
-          error={errors.hireDate}
-        />
-        <Field
-          label="실입사일"
-          value={originalHireDate}
-          onChange={setOriginalHireDate}
-          type="date"
-          error={errors.originalHireDate}
-        />
-      </FieldGrid>
-
-      {/* 직무를 고르면 급여 기준값이 따라온다. 읽기전용이다 (명세서 A-102). */}
-      {job && (
-        <FieldGrid>
-          <Field label="급여계산 대상" value={job.payrollTarget ? '대상' : '아님'} readOnly />
-          <Field
-            label="시급"
-            value={job.hourlyWage === null ? '' : formatAmount(job.hourlyWage)}
-            readOnly
-          />
-        </FieldGrid>
-      )}
-
-      <div className="detail-actions">
-        <Button label="목록으로" onClick={() => navigate('/employees')} />
-        <Button label="저장하기" variant="primary" loading={create.isPending} onClick={submit} />
+    <section className="page-blocks">
+      <div className="page-head">
+        <div className="page-head-text">
+          <h1 className="page-title">직원 등록</h1>
+          <p className="page-lead">
+            등록하면 재직 상태로 시작해요. 휴직·퇴사는 상세 화면에서 바꿔요.
+          </p>
+        </div>
       </div>
-      {create.error && <p className="danger">{create.error.message}</p>}
 
-      <p className="muted">
-        주민등록번호는 여기서 받지 않아요. 재직상태는 등록 후 상세 화면에서 바꿔요.
-      </p>
+      <div className="panel is-form">
+        <div className="panel-body">
+          <FieldGrid>
+            <Field label="성명" value={name} onChange={setName} required error={errors.name} maxLength={50} />
+            <Field
+              label="법인"
+              value={corporation}
+              onChange={setCorporation}
+              required
+              error={errors.corporation}
+              maxLength={30}
+            />
+            <Field
+              label="사번"
+              value={employeeNo}
+              onChange={setEmployeeNo}
+              maxLength={20}
+              placeholder="나중에 부여해도 돼요"
+            />
+            <Select
+              label="부서"
+              value={departmentId}
+              onChange={setDepartmentId}
+              placeholder="고르지 않음"
+              options={(departments.data ?? []).map((department) => ({
+                value: String(department.id),
+                label: department.name,
+              }))}
+            />
+            <Select
+              label="직무"
+              value={jobId}
+              onChange={setJobId}
+              placeholder="고르지 않음"
+              options={(jobs.data ?? []).map((item) => ({
+                value: String(item.id),
+                label: item.name,
+              }))}
+            />
+            <Field
+              label="입사일"
+              value={hireDate}
+              onChange={setHireDate}
+              type="date"
+              required
+              error={errors.hireDate}
+            />
+            <Field
+              label="실입사일"
+              value={originalHireDate}
+              onChange={setOriginalHireDate}
+              type="date"
+              error={errors.originalHireDate}
+            />
+          </FieldGrid>
+        </div>
+
+        {/* 직무를 고르면 급여 기준값이 따라온다. 읽기전용이라 입력칸과 칸을 나눈다. */}
+        {job && (
+          <div className="panel-body">
+            <p className="muted">직무를 고르면 따라오는 값이에요. 여기서 고칠 수 없어요.</p>
+            <FieldGrid>
+              <Field label="급여계산 대상" value={job.payrollTarget ? '대상' : '아님'} readOnly />
+              <Field
+                label="시급"
+                value={job.hourlyWage === null ? '' : formatAmount(job.hourlyWage)}
+                readOnly
+              />
+            </FieldGrid>
+          </div>
+        )}
+
+        <div className="panel-actions">
+          {create.error ? (
+            <p className="panel-note is-error">{create.error.message}</p>
+          ) : (
+            <p className="panel-note">주민등록번호는 여기서 받지 않아요.</p>
+          )}
+          <div className="panel-buttons">
+            <Button label="목록으로" onClick={() => navigate('/employees')} />
+            <Button
+              label="저장하기"
+              variant="primary"
+              loading={create.isPending}
+              onClick={submit}
+            />
+          </div>
+        </div>
+      </div>
     </section>
   );
 }

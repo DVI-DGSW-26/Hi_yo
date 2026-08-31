@@ -1,6 +1,15 @@
 import { useState } from 'react';
 import { Link, useParams } from 'react-router';
-import { Button, Dialog, Field, Select, StatusText, Table, type Column } from '@/components';
+import {
+  Button,
+  DetailList,
+  Dialog,
+  Field,
+  Select,
+  StatusText,
+  Table,
+  type Column,
+} from '@/components';
 import {
   useAssignEmployeeNo,
   useChangeStatus,
@@ -59,69 +68,80 @@ export function EmployeeDetail() {
   ];
 
   return (
-    <section>
-      <Link to="/employees" className="back-link">
-        직원 목록으로
-      </Link>
-
-      <h1 className="page-title">{summary.name}</h1>
-
-      <dl className="rows">
-        <dt>사번</dt>
-        <dd>{summary.employeeNo ?? '아직 없어요'}</dd>
-        <dt>법인</dt>
-        <dd>{summary.corporation ?? '아직이에요'}</dd>
-        <dt>부서</dt>
-        <dd>{summary.departmentName ?? '아직이에요'}</dd>
-        <dt>직무</dt>
-        <dd>
-          {summary.jobName ?? '아직이에요'}
-          {summary.payrollTarget ? ' · 급여계산 대상' : ''}
-        </dd>
-        <dt>입사일</dt>
-        <dd>{summary.hireDate ?? '아직이에요'}</dd>
-        <dt>실입사일</dt>
-        <dd>{summary.originalHireDate ?? '아직이에요'}</dd>
-        <dt>재직상태</dt>
-        <dd>
-          <StatusText
-            label={summary.employmentStatusLabel ?? STATUS_LABEL[summary.employmentStatus]}
-            tone={summary.employmentStatus === 'RESIGNED' ? 'error' : 'neutral'}
-          />
-          {summary.resignDate ? ` · ${summary.resignDate}` : ''}
-        </dd>
-        <dt>주민등록번호</dt>
-        <dd>
-          {summary.residentNoRegistered ? (
-            '등록됨'
-          ) : (
-            <StatusText label="등록되지 않았어요" tone="error" />
-          )}
-        </dd>
-        <dt>연락처</dt>
-        <dd>{detail.phone ?? '아직이에요'}</dd>
-        <dt>이메일</dt>
-        <dd>{detail.email ?? '아직이에요'}</dd>
-        <dt>계좌</dt>
-        <dd>
-          {detail.bankAccount?.bankAccount
-            ? `${detail.bankAccount.bankName ?? ''} ${detail.bankAccount.bankAccount}`.trim()
-            : '아직이에요'}
-        </dd>
-      </dl>
-
-      <div className="detail-actions">
-        <Button label="재직상태 바꾸기" onClick={() => setStatusDialog(true)} />
-        <Button
-          label={summary.employeeNo ? '사번 다시 부여하기' : '사번 부여하기'}
-          onClick={() => setNoDialog(true)}
-        />
+    <section className="page-blocks">
+      <div className="page-head">
+        <div className="page-head-text">
+          <Link to="/employees" className="back-link">
+            직원 목록으로
+          </Link>
+          <h1 className="page-title">{summary.name}</h1>
+          <p className="page-lead">
+            계좌는 서버가 마스킹한 값을 그대로 보여줘요. 여기서 가리거나 풀지 않아요.
+          </p>
+        </div>
       </div>
 
-      <p className="muted">
-        인적사항 수정은 아직 못 만들어요. 서버가 부분 수정을 지원해야 주민등록번호가 지워지지
-        않아요.
-      </p>
+      <div className="panel">
+        <div className="panel-body">
+          <DetailList
+            items={[
+              { label: '사번', value: summary.employeeNo ?? '아직 없어요' },
+              { label: '법인', value: summary.corporation ?? '아직이에요' },
+              { label: '부서', value: summary.departmentName ?? '아직이에요' },
+              {
+                label: '직무',
+                value: `${summary.jobName ?? '아직이에요'}${
+                  summary.payrollTarget ? ' · 급여계산 대상' : ''
+                }`,
+              },
+              { label: '입사일', value: summary.hireDate ?? '아직이에요' },
+              { label: '실입사일', value: summary.originalHireDate ?? '아직이에요' },
+              {
+                label: '재직상태',
+                value: (
+                  <>
+                    <StatusText
+                      label={summary.employmentStatusLabel ?? STATUS_LABEL[summary.employmentStatus]}
+                      tone={summary.employmentStatus === 'RESIGNED' ? 'error' : 'neutral'}
+                    />
+                    {summary.resignDate ? ` · ${summary.resignDate}` : ''}
+                  </>
+                ),
+              },
+              {
+                label: '주민등록번호',
+                value: summary.residentNoRegistered ? (
+                  '등록됨'
+                ) : (
+                  <StatusText label="등록되지 않았어요" tone="error" />
+                ),
+              },
+              { label: '연락처', value: detail.phone ?? '아직이에요' },
+              { label: '이메일', value: detail.email ?? '아직이에요' },
+              {
+                label: '계좌',
+                value: detail.bankAccount?.bankAccount
+                  ? `${detail.bankAccount.bankName ?? ''} ${detail.bankAccount.bankAccount}`.trim()
+                  : '아직이에요',
+              },
+            ]}
+          />
+        </div>
+
+        <div className="panel-actions">
+          <p className="panel-note">
+            인적사항 수정은 아직 못 만들어요. 서버가 부분 수정을 지원해야 주민등록번호가
+            지워지지 않아요.
+          </p>
+          <div className="panel-buttons">
+            <Button label="재직상태 바꾸기" onClick={() => setStatusDialog(true)} />
+            <Button
+              label={summary.employeeNo ? '사번 다시 부여하기' : '사번 부여하기'}
+              onClick={() => setNoDialog(true)}
+            />
+          </div>
+        </div>
+      </div>
 
       <h2 className="section-title">재직상태 이력</h2>
       <Table

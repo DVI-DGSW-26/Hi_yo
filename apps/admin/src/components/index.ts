@@ -5,4 +5,5 @@ export { Field, FieldGrid, Select } from './Field';
 export { Dialog } from './Dialog';
 export { Pager } from './Pager';
 export { Summary } from './Summary';
+export { DetailList } from './DetailList';
 export { StatusText } from './StatusText';
