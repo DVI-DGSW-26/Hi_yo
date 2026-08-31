@@ -1,16 +1,14 @@
-/*
- * 화면 뼈대와 도구줄은 index.css 의 .page-* 와 Table 의 .table-toolbar 가 잡는다.
- * 여기에는 이 화면에만 있는 것만 둔다 (DESIGN_ADMIN.md 11장).
- */
-
 .pager {
   display: flex;
   align-items: center;
   gap: var(--space-row-gap);
+  margin-top: var(--space-row-gap);
 }
 
 .pager-text {
   font-size: var(--font-size-label);
   line-height: var(--line-height-label);
   color: var(--color-text-weak);
+  /* 쪽을 넘겨도 숫자 폭이 흔들리지 않는다. */
+  font-variant-numeric: tabular-nums;
 }

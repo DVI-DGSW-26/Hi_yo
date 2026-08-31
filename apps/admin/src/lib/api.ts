@@ -21,3 +21,4 @@ export function authHeaders(): Record<string, string> {
 }
 
 export type { PageResponse, PageParams } from '@hr/api';
+export { MAX_PAGE_SIZE } from '@hr/api';

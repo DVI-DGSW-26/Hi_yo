@@ -34,3 +34,12 @@ export function apiUrl(path: string): string {
 }
 
 export type { PageResponse, PageParams } from '@hr/api';
+export { MAX_PAGE_SIZE } from '@hr/api';
+
+/**
+ * 목록 한 쪽의 크기. 폰에서 한 번에 읽을 만한 양이다.
+ *
+ * 서버 상한(`MAX_PAGE_SIZE` 100)보다 훨씬 작게 둔다. 목록은 `더 보기`로 이어 붙이므로
+ * 한 번에 많이 받을 이유가 없고, 첫 화면이 빨리 뜨는 편이 낫다.
+ */
+export const LIST_PAGE_SIZE = 20;
