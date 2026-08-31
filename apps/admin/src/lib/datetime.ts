@@ -43,6 +43,65 @@ export function monthRange(isoDate: string): { from: string; to: string } {
   return { from: `${prefix}-01`, to: `${prefix}-${String(lastDay).padStart(2, '0')}` };
 }
 
+/**
+ * 이번 달 (`yyyy-MM`), **KST 기준**. 달력 화면이 처음 여는 달이다.
+ */
+export function currentMonth(): string {
+  return todayInKst().slice(0, 7);
+}
+
+/**
+ * `yyyy-MM` 에서 달을 옮긴다. `addMonth('2026-01', -1)` → `2025-12`.
+ *
+ * `Date.UTC` 로 센다 — 기기 타임존을 타면 월말·월초에 한 달이 밀린다.
+ * 날짜를 1일로 고정해 계산하므로 31일이 있는 달에서 하루가 새지 않는다.
+ */
+export function addMonth(month: string, delta: number): string {
+  const [year, monthNo] = month.split('-').map(Number);
+  if (year === undefined || monthNo === undefined) return month;
+
+  const moved = new Date(Date.UTC(year, monthNo - 1 + delta, 1));
+  const movedMonth = String(moved.getUTCMonth() + 1).padStart(2, '0');
+  return `${moved.getUTCFullYear()}-${movedMonth}`;
+}
+
+/** `2026-09` → `2026년 9월` */
+export function monthTitle(month: string): string {
+  const [year, monthNo] = month.split('-').map(Number);
+  if (year === undefined || monthNo === undefined) return month;
+  return `${year}년 ${monthNo}월`;
+}
+
+/**
+ * 달력 격자에 깔 날짜들. **일요일로 시작하는 주 단위**로 앞뒤를 채운다.
+ *
+ * 그 달을 덮는 데 필요한 만큼만 준다 (4~6주). 항상 6주로 고정하면 5주짜리 달에
+ * 빈 줄이 하나 남는다.
+ *
+ * 앞뒤로 붙는 다른 달 날짜도 같이 온다 — 격자를 채우려면 필요하다. 그 날들을
+ * 어떻게 그릴지는 화면이 정한다.
+ */
+export function monthGridDates(month: string): string[] {
+  const [year, monthNo] = month.split('-').map(Number);
+  if (year === undefined || monthNo === undefined) return [];
+
+  const first = new Date(Date.UTC(year, monthNo - 1, 1));
+  const lastDay = new Date(Date.UTC(year, monthNo, 0)).getUTCDate();
+  const leading = first.getUTCDay();
+  const weeks = Math.ceil((leading + lastDay) / 7);
+
+  return Array.from({ length: weeks * 7 }, (_, index) => {
+    const date = new Date(Date.UTC(year, monthNo - 1, 1 - leading + index));
+    const isoMonth = String(date.getUTCMonth() + 1).padStart(2, '0');
+    const isoDay = String(date.getUTCDate()).padStart(2, '0');
+    return `${date.getUTCFullYear()}-${isoMonth}-${isoDay}`;
+  });
+}
+
+/** 그 날짜가 `yyyy-MM` 달에 속하는가. 격자 앞뒤에 붙은 다른 달 날짜를 가른다 */
+export function isInMonth(isoDate: string, month: string): boolean {
+  return isoDate.startsWith(`${month}-`);
+}
 const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토'];
 
 /**
