@@ -93,6 +93,37 @@ export function formatKstDateTime(value: string): string {
   return `${get('month')}.${get('day')} ${get('hour')}:${get('minute')}`;
 }
 
+/**
+ * 서버 일시에서 **시각만** 뽑아 `09:02`로. 하루를 보는 표에서 날짜는 이미 제목에 있다.
+ *
+ * **자정을 넘긴 퇴근에 `+1`을 붙인다.** 야간근무는 출근일 다음 날 퇴근하고, 서버는
+ * 그것을 `checkOutAt`의 **날짜**로 표현한다 (`AttendanceCorrectionRequest` 스키마 설명).
+ * `01:30`만 적으면 새벽에 출근한 것으로 읽힌다.
+ *
+ * `baseDate`는 그 줄의 근무일(`yyyy-MM-dd`)이다. **며칠이 밀렸는지는 세지 않는다** —
+ * 하루를 넘는 퇴근이 무엇인지가 문서에 없다.
+ */
+export function formatKstClock(value: string, baseDate?: string): string {
+  const date = new Date(hasTimeZone(value) ? value : `${value}+09:00`);
+  if (Number.isNaN(date.getTime())) return '—';
+
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: KST,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  }).formatToParts(date);
+
+  const get = (type: string) => parts.find((part) => part.type === type)?.value ?? '';
+  const clock = `${get('hour')}:${get('minute')}`;
+  const onDate = `${get('year')}-${get('month')}-${get('day')}`;
+
+  return baseDate !== undefined && onDate !== baseDate ? `${clock} +1` : clock;
+}
+
 /** 끝에 `Z` 또는 `+09:00` 같은 오프셋이 붙어 있는지. 날짜부의 `-`와 섞이지 않게 뒤에서 본다 */
 function hasTimeZone(value: string): boolean {
   return /(?:Z|[+-]\d{2}:?\d{2})$/.test(value);
