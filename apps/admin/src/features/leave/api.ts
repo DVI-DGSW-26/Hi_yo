@@ -3,7 +3,7 @@ import { api } from '@/lib/api';
 import { currentYear } from '@/lib/datetime';
 
 /**
- * 연차 — 관리팀 (Swagger `6. 연차`). 명세는 `docs/API_연차.md` 에 있다.
+ * 연차 — 관리팀 (A-301 · A-303. Swagger `6. 연차`). 명세는 `docs/API_연차.md` 에 있다.
  *
  * **잔여는 서버가 계산한다.** `granted - used - pending` 을 화면에서 하지 않는다
  * (명세서 7.2, `CLAUDE.md` 3장). 대장은 서버가 준 네 숫자를 그대로 표기한다.
@@ -43,6 +43,7 @@ export interface LeaveLedgerRow {
 export const leaveKeys = {
   all: ['leave'] as const,
   ledger: (year: number) => [...leaveKeys.all, 'ledger', year] as const,
+  calendar: (from: string, to: string) => [...leaveKeys.all, 'calendar', from, to] as const,
 };
 
 /**
@@ -73,4 +74,49 @@ export function useLeaveLedger(year: number) {
 export function selectableLedgerYears(): number[] {
   const thisYear = currentYear();
   return [thisYear, thisYear - 1, thisYear - 2];
+}
+
+/**
+ * 달력 한 칸에 들어가는 한 건 (A-301).
+ *
+ * **표시명은 `typeName`이다.** 코드로 이름을 만들지 않는다 — 종류가 늘거나 이름이
+ * 바뀌면 서버만 고치면 된다 (`docs/API_신청결재.md` 5장).
+ *
+ * `days`는 서버가 계산한 차감 일수다. 반차면 `0.5`로 온다. **화면에서 세지 않는다.**
+ */
+export interface CalendarEntry {
+  /** `yyyy-MM-dd` */
+  date: string;
+  employeeId: number;
+  employeeName: string | null;
+  typeCode: string;
+  /** 화면에 그대로 쓴다 */
+  typeName: string | null;
+  days: number;
+  /** 신청서로 이어진다 */
+  requestId: number;
+}
+
+/**
+ * 전 직원 연차 달력. `from`·`to`가 **둘 다 필수**다 — 기본값이 없다.
+ *
+ * 화면이 보고 있는 범위를 그대로 넣는다. 달력 격자는 앞뒤 달 날짜까지 덮으므로
+ * 그 달의 1일~말일이 아니라 **격자의 처음과 끝**을 넘긴다. 그러지 않으면 첫 줄과
+ * 마지막 줄에 걸친 날이 비어 보인다.
+ *
+ * **`apps/mobile`에 넣지 않는다.** 본인용 화면은 `/leave/calendar`로 자기 것만 본다
+ * (`docs/API_연차.md` 6장).
+ */
+export function useLeaveCalendarAll(from: string, to: string) {
+  return useQuery({
+    queryKey: leaveKeys.calendar(from, to),
+    enabled: from !== '' && to !== '',
+    queryFn: async ({ signal }) => {
+      const { data } = await api.get<CalendarEntry[]>('/leave/calendar/all', {
+        params: { from, to },
+        signal,
+      });
+      return data;
+    },
+  });
 }

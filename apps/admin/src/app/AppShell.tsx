@@ -23,6 +23,7 @@ const MENU = [
   {
     module: '연차',
     items: [
+      { to: '/leave-calendar', label: '연차 달력' },
       { to: '/approvals', label: '연차 결재' },
       { to: '/leave-ledger', label: '연차관리대장' },
       { to: '/company-leaves', label: '단체연차' },

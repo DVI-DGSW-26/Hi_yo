@@ -1,0 +1,160 @@
+/*
+ * 달력 (DESIGN_ADMIN.md 3장·11장).
+ *
+ * 표와 같은 상자에 담는다 — border 1px + radius chip. 그림자를 쓰지 않는다.
+ */
+
+.calendar-box {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-chip);
+  overflow: hidden;
+}
+
+/* 도구줄은 표와 같은 자리·같은 모양이다. 무엇을 보고 있는 달인지가 격자에 붙어 있어야 한다. */
+.calendar-toolbar {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--space-row-gap);
+  flex-wrap: wrap;
+  padding: var(--space-row-gap);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.calendar-toolbar > .field {
+  margin-bottom: 0;
+}
+
+/* 달 이름과 앞뒤 이동. 도구줄 왼쪽 끝에 붙는다. */
+.calendar-month {
+  display: flex;
+  align-items: center;
+  gap: var(--space-tight);
+}
+
+.calendar-month-title {
+  min-width: var(--space-side-nav-width);
+  text-align: center;
+  font-size: var(--font-size-section-title);
+  line-height: var(--line-height-section-title);
+  font-weight: var(--font-weight-section-title);
+  color: var(--color-text-strong);
+}
+
+/*
+ * 로딩·오류를 격자 위에 한 줄로 둔다. 격자를 지우지 않는다 — 달력은 서버 응답이
+ * 없어도 그 달의 모양 자체가 정보다 (DESIGN_ADMIN.md 3장의 표와 같은 원칙).
+ */
+.calendar-message {
+  padding: var(--space-row-gap);
+  border-bottom: 1px solid var(--color-border);
+  font-size: var(--font-size-body-small);
+  line-height: var(--line-height-body-small);
+  color: var(--color-text-weak);
+}
+
+.calendar-message.danger {
+  color: var(--color-danger);
+}
+
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+}
+
+.calendar-weekday {
+  padding: var(--space-tight) var(--space-tight);
+  border-bottom: 1px solid var(--color-border-strong);
+  font-size: var(--font-size-label);
+  line-height: var(--line-height-label);
+  color: var(--color-text-weak);
+}
+
+/*
+ * 격자에는 세로선이 필요하다. 표에서 세로선을 긋지 않는 규칙(DESIGN_ADMIN.md 3장)은
+ * 열이 스무 개까지 늘어나는 표 이야기다 — 달력은 일곱 칸이 고정이고, 어느 요일인지가
+ * 칸 경계로 읽힌다. 세로선이 없으면 이름들이 어느 날 것인지 흐려진다.
+ */
+.calendar-cell {
+  min-height: calc(var(--space-table-row-height) * 2);
+  padding: var(--space-tight);
+  border-bottom: 1px solid var(--color-border);
+  border-right: 1px solid var(--color-border);
+}
+
+/* 오른쪽 끝 칸과 마지막 줄의 선은 상자 테두리와 겹친다. */
+.calendar-grid > .calendar-cell:nth-child(7n) {
+  border-right: 0;
+}
+
+.calendar-grid > .calendar-cell:nth-last-child(-n + 7) {
+  border-bottom: 0;
+}
+
+.calendar-cell.is-outside {
+  background: var(--color-divider);
+}
+
+.calendar-day {
+  font-size: var(--font-size-label);
+  line-height: var(--line-height-label);
+  color: var(--color-text-body);
+  font-variant-numeric: tabular-nums;
+}
+
+/* 일요일은 옅게. 색으로 의미를 만들지 않고 주의 시작만 알린다. */
+.calendar-cell.is-sunday .calendar-day {
+  color: var(--color-text-weak);
+}
+
+.calendar-today .calendar-day {
+  font-weight: 500;
+  color: var(--color-text-strong);
+}
+
+/* 날짜 옆 보조 표시 — 공휴일 이름처럼 그 날이 무슨 날인지. */
+.calendar-note {
+  margin-left: var(--space-tight);
+  font-size: var(--font-size-caption);
+  line-height: var(--line-height-caption);
+  color: var(--color-text-weak);
+}
+
+.calendar-entries {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: var(--space-tight);
+}
+
+/*
+ * 한 줄에 한 사람. 칸을 넘치면 말줄임하고 `title`에 전체를 둔다 —
+ * 이름이 잘려도 마우스를 올리면 읽힌다.
+ */
+.calendar-entry {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-tight);
+  min-width: 0;
+  font-size: var(--font-size-label);
+  line-height: var(--line-height-label);
+  color: var(--color-text-strong);
+}
+
+.calendar-entry-name {
+  flex: 0 1 auto;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.calendar-entry-kind {
+  flex: 0 1 auto;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--font-size-caption);
+  line-height: var(--line-height-caption);
+  color: var(--color-text-weak);
+}

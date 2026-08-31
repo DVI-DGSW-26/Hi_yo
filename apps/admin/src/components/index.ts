@@ -1,4 +1,5 @@
 export { Button, RowLink } from './Button';
+export { Calendar } from './Calendar';
 export { Table } from './Table';
 export type { Column } from './Table';
 export { Field, FieldGrid, Select } from './Field';
