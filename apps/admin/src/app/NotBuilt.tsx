@@ -11,12 +11,16 @@ interface Props {
 
 export function NotBuilt({ screenId, title, blockedBy }: Props) {
   return (
-    <section>
-      <h1 className="page-title">
-        {screenId} {title}
-      </h1>
-      <p className="muted">아직 만들지 않았어요.</p>
-      {blockedBy && <p className="muted">{blockedBy}</p>}
+    <section className="page-blocks">
+      <div className="page-head">
+        <div className="page-head-text">
+          <h1 className="page-title">{title}</h1>
+          <p className="page-lead">
+            {screenId} · 아직 만들지 않았어요.
+            {blockedBy ? ` ${blockedBy}` : ''}
+          </p>
+        </div>
+      </div>
     </section>
   );
 }

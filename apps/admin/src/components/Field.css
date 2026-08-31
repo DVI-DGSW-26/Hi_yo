@@ -56,5 +56,10 @@
 .field-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 320px));
-  gap: 0 var(--space-section-y);
+  gap: var(--space-row-gap) var(--space-section-y);
+}
+
+/* 줄 간격은 그리드의 gap 이 잡는다. 마지막 줄 뒤에 여백이 남지 않는다. */
+.field-grid > .field {
+  margin-bottom: 0;
 }

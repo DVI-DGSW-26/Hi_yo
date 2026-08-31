@@ -1,4 +1,5 @@
 import { Link, useParams } from 'react-router';
+import { DetailList } from '@/components';
 import { DutyMembersSection } from '@/features/duty/DutyMembersSection';
 import { DutyScheduleSection } from '@/features/duty/DutyScheduleSection';
 import { useDutyMembers, useDutyRosters } from '@/features/duty/api';
@@ -28,7 +29,7 @@ export function DutyRosterDetail() {
 
   if (!roster) {
     return (
-      <section>
+      <section className="page-blocks">
         <Link to="/duty" className="back-link">
           당직 명단으로
         </Link>
@@ -38,32 +39,44 @@ export function DutyRosterDetail() {
   }
 
   return (
-    <section>
-      <Link to="/duty" className="back-link">
-        당직 명단으로
-      </Link>
+    <section className="page-blocks">
+      <div className="page-head">
+        <div className="page-head-text">
+          <Link to="/duty" className="back-link">
+            당직 명단으로
+          </Link>
+          <h1 className="page-title">{roster.name}</h1>
+          <p className="page-lead">
+            순번은 관리팀이 정해요. 여기 있는 순서대로 자동 편성이 돌아요.
+          </p>
+        </div>
+      </div>
 
-      <h1 className="page-title">{roster.name}</h1>
-
-      <dl className="rows">
-        <dt>순환</dt>
-        <dd>{rotationCycleText(roster.rotationCycle)}</dd>
-        <dt>자동 편성</dt>
-        <dd>{roster.autoAssignable ? '순번대로 돌릴 수 있어요' : '직접 넣어야 해요'}</dd>
-        <dt>근무 시간</dt>
-        <dd>{timeRangeText(roster.workStart, roster.workEnd)}</dd>
-        <dt>슬롯</dt>
-        <dd>
-          {roster.useSlot
-            ? roster.slots
-                .map(
-                  (slot) =>
-                    `${slotText(slot.code)} ${timeRangeText(slot.startTime, slot.endTime)}`,
-                )
-                .join(' · ')
-            : '하루에 한 건이에요'}
-        </dd>
-      </dl>
+      <div className="panel">
+        <div className="panel-body">
+          <DetailList
+            items={[
+              { label: '순환', value: rotationCycleText(roster.rotationCycle) },
+              {
+                label: '자동 편성',
+                value: roster.autoAssignable ? '순번대로 돌릴 수 있어요' : '직접 넣어야 해요',
+              },
+              { label: '근무 시간', value: timeRangeText(roster.workStart, roster.workEnd) },
+              {
+                label: '슬롯',
+                value: roster.useSlot
+                  ? roster.slots
+                      .map(
+                        (slot) =>
+                          `${slotText(slot.code)} ${timeRangeText(slot.startTime, slot.endTime)}`,
+                      )
+                      .join(' · ')
+                  : '하루에 한 건이에요',
+              },
+            ]}
+          />
+        </div>
+      </div>
 
       <DutyMembersSection rosterId={roster.id} />
 

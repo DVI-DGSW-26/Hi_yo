@@ -4,9 +4,8 @@
  * 색·여백·글자 크기는 전부 CSS 변수로 온다 (src/lib/applyTokens.ts).
  * 여기에 hex 값이나 여백 숫자를 직접 적지 않는다.
  *
- * TODO: 관리팀 화면(테이블 6컬럼 이상)의 디자인 규칙은 아직 없다.
- * DESIGN_SYSTEM.md 의 컴포넌트는 전부 React Native 기준이다.
- * 규칙이 정해지기 전까지 여기에 화면용 스타일을 늘리지 않는다.
+ * 글자 위계·여백·화면 뼈대는 DESIGN_ADMIN.md 11장에 확정돼 있다.
+ * 여기에 크기나 여백 숫자를 새로 적지 않는다 — 토큰을 늘리고 그것을 참조한다.
  */
 
 @font-face {
@@ -118,6 +117,9 @@ a {
 
 /* 화면의 주 동작. 제목 줄 오른쪽 끝에 붙는다. */
 .page-head-action {
+  display: flex;
+  align-items: center;
+  gap: var(--space-tight);
   margin-left: auto;
   flex-shrink: 0;
 }
@@ -134,29 +136,75 @@ a {
   color: var(--color-danger);
 }
 
-.rows {
-  display: grid;
-  grid-template-columns: auto 1fr;
-  gap: var(--space-row-gap);
-  margin: 0 0 var(--space-section-y);
+/*
+ * 폼과 상세를 담는 상자. 표의 .table-box 와 같은 모양이다 (DESIGN_ADMIN.md 11장).
+ * 그림자가 아니라 테두리로 띄운다.
+ */
+.panel {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-chip);
 }
 
-.rows dt {
-  font-size: var(--font-size-body-small);
-  line-height: var(--line-height-body-small);
+/*
+ * 폼 상자는 입력칸 폭만큼만 쓴다. 표와 달리 가로로 늘릴 이유가 없다 —
+ * 320px 칸 두 개 옆에 빈 공간이 화면 폭만큼 남으면 어디를 봐야 할지 흐려진다.
+ * 상세(라벨-값)는 칸이 폭에 맞춰 늘어나므로 이 표시를 붙이지 않는다.
+ */
+.panel.is-form {
+  align-self: flex-start;
+}
+
+.panel-body {
+  padding: var(--space-block-gap);
+}
+
+/* 상자 안이 두 부분으로 나뉠 때. 읽기전용 값처럼 성격이 다른 묶음을 가른다. */
+.panel-body + .panel-body {
+  border-top: 1px solid var(--color-border);
+}
+
+/*
+ * 상자 맨 아래 실행 줄. 오른쪽이 주 동작이다 (Dialog 와 같은 순서).
+ * 왼쪽에는 그 동작을 누르기 전에 알아야 할 것만 둔다.
+ */
+.panel-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-row-gap);
+  flex-wrap: wrap;
+  padding: var(--space-row-gap) var(--space-block-gap);
+  border-top: 1px solid var(--color-border);
+}
+
+.panel-actions .panel-note {
+  margin: 0;
+  flex: 1 1 auto;
+  max-width: var(--space-read-width);
+  font-size: var(--font-size-label);
+  line-height: var(--line-height-label);
   color: var(--color-text-weak);
 }
 
-.rows dd {
-  margin: 0;
-  color: var(--color-text-strong);
+.panel-buttons {
+  display: flex;
+  align-items: center;
+  gap: var(--space-tight);
+  margin-left: auto;
+}
+
+/* 실패했을 때는 안내문 자리에 서버가 준 문구가 들어간다. 버튼 옆이라 눈에 걸린다. */
+.panel-actions .panel-note.is-error {
+  color: var(--color-danger);
 }
 
 /* 화면 공통 — 여러 화면이 같이 쓴다. 화면별 CSS 에 다시 적지 않는다. */
 
+/* 여백은 .page-blocks 의 gap 이 잡는다. 여기서 margin 을 주지 않는다. */
 .back-link {
   display: inline-block;
-  margin-bottom: var(--space-tight);
+  align-self: flex-start;
   font-size: var(--font-size-label);
   line-height: var(--line-height-label);
   color: var(--color-text-body);
@@ -164,7 +212,7 @@ a {
 }
 
 .section-title {
-  margin: var(--space-section-y) 0 var(--space-tight);
+  margin: 0;
   font-size: var(--font-size-section-title);
   line-height: var(--line-height-section-title);
   font-weight: var(--font-weight-section-title);
@@ -174,7 +222,6 @@ a {
 .detail-actions {
   display: flex;
   gap: var(--space-tight);
-  margin: var(--space-section-title-gap) 0 var(--space-tight);
   flex-wrap: wrap;
 }
 

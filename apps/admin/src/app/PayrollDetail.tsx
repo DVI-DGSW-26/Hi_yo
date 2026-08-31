@@ -1,7 +1,16 @@
 import { useState } from 'react';
 import { Link, useParams } from 'react-router';
 import { formatAmount, formatMinutes, formatTargetYm } from '@hr/format';
-import { Button, Dialog, Field, Select, StatusText, Table, type Column } from '@/components';
+import {
+  Button,
+  DetailList,
+  Dialog,
+  Field,
+  Select,
+  StatusText,
+  Table,
+  type Column,
+} from '@/components';
 import {
   ITEM_CODES,
   useAdjust,
@@ -84,53 +93,69 @@ export function PayrollDetail() {
   ];
 
   return (
-    <section>
-      <Link to="/payroll" className="back-link">
-        급여대장으로
-      </Link>
-
-      <h1 className="page-title">
-        {data.employeeName ?? `직원 ${data.employeeId}`} · {formatTargetYm(data.targetYm)}
-      </h1>
-
-      <dl className="rows">
-        <dt>부서</dt>
-        <dd>{data.departmentName ?? '아직이에요'}</dd>
-        <dt>지급총액</dt>
-        <dd>{formatAmount(data.totalPayment)}</dd>
-        <dt>공제총액</dt>
-        <dd>{formatAmount(data.totalDeduction)}</dd>
-        <dt>실지급액</dt>
-        <dd className="final-amount">{formatAmount(data.finalAmount)}</dd>
-        <dt>상태</dt>
-        <dd>
-          {data.confirmed ? <StatusText label="확정" tone="done" /> : <StatusText label="확정 전" />}
-        </dd>
-      </dl>
-
-      {data.modified && (
-        <p className="muted">
-          관리팀이 금액을 고쳤어요. 자동 계산 금액은 {formatAmount(data.calculatedAmount)}이었어요.
-          {data.modifyReason && ` 사유: ${data.modifyReason}`}
-        </p>
-      )}
-
-      <div className="detail-actions">
-        <Button
-          label="금액 고치기"
-          disabledReason={closedReason}
-          onClick={() => setAdjusting(true)}
-        />
-        <Button
-          label={data.confirmed ? '확정 해제하기' : '확정하기'}
-          variant={data.confirmed ? 'secondary' : 'primary'}
-          loading={confirm.isPending}
-          onClick={() =>
-            confirm.mutate({ payrollId: data.id, confirmed: !data.confirmed })
-          }
-        />
+    <section className="page-blocks">
+      <div className="page-head">
+        <div className="page-head-text">
+          <Link to="/payroll" className="back-link">
+            급여대장으로
+          </Link>
+          <h1 className="page-title">
+            {data.employeeName ?? `직원 ${data.employeeId}`} · {formatTargetYm(data.targetYm)}
+          </h1>
+        </div>
       </div>
-      {confirm.error && <p className="danger">{confirm.error.message}</p>}
+
+      <div className="panel">
+        <div className="panel-body">
+          <DetailList
+            items={[
+              { label: '부서', value: data.departmentName ?? '아직이에요' },
+              { label: '지급총액', value: formatAmount(data.totalPayment) },
+              { label: '공제총액', value: formatAmount(data.totalDeduction) },
+              {
+                label: '실지급액',
+                value: <span className="final-amount">{formatAmount(data.finalAmount)}</span>,
+              },
+              {
+                label: '상태',
+                value: data.confirmed ? (
+                  <StatusText label="확정" tone="done" />
+                ) : (
+                  <StatusText label="확정 전" />
+                ),
+              },
+              ...(data.modified
+                ? [
+                    {
+                      label: '금액 수정',
+                      wide: true,
+                      value: `관리팀이 금액을 고쳤어요. 자동 계산 금액은 ${formatAmount(
+                        data.calculatedAmount,
+                      )}이었어요.${data.modifyReason ? ` 사유: ${data.modifyReason}` : ''}`,
+                    },
+                  ]
+                : []),
+            ]}
+          />
+        </div>
+
+        <div className="panel-actions">
+          {confirm.error && <p className="panel-note is-error">{confirm.error.message}</p>}
+          <div className="panel-buttons">
+            <Button
+              label="금액 고치기"
+              disabledReason={closedReason}
+              onClick={() => setAdjusting(true)}
+            />
+            <Button
+              label={data.confirmed ? '확정 해제하기' : '확정하기'}
+              variant={data.confirmed ? 'secondary' : 'primary'}
+              loading={confirm.isPending}
+              onClick={() => confirm.mutate({ payrollId: data.id, confirmed: !data.confirmed })}
+            />
+          </div>
+        </div>
+      </div>
 
       <h2 className="section-title">명세서</h2>
       <Table
