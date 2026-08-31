@@ -1,5 +1,5 @@
 import { createApiClient } from '@hr/api';
-import { DEV_AUTH_HEADER, devAuthValue } from './devAuth';
+import { getToken } from './auth';
 
 // 앱의 유일한 HTTP 클라이언트. fetch를 직접 쓰지 않는다.
 // 오류 정규화와 인터셉터는 @hr/api 가 한다. 관리팀 화면과 같은 규칙을 쓴다.
@@ -12,9 +12,8 @@ if (__DEV__ && !baseURL) {
   );
 }
 
-// TODO: 인증 방식(토큰 형태, 갱신 규칙)이 확정되면 authHeaders 를 그것으로 바꾼다.
-// 토큰은 expo-secure-store에만 저장한다. AsyncStorage를 쓰지 않는다.
-// 지금 붙는 것은 개발용 스텁 헤더뿐이다 (devAuth.ts). 릴리스 빌드에는 붙지 않는다.
+// 인증은 DVI 통합 로그인이다 (lib/auth.ts). 토큰은 expo-secure-store 에만 둔다 —
+// AsyncStorage 를 쓰지 않는다 (CLAUDE.md 2장).
 export const api = createApiClient({ baseURL, authHeaders });
 
 /**
@@ -24,8 +23,8 @@ export const api = createApiClient({ baseURL, authHeaders });
  * 방식이 바뀔 때 한쪽이 남는다. 붙일 헤더는 이 함수 하나에서만 만든다.
  */
 export function authHeaders(): Record<string, string> {
-  const devAuth = devAuthValue();
-  return devAuth ? { [DEV_AUTH_HEADER]: devAuth } : {};
+  const token = getToken();
+  return token ? { Authorization: `Bearer ${token}` } : {};
 }
 
 /** 파일 내려받기처럼 절대 주소가 필요할 때 쓴다 */
