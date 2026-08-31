@@ -25,3 +25,22 @@ export function alertLevelText(level: number): string {
 export function alertLevelTone(level: number): 'done' | 'error' | 'neutral' {
   return level >= 2 ? 'error' : 'neutral';
 }
+
+/**
+ * 판정이 끝났는가 (A-501).
+ *
+ * **그린을 쓰지 않는다.** `DESIGN_ADMIN.md` 7장의 `done`은 확정·승인·마감에 쓰는 색이고
+ * 판정 확정도 거기 들지만, 이 표는 서른 줄 넘게 늘어서고 정상인 줄이 대부분이다.
+ * 정상이 초록으로 깔리면 손대야 할 줄이 그 사이에 묻힌다 — 52시간 현황에서 `여유 있어요`를
+ * 무채색으로 둔 것과 같은 판단이다.
+ *
+ * 판정 전은 빨강이다. 7장이 `error`의 예로 **근태 누락**을 직접 들고 있고, 실제로
+ * 급여 계산에서 그 사람이 빠진다.
+ */
+export function judgedText(confirmed: boolean): string {
+  return confirmed ? '판정 완료' : '판정 전';
+}
+
+export function judgedTone(confirmed: boolean): 'done' | 'error' | 'neutral' {
+  return confirmed ? 'neutral' : 'error';
+}

@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 
 /**
- * 근태 (A-503). Swagger `5. 근태` 확인 2026-08-28.
+ * 근태 (A-501 · A-503). Swagger `5. 근태` 확인 2026-08-28.
  *
  * **관리팀 전용이다.** 일반 직원이 부르면 403이다 (실호출 확인).
  *
@@ -41,6 +41,7 @@ export const attendanceKeys = {
   all: ['attendance'] as const,
   weekly: (date: string, onlyAlerted: boolean) =>
     [...attendanceKeys.all, 'weekly', date, onlyAlerted] as const,
+  daily: (date: string) => [...attendanceKeys.all, 'daily', date] as const,
 };
 
 /**
@@ -56,6 +57,70 @@ export function useWeeklyWork(date: string, onlyAlerted: boolean) {
     queryFn: async ({ signal }) => {
       const { data } = await api.get<WeeklyWorkSummary[]>('/attendance/weekly', {
         params: { date, ...(onlyAlerted ? { onlyAlerted: true } : {}) },
+        signal,
+      });
+      return data;
+    },
+  });
+}
+
+
+/**
+ * 하루치 근태 한 줄 (A-501).
+ *
+ * **`checkInAt`·`checkOutAt` 은 보정이 반영된 값이다.** 원본이 궁금하면 보정 이력을
+ * 따로 조회한다 — 그 화면은 아직 없다.
+ *
+ * 시간은 전부 **분 단위 정수**로 온다. 스키마가 이유를 적고 있다 — "소수 시간으로
+ * 내려보내면 반올림 오차가 급여에 그대로 실립니다." 표기는 `formatMinutes` 를 거친다.
+ *
+ * `confirmed` 는 판정이 확정된 날이다. **급여 계산이 이 값을 본다** — 미확정 근태가
+ * 있는 직원은 급여에서 `skipped` 로 빠진다 (`docs/API_급여.md`).
+ *
+ * 자정을 넘긴 퇴근은 `checkOutAt` 의 **날짜**가 하루 뒤다. 시각만 떼어 적으면 새벽에
+ * 출근한 것으로 읽히므로 `formatKstClock` 에 근무일을 같이 넘긴다.
+ */
+export interface AttendanceDaily {
+  employeeId: number;
+  employeeName: string | null;
+  departmentName: string | null;
+  /** `yyyy-MM-dd`. 요청한 날짜와 같다 */
+  workDate: string;
+  dayOfWeek: string | null;
+  checkInAt: string | null;
+  checkOutAt: string | null;
+  /** 보정이 들어간 날 */
+  corrected: boolean;
+  /** 급여 산정 기준 */
+  payrollMinutes: number;
+  /** 법정 기준 */
+  statutoryMinutes: number;
+  basicMinutes: number;
+  overtimeMinutes: number;
+  nightMinutes: number;
+  holidayMinutes: number;
+  holidayOvertimeMinutes: number;
+  weeklyHolidayMinutes: number;
+  dutyMinutes: number;
+  lateMinutes: number;
+  earlyLeaveMinutes: number;
+  /** 판정이 확정된 날 */
+  confirmed: boolean;
+  judgedAt: string | null;
+}
+
+/**
+ * 그 날짜의 전 직원 근태. `date` 를 서버가 필수로 받는다.
+ *
+ * 페이지네이션이 없다 — 배열이 통째로 온다. 인원이 늘면 서버에 페이지를 요청한다.
+ */
+export function useDailyAttendance(date: string) {
+  return useQuery({
+    queryKey: attendanceKeys.daily(date),
+    enabled: date !== '',
+    queryFn: async ({ signal }) => {
+      const { data } = await api.get<AttendanceDaily[]>('/attendance/daily', {
+        params: { date },
         signal,
       });
       return data;
