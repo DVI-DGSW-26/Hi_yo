@@ -5,6 +5,7 @@ import { createBrowserRouter, RouterProvider } from 'react-router';
 import { ApiError } from '@hr/api';
 import { applyTokens } from '@/lib/applyTokens';
 import { AppShell } from '@/app/AppShell';
+import { AuthCallback } from '@/app/AuthCallback';
 import { Home } from '@/app/Home';
 import { NotBuilt } from '@/app/NotBuilt';
 import { PayrollPage } from '@/app/PayrollPage';
@@ -38,6 +39,8 @@ const queryClient = new QueryClient({
 });
 
 const router = createBrowserRouter([
+  // 로그인 콜백은 좌측 메뉴 밖에 둔다. 아직 누가 로그인했는지 모른다.
+  { path: '/auth/callback', element: <AuthCallback /> },
   {
     path: '/',
     element: <AppShell />,
