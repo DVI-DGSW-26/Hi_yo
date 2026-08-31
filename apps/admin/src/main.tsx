@@ -15,6 +15,7 @@ import { EmployeeDetail } from '@/app/EmployeeDetail';
 import { InsuranceRatesPage } from '@/app/InsuranceRatesPage';
 import { DutyRostersPage } from '@/app/DutyRostersPage';
 import { DutyRosterDetail } from '@/app/DutyRosterDetail';
+import { DailyAttendancePage } from '@/app/DailyAttendancePage';
 import { WeeklyHoursPage } from '@/app/WeeklyHoursPage';
 import { HolidaysPage } from '@/app/HolidaysPage';
 import { CompanyLeavePage } from '@/app/CompanyLeavePage';
@@ -60,6 +61,7 @@ const router = createBrowserRouter([
       { path: 'payroll/:payrollId', element: <PayrollDetail /> },
       { path: 'duty', element: <DutyRostersPage /> },
       { path: 'duty/:rosterId', element: <DutyRosterDetail /> },
+      { path: 'attendance', element: <DailyAttendancePage /> },
       { path: 'weekly-hours', element: <WeeklyHoursPage /> },
       { path: 'insurance-rates', element: <InsuranceRatesPage /> },
     ],
