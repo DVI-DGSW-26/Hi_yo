@@ -19,6 +19,7 @@ import { DailyAttendancePage } from '@/app/DailyAttendancePage';
 import { WeeklyHoursPage } from '@/app/WeeklyHoursPage';
 import { HolidaysPage } from '@/app/HolidaysPage';
 import { CompanyLeavePage } from '@/app/CompanyLeavePage';
+import { LeaveLedgerPage } from '@/app/LeaveLedgerPage';
 import { ApprovalsPage } from '@/app/ApprovalsPage';
 import { ApprovalDetail } from '@/app/ApprovalDetail';
 import './index.css';
@@ -54,6 +55,7 @@ const router = createBrowserRouter([
       { path: 'approvals', element: <ApprovalsPage /> },
       { path: 'approvals/:requestId', element: <ApprovalDetail /> },
       { path: 'company-leaves', element: <CompanyLeavePage /> },
+      { path: 'leave-ledger', element: <LeaveLedgerPage /> },
       { path: 'holidays', element: <HolidaysPage /> },
       { path: 'payroll', element: <PayrollPage /> },
       { path: 'payroll/:payrollId', element: <PayrollDetail /> },
