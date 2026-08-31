@@ -86,7 +86,7 @@ export function DutyScheduleSection({ roster, members }: Props) {
   ];
 
   return (
-    <>
+    <div className="page-blocks">
       <h2 className="section-title">당직표</h2>
 
       <div className="duty-toolbar">
@@ -148,7 +148,7 @@ export function DutyScheduleSection({ roster, members }: Props) {
         </p>
         {remove.error && <p className="danger">{remove.error.message}</p>}
       </Dialog>
-    </>
+    </div>
   );
 }
 

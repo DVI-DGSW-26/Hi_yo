@@ -48,7 +48,7 @@ export function DutyMembersSection({ rosterId }: { rosterId: number }) {
   ];
 
   return (
-    <>
+    <div className="page-blocks">
       <h2 className="section-title">대상자</h2>
 
       <div className="detail-actions">
@@ -98,6 +98,6 @@ export function DutyMembersSection({ rosterId }: { rosterId: number }) {
         </p>
         {remove.error && <p className="danger">{remove.error.message}</p>}
       </Dialog>
-    </>
+    </div>
   );
 }
