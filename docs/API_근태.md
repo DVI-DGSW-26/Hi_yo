@@ -188,6 +188,15 @@ POST /secom/ingest      원본을 버퍼에 쌓는다 (기계 전용)
 - `unconfirmedDays`가 `0`이 아니면 급여를 확정하면 안 된다. 화면이 이 값을 보여줘야 한다
 - 보정은 관리팀만 한다. **본인이 직접 입력하는 경로가 없다** (명세서 5장 예외 6번과 같다)
 
+**S-501 내 근태 현황을 만들었다** (`apps/mobile` `/attendance`, 2026-09-01).
+`GET /attendance/{employeeId}`(기간)와 `GET /attendance/{employeeId}/weekly`(주 목록)를 부른다.
+
+- **`/weekly`는 날짜를 받지 않고 주 목록을 배열로 준다.** 몇 주를 보여줄지 화면이 정하지
+  않고 받은 만큼 그린다
+- **합계는 `totals`를 그대로 쓴다.** `days`를 더하지 않는다
+- 52시간을 게이지로 그리지 않았다 — 서버가 비율을 주지 않아서, 앱이 나누면 산정 기준을
+  앱이 정하는 것이 된다
+
 **A-501 전 직원 근태 현황을 만들었다** (`apps/admin` `/attendance`, 2026-09-01).
 `GET /attendance/daily?date=` 하나만 부른다.
 
