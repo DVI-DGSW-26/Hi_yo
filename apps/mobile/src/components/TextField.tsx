@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { StyleSheet, Text, TextInput, View } from 'react-native';
+import { StyleSheet, Text, TextInput, View, type KeyboardTypeOptions } from 'react-native';
 import { colors, radius, spacing, typography } from '@hr/tokens';
 
 interface Props {
@@ -12,6 +12,8 @@ interface Props {
   maxLength?: number;
   /** 인라인 오류. Button에 disabled가 없으므로 막힌 이유는 전부 이 자리로 온다 */
   error?: string;
+  /** 숫자만 받는 칸(시각·연락처)에 쓴다. 글자 키보드를 띄우면 손이 한 번 더 간다 */
+  keyboardType?: KeyboardTypeOptions;
 }
 
 /**
@@ -23,7 +25,15 @@ interface Props {
  * TODO: 라벨 위치·오류 표기·비활성 상태는 DESIGN_RULES.md 7장이 비어 있어 확정되지 않았다.
  * 확정되면 여기에 맞춘다.
  */
-export function TextField({ label, value, onChangeText, placeholder, maxLength, error }: Props) {
+export function TextField({
+  label,
+  value,
+  onChangeText,
+  placeholder,
+  maxLength,
+  error,
+  keyboardType,
+}: Props) {
   const [focused, setFocused] = useState(false);
 
   return (
@@ -35,6 +45,7 @@ export function TextField({ label, value, onChangeText, placeholder, maxLength, 
         placeholder={placeholder}
         placeholderTextColor={colors.textDisabled}
         maxLength={maxLength}
+        keyboardType={keyboardType}
         onFocus={() => setFocused(true)}
         onBlur={() => setFocused(false)}
         accessibilityLabel={label}
