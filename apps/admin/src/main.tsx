@@ -16,6 +16,7 @@ import { MastersPage } from '@/app/MastersPage';
 import { InsuranceRatesPage } from '@/app/InsuranceRatesPage';
 import { DutyRostersPage } from '@/app/DutyRostersPage';
 import { DutyRosterDetail } from '@/app/DutyRosterDetail';
+import { AttendanceOperationsPage } from '@/app/AttendanceOperationsPage';
 import { DailyAttendancePage } from '@/app/DailyAttendancePage';
 import { WeeklyHoursPage } from '@/app/WeeklyHoursPage';
 import { HolidaysPage } from '@/app/HolidaysPage';
@@ -66,6 +67,7 @@ const router = createBrowserRouter([
       { path: 'duty', element: <DutyRostersPage /> },
       { path: 'duty/:rosterId', element: <DutyRosterDetail /> },
       { path: 'attendance', element: <DailyAttendancePage /> },
+      { path: 'attendance/operations', element: <AttendanceOperationsPage /> },
       { path: 'weekly-hours', element: <WeeklyHoursPage /> },
       { path: 'insurance-rates', element: <InsuranceRatesPage /> },
     ],

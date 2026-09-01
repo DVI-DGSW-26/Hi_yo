@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 
 /**
@@ -42,6 +42,8 @@ export const attendanceKeys = {
   weekly: (date: string, onlyAlerted: boolean) =>
     [...attendanceKeys.all, 'weekly', date, onlyAlerted] as const,
   daily: (date: string) => [...attendanceKeys.all, 'daily', date] as const,
+  corrections: (employeeId: number, date: string) =>
+    [...attendanceKeys.all, 'corrections', employeeId, date] as const,
 };
 
 /**
@@ -125,5 +127,144 @@ export function useDailyAttendance(date: string) {
       });
       return data;
     },
+  });
+}
+
+/**
+ * 근태를 만드는 세 동작 (근태 정리 화면).
+ *
+ * 세콤 태그가 근태가 되기까지 두 단계를 거친다 (`docs/API_근태.md` 2장).
+ *
+ * ```
+ * 수신 버퍼 ──(collect)──> 근태 기록 ──(judge)──> 판정 완료 ──> 주간 집계
+ * ```
+ *
+ * **정기 배치가 따로 돈다.** 이 화면의 버튼은 "지금 반영"이 필요할 때 쓰는 것이고,
+ * 서버가 그 용도로 열어 둔 경로다.
+ */
+
+/** 보정 이력 한 건. **누가 언제 왜 고쳤는지**가 분쟁에 필요한 값이다 */
+export interface AttendanceCorrection {
+  id: number;
+  employeeId: number;
+  workDate: string;
+  checkInAt: string | null;
+  checkOutAt: string | null;
+  reason: string;
+  correctedById: number | null;
+  correctedByName: string | null;
+  correctedAt: string;
+}
+
+/**
+ * 보정 입력.
+ *
+ * **고칠 것만 보낸다.** 보내지 않은 쪽은 원본 값을 그대로 쓴다고 스펙이 적고 있다.
+ *
+ * **시각이 아니라 날짜+시각이다.** 야간근무는 자정을 넘기므로 `workDate`가 출근일이고,
+ * 퇴근이 다음 날이면 `checkOutAt`의 날짜가 하루 뒤다.
+ */
+export interface CorrectionInput {
+  workDate: string;
+  /** `2026-09-01T09:00:00`. 서버가 돌려주는 것과 같은 모양으로 보낸다 */
+  checkInAt?: string;
+  checkOutAt?: string;
+  /** 왜 고쳤는지. 서버가 필수로 받는다 */
+  reason: string;
+}
+
+/** 서버가 받는 한계. 입력칸이 이 값을 그대로 쓴다 */
+export const CORRECTION_REASON_MAX = 255;
+
+export interface JudgeResult {
+  date: string;
+  /** 판정한 인원 */
+  judged: number;
+  /** 주간 집계를 다시 낸 인원 */
+  aggregated: number;
+  confirmed: boolean;
+}
+
+export interface CollectResult {
+  /** 수신 버퍼에서 읽은 행 수 */
+  read: number;
+  collected: number;
+  /** 기존 기록의 시각이 바뀐 건수 — **그만큼 재판정이 필요하다** */
+  changed: number;
+  /** 직원을 못 찾았거나 형식을 못 읽어 건너뛴 건수 */
+  skipped: number;
+}
+
+/** 그 사람 그 날의 보정 이력. 원본이 궁금할 때 본다 */
+export function useCorrections(employeeId: number | undefined, date: string) {
+  return useQuery({
+    queryKey: attendanceKeys.corrections(employeeId ?? 0, date),
+    enabled: employeeId !== undefined && date !== '',
+    queryFn: async ({ signal }) => {
+      const { data } = await api.get<AttendanceCorrection[]>(
+        `/attendance/${employeeId}/corrections`,
+        { params: { date }, signal },
+      );
+      return data;
+    },
+  });
+}
+
+/**
+ * 근태 보정.
+ *
+ * **원본을 고치지 않는다.** 보정만 쌓고 그 날짜를 다시 판정한다 (`docs/API_근태.md` 2장).
+ * 그래서 되돌릴 수 없는 동작이 아니다 — 잘못 넣었으면 다시 보정한다.
+ */
+export function useCorrectAttendance(employeeId: number | undefined) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (input: CorrectionInput) => {
+      const { data } = await api.post<AttendanceCorrection>(
+        `/attendance/${employeeId}/corrections`,
+        input,
+      );
+      return data;
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: attendanceKeys.all }),
+  });
+}
+
+/**
+ * 판정 재실행. `date`가 필수다.
+ *
+ * `confirm`을 켜면 그 날 근태가 **확정**된다. 확정돼야 급여 계산에 들어간다 —
+ * 미확정 근태가 있는 직원은 급여에서 `skipped`로 빠진다 (`docs/API_급여.md`).
+ */
+export function useJudgeAttendance() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ date, confirm }: { date: string; confirm?: boolean }) => {
+      const { data } = await api.post<JudgeResult>('/attendance/judge', null, {
+        params: { date, ...(confirm ? { confirm: true } : {}) },
+      });
+      return data;
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: attendanceKeys.all }),
+  });
+}
+
+/**
+ * 세콤 원본을 근태 기록으로 옮긴다.
+ *
+ * **파라미터가 없다.** 날짜를 고르는 동작이 아니라 버퍼에 쌓인 것을 통째로 옮기는
+ * 동작이라, 이 화면의 기준일과 무관하게 돈다.
+ */
+export function useCollectAttendance() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async () => {
+      const { data } = await api.post<CollectResult>('/attendance/collect');
+      return data;
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: attendanceKeys.all }),
   });
 }

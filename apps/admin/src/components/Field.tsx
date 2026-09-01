@@ -10,7 +10,7 @@ interface Props {
   error?: string;
   /** 자동으로 채워지는 값. 입력칸처럼 보이면 눌러본다 (DESIGN_ADMIN.md 4장) */
   readOnly?: boolean;
-  type?: 'text' | 'number' | 'date' | 'month';
+  type?: 'text' | 'number' | 'date' | 'month' | 'time';
   placeholder?: string;
   /** 서버가 받는 한계를 그대로 넣는다 */
   maxLength?: number;

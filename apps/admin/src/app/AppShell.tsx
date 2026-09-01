@@ -37,6 +37,7 @@ const MENU = [
     module: '근태',
     items: [
       { to: '/attendance', label: '근태 현황' },
+      { to: '/attendance/operations', label: '근태 정리' },
       { to: '/duty', label: '당직' },
       { to: '/weekly-hours', label: '52시간' },
     ],
