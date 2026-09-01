@@ -5,8 +5,11 @@ import { ListRow, QueryState, Section, SectionTitle } from '@/components';
 import { useMe } from '@/features/employees/api';
 
 /**
- * 임시 진입점이다. 홈 화면(S-101 마이페이지 포함) 상세 스펙이 확정되면 이 파일을 대체한다.
- * 지금은 만들어진 화면으로 들어가는 통로 역할만 한다.
+ * 임시 진입점이다. 만들어진 화면으로 들어가는 통로 역할만 한다.
+ *
+ * **S-101은 이 화면이 아니라 `/profile`로 따로 만들었다** (2026-09-01). 인사정보 스무 줄이
+ * 진입점에 깔리면 바로가기가 그 아래로 내려간다. 홈을 어떻게 짤지는 아직 정해지지 않았고,
+ * 정해지면 이 파일을 대체한다.
  *
  * **하단 탭을 두지 않는다** (2026-08-28 확정). 본인용 8개 화면 중 3개만 만들어져 있어서
  * 지금 탭을 나누면 절반이 빈 탭이 되고, S-101 스펙이 나오면 어차피 다시 짠다.
@@ -29,6 +32,12 @@ export default function Index() {
           <QueryState query={me}>
             {(data) => (
               <>
+                <ListRow
+                  label="내 정보"
+                  value="인사정보·계좌"
+                  variant="nav"
+                  onPress={() => router.push('/profile')}
+                />
                 <ListRow
                   label="연차"
                   value="현황·신청"
