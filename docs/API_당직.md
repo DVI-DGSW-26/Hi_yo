@@ -221,9 +221,16 @@ TODO: `dayOfWeek`가 `SATURDAY`인지 `토`인지 **확인하지 못했다.** �
 `POST /duty/schedules/{scheduleId}/swaps`는 `targetId`가 필수인데, 일반 직원은 누구에게
 부탁할 수 있는지 알아낼 방법이 없다. 후보를 담은 두 경로가 모두 `403`이다 (5장).
 
-Swagger에 `GET /duty/rosters/{id}/members`는 **`관리팀만` 표시가 없다.** 같은 태그의
-`POST`·`DELETE`·`PATCH`에는 붙어 있어서 조회는 열려 있는 것으로 읽힌다. 실제로는 막혀 있다.
-**스펙과 동작 중 어느 쪽이 의도인지 정해야 한다.**
+~~Swagger에 `관리팀만` 표시가 없다~~ — **표시가 들어갔다** (2026-09-01 스펙 재확인).
+`GET /duty/rosters/{id}/members`와 `GET /duty/schedules` 둘 다 요약에 `관리팀만`이 붙어 있다.
+**스펙과 동작이 어긋나던 것은 해소됐고, 이제 "관리팀만"이 의도라는 것이 분명하다.**
+
+그래서 **남은 것은 하나다 — 일반 직원이 부탁할 상대를 고를 방법.** 지금은 동료의 이름도
+id도 받아올 경로가 없다 (`GET /employees`도 관리팀만). 사번으로 대신 넣을 수도 없다 —
+`targetId`는 `employeeId`다.
+
+**앱은 부탁하기까지 전부 준비돼 있다.** `useRequestSwap`이 붙어 있고 화면만 없다.
+후보 조회가 열리면 `SelectSheet`를 붙이는 것으로 끝난다.
 
 ### 2. `dayOfWeek`의 형식
 
