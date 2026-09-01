@@ -9,7 +9,7 @@ import * as SecureStore from 'expo-secure-store';
  * 토큰을 `expo-secure-store`에 둔다** (`CLAUDE.md` 2장. `AsyncStorage`를 쓰지 않는다).
  *
  * 흐름
- * 1. 로그인 버튼 → 시스템 브라우저로 `oauth2/authorization/keycloak` 열기
+ * 1. 로그인 버튼 → 시스템 브라우저로 `/auth/login?redirect=<앱 딥링크>` 열기
  * 2. 서버가 `hr://auth/callback#token=<JWT>` 로 돌려보낸다 → OS가 앱을 깨운다
  * 3. 토큰을 SecureStore에 넣고 이후 요청에 `Authorization: Bearer` 로 붙인다
  *
@@ -17,8 +17,13 @@ import * as SecureStore from 'expo-secure-store';
  * 라이브러리가 하나 늘어난다 (`CLAUDE.md` 7장). 이미 있는 `expo-linking`으로 시스템
  * 브라우저를 열어도 같은 결과가 나온다. 시트가 필요해지면 그때 제안한다.
  *
- * **서버가 커스텀 스킴으로 리다이렉트해 주는지 아직 확인되지 않았다.** 백엔드 안내는 웹
- * 주소만 예로 들고 있다. 아래 `callbackUrl()`이 만드는 주소를 서버에 등록해 달라고 해야 한다.
+ * **`hr://auth/callback`이 아직 등록되지 않았다** (2026-09-01 실호출 확인).
+ * 그 주소로 `redirect`를 넣어 부르면 서버가 이렇게 답한다 —
+ * `400 등록되지 않은 콜백 주소입니다. 백엔드에 이 주소를 알려주세요: hr://auth/callback`
+ *
+ * 커스텀 스킴을 받아주지 않는 것이 아니라 **등록만 안 된 것이다.** 등록되면 그날 바로
+ * 돈다. 개발 빌드는 앞이 달라지므로 로그인 화면이 `callbackUrl()` 값을 띄우고,
+ * 기기에서 읽어 그 값도 같이 등록을 요청한다.
  */
 
 const TOKEN_KEY = 'hr.accessToken';
@@ -90,10 +95,19 @@ export function callbackUrl(): string {
   return Linking.createURL('/auth/callback');
 }
 
-/** 로그인 시작 주소 */
+/**
+ * 로그인 시작 주소.
+ *
+ * **`redirect`에 앱 딥링크를 실어 보낸다.** 이것을 빠뜨리면 서버가 웹 기본 콜백으로
+ * 돌려보내서 **토큰이 앱으로 영영 오지 않는다.** `callbackUrl()`을 만들어 두고도 여기에
+ * 붙이지 않고 있었다 (2026-09-01 고침).
+ *
+ * 등록되지 않은 주소면 서버가 **400과 함께 그 주소를 그대로 찍어** 준다. 개발 빌드는
+ * 앞이 달라지므로 로그인 화면이 그 값을 띄우고, 기기에서 읽어 서버에 등록을 요청한다.
+ */
 export function loginUrl(): string {
   const base = process.env.EXPO_PUBLIC_API_BASE_URL ?? '';
-  return `${base.replace(/\/$/, '')}/oauth2/authorization/keycloak`;
+  return `${base.replace(/\/$/, '')}/auth/login?redirect=${encodeURIComponent(callbackUrl())}`;
 }
 
 /** 사용자가 로그인 버튼을 눌렀을 때. 시스템 브라우저가 열린다 */
