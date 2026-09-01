@@ -36,11 +36,8 @@ interface Props<T> {
  * 로딩·빈·에러를 **표 안에** 그린다. 표를 지우고 다른 것을 그리면 열 머리가 사라져
  * 무엇을 보던 화면인지 잃는다 (DESIGN_ADMIN.md 3장).
  *
- * **맨 뒤에 빈 칸을 하나 둔다.** 표는 상자 폭을 채워야 하는데(`width: 100%`), 열이 적으면
- * 남는 폭을 열들이 나눠 가져서 **이름과 숫자가 화면 양끝으로 흩어진다.** 넓은 화면에서
- * 특히 그렇다 — 2400px에서 여덟 열짜리 대장을 열면 `부서`와 `발생` 사이가 텅 빈다.
- * 남는 폭을 이 빈 칸이 전부 먹으면 열은 내용만큼만 차지하고 왼쪽부터 붙는다.
- * 열이 스무 개여서 넘칠 때는 빈 칸이 0이 되므로 그때 동작은 그대로다.
+ * **상자가 내용만큼만 차지한다** (`Table.css`). 그래야 열이 흩어지지도, 텅 빈 상자가
+ * 화면을 반 넘게 먹지도 않는다.
  */
 export function Table<T>({
   columns,
@@ -64,20 +61,17 @@ export function Table<T>({
                   {column.header}
                 </th>
               ))}
-              {/* 남는 폭을 이 칸이 먹는다. 아래 주석 참고 */}
-              <th className="is-spacer" />
             </tr>
           </thead>
           <tbody>
             {isPending ? (
-              // 빈 칸까지 세어야 메시지가 표 전체 폭에 걸린다.
-              <Message columns={columns.length + 1}>불러오는 중이에요.</Message>
+              <Message columns={columns.length}>불러오는 중이에요.</Message>
             ) : error ? (
-              <Message columns={columns.length + 1} tone="danger">
+              <Message columns={columns.length} tone="danger">
                 {error.message}
               </Message>
             ) : !rows || rows.length === 0 ? (
-              <Message columns={columns.length + 1}>{emptyText}</Message>
+              <Message columns={columns.length}>{emptyText}</Message>
             ) : (
               rows.map((row) => (
                 <tr
@@ -90,7 +84,6 @@ export function Table<T>({
                       {column.render(row)}
                     </td>
                   ))}
-                  <td className="is-spacer" />
                 </tr>
               ))
             )}

@@ -57,18 +57,20 @@ export function EmployeesPage() {
     {
       key: 'residentNo',
       header: '주민번호',
-      // 빨강을 쓰지 않는다. 이 화면에서 등록할 방법이 없고(서버가 전용 경로를 아직
-      // 열지 않았다) 지금은 전원이 미등록이라, 열 전체가 빨개져서 아무도 안 읽는다.
-      render: (row) => (row.residentNoRegistered ? '등록됨' : <StatusText label="없음" />),
+      render: (row) =>
+        row.residentNoRegistered ? (
+          '등록됨'
+        ) : (
+          <StatusText label="없음" tone="error" />
+        ),
     },
     {
       key: 'status',
       header: '재직상태',
       render: (row) => (
         <StatusText
-          // 퇴사는 오류가 아니라 끝난 사실이다. 개발 서버는 절반이 퇴사라 빨강으로
-          // 두면 화면이 경고로 뒤덮인다 (DESIGN_ADMIN.md 7장).
           label={row.employmentStatusLabel ?? row.employmentStatus}
+          tone={row.employmentStatus === 'RESIGNED' ? 'error' : 'neutral'}
         />
       ),
     },

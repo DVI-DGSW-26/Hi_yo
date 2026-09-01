@@ -103,10 +103,19 @@ a {
   gap: var(--space-block-gap);
 }
 
+/*
+ * 제목·설명·주 동작이 한 덩어리로 읽혀야 한다.
+ *
+ * **폭을 채우지 않는다.** 채우면 넓은 화면에서 제목은 왼쪽 끝, 버튼은 오른쪽 끝에 서고
+ * 그 사이가 텅 빈다 — 3800px에서는 눈이 2미터를 건너가야 버튼을 찾는다 (2026-09-01 확인).
+ * 설명이 `readWidth`에서 줄바꿈하므로 덩어리는 저절로 읽기 좋은 폭이 된다.
+ */
 .page-head {
   display: flex;
+  align-self: flex-start;
   align-items: flex-start;
   gap: var(--space-block-gap);
+  max-width: 100%;
 }
 
 .page-head-text {
@@ -143,18 +152,20 @@ a {
 .panel {
   display: flex;
   flex-direction: column;
+  /*
+   * 상자는 내용만큼만 차지한다. 표·요약·제목 줄과 같은 규칙이다.
+   * 늘리면 넓은 화면에서 안쪽이 텅 비고, 실행 줄의 버튼이 화면 오른쪽 끝으로 달아난다.
+   */
+  align-self: flex-start;
+  max-width: 100%;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-chip);
 }
 
 /*
- * 폼 상자는 입력칸 폭만큼만 쓴다. 표와 달리 가로로 늘릴 이유가 없다 —
- * 320px 칸 두 개 옆에 빈 공간이 화면 폭만큼 남으면 어디를 봐야 할지 흐려진다.
- * 상세(라벨-값)는 칸이 폭에 맞춰 늘어나므로 이 표시를 붙이지 않는다.
+ * 폼 상자는 입력칸 폭만큼만 쓴다 — 이제 `.panel`이 다 그렇게 하므로 따로 표시할 것이
+ * 없다. 클래스는 화면 코드가 이미 쓰고 있어 남겨 둔다.
  */
-.panel.is-form {
-  align-self: flex-start;
-}
 
 .panel-body {
   padding: var(--space-block-gap);
