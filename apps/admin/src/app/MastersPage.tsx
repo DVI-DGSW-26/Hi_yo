@@ -100,13 +100,12 @@ function workText(job: Job): string {
 }
 
 /**
- * 쓰이는 것과 내린 것. **그린을 쓰지 않는다** — 대부분이 `active`라 초록이 깔리면
- * 내려둔 줄이 그 사이에 묻힌다. 근태 현황에서 `판정 완료`를 무채색으로 둔 것과 같다.
+ * 쓰이는 것과 내린 것. **색으로 가르지 않는다.**
+ *
+ * 그린을 안 쓰는 이유는 대부분이 `active`라 초록이 깔리면 내려둔 줄이 묻히기 때문이고,
+ * 빨강을 안 쓰는 이유는 **내려둔 직무가 오류가 아니기 때문**이다. 이 화면은 조회만 하는
+ * 자리라 여기서 손댈 것도 없다 (`DESIGN_ADMIN.md` 7장).
  */
 function activeText(active: boolean) {
-  return active ? (
-    <StatusText label="쓰는 중" tone="neutral" />
-  ) : (
-    <StatusText label="내려둠" tone="error" />
-  );
+  return <StatusText label={active ? '쓰는 중' : '내려둠'} />;
 }

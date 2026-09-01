@@ -57,8 +57,8 @@ export function EmployeeDetail() {
       sticky: true,
       render: (row) => (
         <StatusText
+          // 퇴사는 오류가 아니라 끝난 사실이다 (DESIGN_ADMIN.md 7장).
           label={row.statusLabel ?? STATUS_LABEL[row.status]}
-          tone={row.status === 'RESIGNED' ? 'error' : 'neutral'}
         />
       ),
     },
@@ -102,7 +102,6 @@ export function EmployeeDetail() {
                   <>
                     <StatusText
                       label={summary.employmentStatusLabel ?? STATUS_LABEL[summary.employmentStatus]}
-                      tone={summary.employmentStatus === 'RESIGNED' ? 'error' : 'neutral'}
                     />
                     {summary.resignDate ? ` · ${summary.resignDate}` : ''}
                   </>
@@ -113,7 +112,7 @@ export function EmployeeDetail() {
                 value: summary.residentNoRegistered ? (
                   '등록됨'
                 ) : (
-                  <StatusText label="등록되지 않았어요" tone="error" />
+                  <StatusText label="등록되지 않았어요" />
                 ),
               },
               { label: '연락처', value: detail.phone ?? '아직이에요' },

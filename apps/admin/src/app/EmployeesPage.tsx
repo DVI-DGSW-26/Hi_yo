@@ -44,7 +44,7 @@ export function EmployeesPage() {
 
   const columns: Column<Employee>[] = [
     { key: 'name', header: '성명', sticky: true, render: (row) => row.name },
-    { key: 'employeeNo', header: '사번', render: (row) => row.employeeNo ?? '아직 없어요' },
+    { key: 'employeeNo', header: '사번', render: (row) => row.employeeNo ?? '—' },
     { key: 'corporation', header: '법인', render: (row) => row.corporation ?? '—' },
     { key: 'department', header: '부서', render: (row) => row.departmentName ?? '—' },
     { key: 'job', header: '직무', render: (row) => row.jobName ?? '—' },
@@ -57,20 +57,18 @@ export function EmployeesPage() {
     {
       key: 'residentNo',
       header: '주민번호',
-      render: (row) =>
-        row.residentNoRegistered ? (
-          '등록됨'
-        ) : (
-          <StatusText label="없음" tone="error" />
-        ),
+      // 빨강을 쓰지 않는다. 이 화면에서 등록할 방법이 없고(서버가 전용 경로를 아직
+      // 열지 않았다) 지금은 전원이 미등록이라, 열 전체가 빨개져서 아무도 안 읽는다.
+      render: (row) => (row.residentNoRegistered ? '등록됨' : <StatusText label="없음" />),
     },
     {
       key: 'status',
       header: '재직상태',
       render: (row) => (
         <StatusText
+          // 퇴사는 오류가 아니라 끝난 사실이다. 개발 서버는 절반이 퇴사라 빨강으로
+          // 두면 화면이 경고로 뒤덮인다 (DESIGN_ADMIN.md 7장).
           label={row.employmentStatusLabel ?? row.employmentStatus}
-          tone={row.employmentStatus === 'RESIGNED' ? 'error' : 'neutral'}
         />
       ),
     },
