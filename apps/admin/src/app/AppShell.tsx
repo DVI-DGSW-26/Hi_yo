@@ -18,7 +18,10 @@ import './AppShell.css';
 const MENU = [
   {
     module: '인사정보',
-    items: [{ to: '/employees', label: '직원' }],
+    items: [
+      { to: '/employees', label: '직원' },
+      { to: '/masters', label: '직무·부서' },
+    ],
   },
   {
     module: '연차',
@@ -34,6 +37,7 @@ const MENU = [
     module: '근태',
     items: [
       { to: '/attendance', label: '근태 현황' },
+      { to: '/attendance/operations', label: '근태 정리' },
       { to: '/duty', label: '당직' },
       { to: '/weekly-hours', label: '52시간' },
     ],

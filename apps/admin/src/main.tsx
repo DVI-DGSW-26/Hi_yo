@@ -12,9 +12,11 @@ import { PayrollDetail } from '@/app/PayrollDetail';
 import { EmployeesPage } from '@/app/EmployeesPage';
 import { EmployeeNew } from '@/app/EmployeeNew';
 import { EmployeeDetail } from '@/app/EmployeeDetail';
+import { MastersPage } from '@/app/MastersPage';
 import { InsuranceRatesPage } from '@/app/InsuranceRatesPage';
 import { DutyRostersPage } from '@/app/DutyRostersPage';
 import { DutyRosterDetail } from '@/app/DutyRosterDetail';
+import { AttendanceOperationsPage } from '@/app/AttendanceOperationsPage';
 import { DailyAttendancePage } from '@/app/DailyAttendancePage';
 import { WeeklyHoursPage } from '@/app/WeeklyHoursPage';
 import { HolidaysPage } from '@/app/HolidaysPage';
@@ -53,6 +55,7 @@ const router = createBrowserRouter([
       { path: 'employees', element: <EmployeesPage /> },
       { path: 'employees/new', element: <EmployeeNew /> },
       { path: 'employees/:employeeId', element: <EmployeeDetail /> },
+      { path: 'masters', element: <MastersPage /> },
       { path: 'approvals', element: <ApprovalsPage /> },
       { path: 'approvals/:requestId', element: <ApprovalDetail /> },
       { path: 'company-leaves', element: <CompanyLeavePage /> },
@@ -64,6 +67,7 @@ const router = createBrowserRouter([
       { path: 'duty', element: <DutyRostersPage /> },
       { path: 'duty/:rosterId', element: <DutyRosterDetail /> },
       { path: 'attendance', element: <DailyAttendancePage /> },
+      { path: 'attendance/operations', element: <AttendanceOperationsPage /> },
       { path: 'weekly-hours', element: <WeeklyHoursPage /> },
       { path: 'insurance-rates', element: <InsuranceRatesPage /> },
     ],

@@ -3,10 +3,10 @@
  *
  * 서버가 로그인 중계까지 한다. **프런트에 OIDC 라이브러리를 넣지 않는다** —
  * 로그인 URL로 브라우저를 통째로 보내면 서버가 Keycloak을 거쳐 토큰을 들고 돌아온다.
- * (백엔드 「HRM 로그인 연동 안내」 2026-08-31)
+ * (백엔드 「HRM 로그인 붙이기」 2026-09-01)
  *
  * 흐름
- * 1. 로그인 버튼 → `oauth2/authorization/keycloak` 로 **화면 이동** (XHR 아님)
+ * 1. 로그인 버튼 → `/auth/login` 으로 **화면 이동** (XHR 아님)
  * 2. 서버가 `<프런트>/auth/callback#token=<JWT>` 로 돌려보낸다
  * 3. 토큰을 보관하고 이후 요청에 `Authorization: Bearer` 로 붙인다
  *
@@ -81,10 +81,18 @@ export function clearToken(): void {
 /**
  * 로그인 시작 주소. **`api` 인스턴스로 부르지 않는다** — 브라우저가 통째로 이동해야
  * Keycloak 로그인 화면(OTP 포함)이 뜬다.
+ *
+ * `/auth/login`이 서버가 안내한 입구다. `oauth2/authorization/keycloak`으로 302를 보내는
+ * 얇은 껍데기이고, **`redirect`를 받는 쪽은 이쪽뿐이다.**
+ *
+ * **돌아올 주소를 명시해서 보낸다.** 등록되지 않은 주소면 서버가 **400과 함께 그 주소를
+ * 그대로 찍어** 준다 — 배포 주소가 바뀌었을 때 무엇을 등록해달라고 해야 하는지가 화면에
+ * 나온다. 생략하면 서버 기본값으로 조용히 다른 곳에 떨어진다.
  */
 export function loginUrl(): string {
   const base = import.meta.env.VITE_API_BASE_URL ?? '';
-  return `${base.replace(/\/$/, '')}/oauth2/authorization/keycloak`;
+  const redirect = `${window.location.origin}/auth/callback`;
+  return `${base.replace(/\/$/, '')}/auth/login?redirect=${encodeURIComponent(redirect)}`;
 }
 
 /** 사용자가 로그인 버튼을 눌렀을 때. 표시를 지우고 무조건 간다 */

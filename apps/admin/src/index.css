@@ -225,6 +225,19 @@ a {
   flex-wrap: wrap;
 }
 
+/* 대화상자 안의 짧은 목록. 점을 찍지 않는다 — 두세 줄짜리에 글머리표는 무겁다. */
+.plain-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-tight);
+  font-size: var(--font-size-label);
+  line-height: var(--line-height-label);
+  color: var(--color-text-weak);
+}
+
 /* 표 안의 행별 동작. 버튼이 아니라 글자 링크로 둔다 (DESIGN_ADMIN.md 5장).
    대상자 표와 당직표가 같이 쓴다. */
 .row-actions {
