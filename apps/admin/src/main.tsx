@@ -12,6 +12,7 @@ import { PayrollDetail } from '@/app/PayrollDetail';
 import { EmployeesPage } from '@/app/EmployeesPage';
 import { EmployeeNew } from '@/app/EmployeeNew';
 import { EmployeeDetail } from '@/app/EmployeeDetail';
+import { MastersPage } from '@/app/MastersPage';
 import { InsuranceRatesPage } from '@/app/InsuranceRatesPage';
 import { DutyRostersPage } from '@/app/DutyRostersPage';
 import { DutyRosterDetail } from '@/app/DutyRosterDetail';
@@ -53,6 +54,7 @@ const router = createBrowserRouter([
       { path: 'employees', element: <EmployeesPage /> },
       { path: 'employees/new', element: <EmployeeNew /> },
       { path: 'employees/:employeeId', element: <EmployeeDetail /> },
+      { path: 'masters', element: <MastersPage /> },
       { path: 'approvals', element: <ApprovalsPage /> },
       { path: 'approvals/:requestId', element: <ApprovalDetail /> },
       { path: 'company-leaves', element: <CompanyLeavePage /> },
