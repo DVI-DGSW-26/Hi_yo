@@ -50,6 +50,12 @@ export default function Index() {
                   variant="nav"
                   onPress={() => router.push('/duty')}
                 />
+                <ListRow
+                  label="내 근태"
+                  value="이번 달·52시간"
+                  variant="nav"
+                  onPress={() => router.push('/attendance')}
+                />
                 {/* 퇴사자도 지난 명세서를 봐야 한다. 재직 상태로 막지 않는다. */}
                 <ListRow
                   label="급여명세서"
