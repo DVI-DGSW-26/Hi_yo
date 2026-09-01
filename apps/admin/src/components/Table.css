@@ -83,6 +83,15 @@
   text-align: right;
 }
 
+/*
+ * 남는 폭을 먹는 빈 칸. 열이 적을 때 이름과 숫자가 화면 양끝으로 흩어지는 것을 막는다.
+ * 열이 많아 표가 넘치면 이 칸은 0이 되고 가로 스크롤이 그대로 돈다.
+ */
+.table .is-spacer {
+  width: 100%;
+  padding: 0;
+}
+
 /* 20열을 훑다가 누구 급여인지 잃어버리면 안 된다. */
 .table .is-sticky {
   position: sticky;
