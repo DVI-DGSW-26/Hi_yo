@@ -44,7 +44,7 @@ export function EmployeesPage() {
 
   const columns: Column<Employee>[] = [
     { key: 'name', header: '성명', sticky: true, render: (row) => row.name },
-    { key: 'employeeNo', header: '사번', render: (row) => row.employeeNo ?? '아직 없어요' },
+    { key: 'employeeNo', header: '사번', render: (row) => row.employeeNo ?? '—' },
     { key: 'corporation', header: '법인', render: (row) => row.corporation ?? '—' },
     { key: 'department', header: '부서', render: (row) => row.departmentName ?? '—' },
     { key: 'job', header: '직무', render: (row) => row.jobName ?? '—' },

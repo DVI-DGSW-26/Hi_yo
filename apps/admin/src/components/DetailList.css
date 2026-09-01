@@ -6,6 +6,13 @@
   grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
   gap: var(--space-block-gap) var(--space-section-y);
   margin: 0;
+  /*
+   * **넉 칸까지만 흘린다.** 위 규칙만 두면 넓은 화면에서 끝없이 늘어난다 —
+   * 2345px에서 재보니 **여덟 칸**이 됐다 (2026-09-01 확인). 한 사람의 사실을 가로
+   * 2000px에 늘어놓으면 눈이 라벨과 값의 짝을 잃는다. 표는 폭을 다 써도 되지만
+   * 이건 읽는 자리다.
+   */
+  max-width: calc(200px * 4 + var(--space-section-y) * 3);
 }
 
 .detail-cell {

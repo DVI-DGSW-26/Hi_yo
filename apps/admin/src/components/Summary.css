@@ -4,10 +4,17 @@
  * 그림자를 쓰지 않는다.
  */
 
+/*
+ * **폭을 채우지 않는다.** 이름 그대로 요약 "줄"이고 담는 상자가 아니다.
+ * 표처럼 늘리면 넓은 화면에서 안쪽이 텅 빈다 — 2345px에서 재보니 2081px 중 1240px,
+ * 곧 60%가 빈 칸이었다 (2026-09-01). 내용만큼만 차지하고 왼쪽에 붙는다.
+ */
 .summary {
   display: flex;
+  align-self: flex-start;
   align-items: stretch;
   flex-wrap: wrap;
+  max-width: 100%;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-chip);
 }
@@ -39,11 +46,16 @@
   font-variant-numeric: tabular-nums;
 }
 
-/* 안내문은 남는 폭을 쓰되 읽는 너비를 넘지 않는다. */
+/*
+ * 안내문은 제 길이만큼만 차지하고 숫자 옆에 붙는다. 읽는 너비를 넘지 않는다.
+ *
+ * **`flex-basis`를 `read-width`로 두지 않는다.** 620px를 요구하면 좁을 때 혼자 다음 줄로
+ * 내려가 상자가 세로로 커지고, 숫자 옆이 텅 빈다. 요약은 한 줄이어야 한다.
+ */
 .summary-note {
   margin: 0;
   align-self: center;
-  flex: 1 1 var(--space-read-width);
+  flex: 0 1 auto;
   max-width: var(--space-read-width);
   padding: var(--space-row-gap) var(--space-block-gap);
   border-left: 1px solid var(--color-border);

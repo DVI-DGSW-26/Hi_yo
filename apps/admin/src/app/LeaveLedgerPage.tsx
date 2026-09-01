@@ -17,6 +17,11 @@ import {
  * 표이기 전에 **누락을 찾는 명단**이다 — 서버가 발생 0인 직원까지 내려주는 이유가 그것이다
  * (`docs/API_연차.md` 3장).
  *
+ * **화면 문구는 회사 양식의 말을 쓴다.** API와 명세서는 `발생`(`granted`)이라고 부르지만
+ * 회사 「휴가(근태)신청서」 양식은 `총 연차 · 사용일수 · 잔여일수`로 적고 있다. 관리팀이
+ * 종이에서 쓰던 말이 있는데 API 용어를 그대로 옮겨서 **"발생이 뭐냐"는 말이 나왔다**
+ * (2026-09-01). **코드와 주석은 `발생`을 그대로 쓴다** — 서버·문서와 오갈 때 같은 말이어야 한다.
+ *
  * **`0일` 과 `아직 안 넣었어요` 를 구분해 적는다.** 둘을 다 `0일` 로 그리면 이 화면이
  * 할 일이 없어진다.
  *
@@ -51,7 +56,7 @@ export function LeaveLedgerPage() {
     { key: 'department', header: '부서', render: (row) => row.departmentName ?? '—' },
     {
       key: 'granted',
-      header: '발생',
+      header: '총 연차',
       align: 'right',
       // 행 배경을 칠하지 않는다. 사유를 그 셀에 danger 글자로 적는다 (DESIGN_ADMIN.md 3장).
       render: (row) =>
@@ -82,7 +87,7 @@ export function LeaveLedgerPage() {
         <div className="page-head-text">
           <h1 className="page-title">연차관리대장</h1>
           <p className="page-lead">
-            발생을 넣지 않은 사람도 같이 나와요. 서버가 연차를 자동으로 주지 않아서, 안 넣으면 그
+            연차를 넣지 않은 사람도 같이 나와요. 서버가 연차를 자동으로 주지 않아서, 안 넣으면 그
             사람은 한 해를 0일로 보내요.
           </p>
         </div>
@@ -93,7 +98,7 @@ export function LeaveLedgerPage() {
         <Summary
           items={[
             { label: `${year}년 대장`, value: `${ledger.data.length}명` },
-            { label: '발생 미입력', value: `${missingCount}명` },
+            { label: '연차 미입력', value: `${missingCount}명` },
           ]}
           note="잔여는 결재 대기중인 신청까지 뺀 값이에요. 화면에서 다시 계산하지 않아요."
         />
@@ -107,7 +112,7 @@ export function LeaveLedgerPage() {
         error={ledger.error}
         emptyText={
           onlyMissing
-            ? `${year}년은 전 직원에게 발생이 들어가 있어요.`
+            ? `${year}년은 전 직원에게 연차가 들어가 있어요.`
             : `${year}년 대장에 직원이 없어요.`
         }
         toolbar={
@@ -124,7 +129,7 @@ export function LeaveLedgerPage() {
               onChange={(value) => setOnlyMissing(value === 'missing')}
               options={[
                 { value: 'all', label: '전 직원' },
-                { value: 'missing', label: '발생 미입력만' },
+                { value: 'missing', label: '연차 미입력만' },
               ]}
             />
           </>
