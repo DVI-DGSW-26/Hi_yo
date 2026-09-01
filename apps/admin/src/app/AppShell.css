@@ -48,13 +48,22 @@
 
 .shell-link {
   /* 묶음 이름보다 한 칸 들여쓴다. 어느 모듈에 속한 화면인지가 눈으로 잡힌다. */
-  padding-left: var(--space-tight);
+  padding: 2px var(--space-tight);
+  border-radius: var(--radius-chip);
   font-size: var(--font-size-body-small);
   line-height: var(--line-height-body-small);
   color: var(--color-text-body);
 }
 
+/*
+ * 지금 어느 화면인지. **색과 굵기만으로는 약하다** — 메뉴가 열두 줄이라 훑을 때 안 잡힌다.
+ * 바탕을 깔아 한 줄을 통째로 집는다.
+ *
+ * 그린을 쓰지 않는다. 메뉴는 모든 화면에 늘 떠 있어서, 여기에 그린을 쓰면
+ * 「한 화면에 그린 두 곳」 예산이 매 화면에서 하나씩 깎인다 (`DESIGN_ADMIN.md` 7장).
+ */
 .shell-link.is-active {
+  background: var(--color-divider);
   color: var(--color-text-strong);
   font-weight: 500;
 }
