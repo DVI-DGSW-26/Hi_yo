@@ -18,7 +18,10 @@ import './AppShell.css';
 const MENU = [
   {
     module: '인사정보',
-    items: [{ to: '/employees', label: '직원' }],
+    items: [
+      { to: '/employees', label: '직원' },
+      { to: '/masters', label: '직무·부서' },
+    ],
   },
   {
     module: '연차',
