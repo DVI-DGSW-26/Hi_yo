@@ -35,6 +35,9 @@ interface Props<T> {
  *
  * 로딩·빈·에러를 **표 안에** 그린다. 표를 지우고 다른 것을 그리면 열 머리가 사라져
  * 무엇을 보던 화면인지 잃는다 (DESIGN_ADMIN.md 3장).
+ *
+ * **상자가 내용만큼만 차지한다** (`Table.css`). 그래야 열이 흩어지지도, 텅 빈 상자가
+ * 화면을 반 넘게 먹지도 않는다.
  */
 export function Table<T>({
   columns,
