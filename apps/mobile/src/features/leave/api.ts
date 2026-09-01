@@ -95,6 +95,14 @@ export interface LeaveRequestInput {
   typeCode: string;
   startDate: string;
   endDate: string;
+  /**
+   * `needTime`인 종류에만 넣는다. 서버가 돌려주는 것과 같은 `HH:mm:ss` 모양이다.
+   *
+   * 반차는 시각이 정해져 있다 (`halfDay.ts`). 그 밖의 `needTime` 종류(외출·조퇴)는
+   * 직접 받아야 하는데 시각을 고르는 칸이 아직 없다.
+   */
+  startTime?: string;
+  endTime?: string;
   reason?: string;
 }
 
