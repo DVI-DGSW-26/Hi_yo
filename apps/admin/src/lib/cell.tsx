@@ -15,7 +15,13 @@ export function dim(value: ReactNode): ReactNode {
   return <span className="dim">{value}</span>;
 }
 
-/** 값이 없는 칸. `—` 를 옅게 둔다 */
+/**
+ * 값이 없는 칸. `—` 를 옅게 둔다.
+ *
+ * **`undefined` 도 같이 받는다.** 서버가 스펙에 있는 필드를 빠뜨려 보내는 일이 있고,
+ * 그것을 `=== null` 로만 막으면 `undefined` 가 그대로 포맷 함수까지 가서 앱 전체가
+ * 죽는다 (`DESIGN_ADMIN.md` 3장 「빈 상태·로딩·에러」).
+ */
 export function orDash(value: string | null | undefined): ReactNode {
   return value ?? dim('—');
 }

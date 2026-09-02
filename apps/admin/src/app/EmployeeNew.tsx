@@ -138,7 +138,7 @@ export function EmployeeNew() {
               <Field label="급여계산 대상" value={job.payrollTarget ? '대상' : '아님'} readOnly />
               <Field
                 label="시급"
-                value={job.hourlyWage === null ? '' : formatAmount(job.hourlyWage)}
+                value={job.hourlyWage == null ? '' : formatAmount(job.hourlyWage)}
                 readOnly
               />
             </FieldGrid>

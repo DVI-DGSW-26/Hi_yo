@@ -105,7 +105,7 @@ export function WeeklyHoursPage() {
     {
       key: 'alertedAt',
       header: '알림 보냄',
-      render: (row) => (row.alertedAt === null ? orDash(null) : formatKstDateTime(row.alertedAt)),
+      render: (row) => (row.alertedAt == null ? orDash(null) : formatKstDateTime(row.alertedAt)),
     },
   ];
 

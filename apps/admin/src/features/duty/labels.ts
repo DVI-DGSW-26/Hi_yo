@@ -40,7 +40,7 @@ export function scheduleStatusText(status: DutySchedule['status']): string {
  * 모르는 코드는 서버가 준 값을 그대로 둔다 — 지어내지 않는다.
  */
 export function slotText(slotCode: string | null): string {
-  if (slotCode === null) return '—';
+  if (slotCode == null) return '—';
   if (slotCode === 'LUNCH') return '중식';
   if (slotCode === 'DINNER') return '석식';
   return slotCode;
@@ -56,6 +56,6 @@ export function slotText(slotCode: string | null): string {
  * 날짜가 없어 타임존을 따질 것이 없고, 초는 화면에 쓰지 않아 잘라낸다.
  */
 export function timeRangeText(startTime: string | null, endTime: string | null): string {
-  if (startTime === null || endTime === null) return '—';
+  if (startTime == null || endTime == null) return '—';
   return `${startTime.slice(0, 5)} ~ ${endTime.slice(0, 5)}`;
 }

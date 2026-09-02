@@ -41,13 +41,13 @@ export function MastersPage() {
       header: '기준시간',
       align: 'right',
       render: (row) =>
-        row.standardMinutes === null ? '—' : formatMinutes(row.standardMinutes),
+        row.standardMinutes == null ? '—' : formatMinutes(row.standardMinutes),
     },
     {
       key: 'hourlyWage',
       header: '시급',
       align: 'right',
-      render: (row) => (row.hourlyWage === null ? '—' : formatAmount(row.hourlyWage)),
+      render: (row) => (row.hourlyWage == null ? '—' : formatAmount(row.hourlyWage)),
     },
     { key: 'active', header: '상태', render: (row) => activeText(row.active) },
   ];
@@ -95,7 +95,7 @@ export function MastersPage() {
 
 /** `09:00 ~ 18:00`. 한쪽이라도 없으면 시간을 지어내지 않는다 */
 function workText(job: Job): string {
-  if (job.workStart === null || job.workEnd === null) return '—';
+  if (job.workStart == null || job.workEnd == null) return '—';
   return `${job.workStart.slice(0, 5)} ~ ${job.workEnd.slice(0, 5)}`;
 }
 

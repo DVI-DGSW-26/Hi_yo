@@ -81,7 +81,7 @@ export function AssignDialog({ open, roster, members, onClose }: Props) {
 /** 슬롯은 코드만으로 어느 시간대인지 알기 어렵다. 서버가 준 시각을 같이 보여준다 */
 function slotOptionLabel(code: string, startTime: string | null, endTime: string | null): string {
   const name = code === 'LUNCH' ? '중식' : code === 'DINNER' ? '석식' : code;
-  if (startTime === null || endTime === null) return name;
+  if (startTime == null || endTime == null) return name;
   return `${name} · ${startTime.slice(0, 5)} ~ ${endTime.slice(0, 5)}`;
 }
 

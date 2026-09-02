@@ -52,7 +52,7 @@ export function InsuranceRatesPage() {
       key: 'roundUnit',
       header: '금액 단위',
       align: 'right',
-      render: (row) => (row.roundUnit === null ? '—' : `${formatAmount(row.roundUnit)}원`),
+      render: (row) => (row.roundUnit == null ? '—' : `${formatAmount(row.roundUnit)}원`),
     },
   ];
 
