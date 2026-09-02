@@ -229,7 +229,8 @@ import { Button, ListRow, TextField, SectionTitle, Section, SectionDivider, Gaug
 
 라벨은 필드 위에 둔다. 높이를 고정하지 않는다 — `minHeight`만 버튼과 같은 54를 준다.
 
-TODO: 라벨 위치·오류 표기·비활성 상태는 `DESIGN_RULES.md` 7장이 비어 있어 확정되지 않았다.
+라벨 위치·오류 표기·비활성 상태는 `DESIGN_RULES.md` 7장에 있다 (2026-09-02).
+TODO: 그 장이 남겨둔 것 둘 — 모바일의 **필수 표시**와 **읽기 전용 표기**.
 
 ### Section / SectionDivider
 
@@ -366,7 +367,7 @@ import { formatMinutes, formatAmount, formatLeaveDays, formatTime } from '@/lib/
 
 ## 7. 문구
 
-전부 **해요체**. 자세한 규칙은 `DESIGN_RULES.md` 6장.
+전부 **해요체**. 자세한 규칙은 `DESIGN_RULES.md` 8장.
 
 | 상황 | 쓰지 않는다 | 쓴다 |
 |---|---|---|
