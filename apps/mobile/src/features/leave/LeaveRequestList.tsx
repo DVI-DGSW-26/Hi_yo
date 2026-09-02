@@ -79,8 +79,17 @@ function statusLabel(status: RequestStatus): string {
   }
 }
 
-function statusTone(status: RequestStatus): 'done' | 'error' | 'neutral' {
-  if (status === 'APPROVED') return 'done';
+/**
+ * **승인을 그린으로 칠하지 않는다** (2026-09-03).
+ *
+ * 이 목록은 낸 것이 대부분 승인되는 자리라, 승인을 칠하면 목록 한 줄 걸러 초록이 된다.
+ * 관리팀 화면이 같은 이유로 근태 `판정 완료`와 52시간 `여유 있어요`를 칠하지 않는다 —
+ * 정상이 초록으로 깔리면 손대야 할 줄이 그 사이에 묻힌다 (`DESIGN_RULES.md` 2장).
+ *
+ * 그린 예산도 이 화면이 이미 다 썼다. 선택된 날짜와 `신청하기`가 두 곳이다
+ * (`DESIGN_SYSTEM.md` 1장). **반려는 빨강 그대로다** — 되물어야 하는 줄이다.
+ */
+function statusTone(status: RequestStatus): 'error' | 'neutral' {
   if (status === 'REJECTED') return 'error';
   return 'neutral';
 }
