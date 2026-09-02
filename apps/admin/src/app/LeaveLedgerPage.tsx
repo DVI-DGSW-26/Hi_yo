@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { formatLeaveDays } from '@hr/format';
-import { Select, Summary, Table, type Column } from '@/components';
+import { Field, Select, Summary, Table, type Column } from '@/components';
+import { departmentOptions, matchesKeyword } from '@/lib/listFilter';
 import {
   selectableLedgerYears,
   useLeaveLedger,
@@ -33,6 +34,8 @@ export function LeaveLedgerPage() {
   const yearOptions = selectableLedgerYears();
   const [year, setYear] = useState(() => yearOptions[0]!);
   const [onlyMissing, setOnlyMissing] = useState(false);
+  const [keyword, setKeyword] = useState('');
+  const [department, setDepartment] = useState('');
 
   const ledger = useLeaveLedger(year);
 
@@ -40,9 +43,18 @@ export function LeaveLedgerPage() {
    * 거르는 것을 화면에서 한다. 52시간 현황과 다른 판단이다 — 그쪽은 서버가 `onlyAlerted`
    * 를 주고 단계도 서버가 매기므로 화면이 다시 거르면 기준이 어긋난다. 여기는 서버에
    * 거르는 파라미터가 없고, `noGrant` 는 서버가 준 참·거짓 그대로다. 다시 판정하지 않는다.
+   *
+   * **대장은 전 직원이 한 번에 온다.** 쪽이 나뉘지 않으므로 화면에서 걸러도 다음 쪽에
+   * 숨는 사람이 없다 (`lib/listFilter.ts`).
    */
-  const rows = ledger.data && onlyMissing ? ledger.data.filter((row) => row.noGrant) : ledger.data;
+  const rows = ledger.data?.filter(
+    (row) =>
+      (!onlyMissing || row.noGrant) &&
+      (department === '' || row.departmentName === department) &&
+      matchesKeyword(keyword, row.employeeName, row.employeeNo),
+  );
   const missingCount = ledger.data?.filter((row) => row.noGrant).length;
+  const filtering = keyword.trim() !== '' || department !== '';
 
   const columns: Column<LeaveLedgerRow>[] = [
     {
@@ -111,9 +123,11 @@ export function LeaveLedgerPage() {
         isPending={ledger.isPending}
         error={ledger.error}
         emptyText={
-          onlyMissing
-            ? `${year}년은 전 직원에게 연차가 들어가 있어요.`
-            : `${year}년 대장에 직원이 없어요.`
+          filtering
+            ? '찾는 조건에 맞는 직원이 없어요.'
+            : onlyMissing
+              ? `${year}년은 전 직원에게 연차가 들어가 있어요.`
+              : `${year}년 대장에 직원이 없어요.`
         }
         toolbar={
           <>
@@ -122,6 +136,13 @@ export function LeaveLedgerPage() {
               value={String(year)}
               onChange={(value) => setYear(Number(value))}
               options={yearOptions.map((value) => ({ value: String(value), label: `${value}년` }))}
+            />
+            <Field label="검색" value={keyword} onChange={setKeyword} placeholder="이름·사번" />
+            <Select
+              label="부서"
+              value={department}
+              onChange={setDepartment}
+              options={departmentOptions(ledger.data, (row) => row.departmentName)}
             />
             <Select
               label="보기"
