@@ -13,5 +13,6 @@ export { MoreButton } from './MoreButton';
 export { Sheet } from './Sheet';
 export { ConfirmSheet } from './ConfirmSheet';
 export { SelectSheet } from './SelectSheet';
+export { SignaturePad } from './SignaturePad';
 export type { MarkerType } from './Calendar';
 export type { SelectOption } from './SelectSheet';
