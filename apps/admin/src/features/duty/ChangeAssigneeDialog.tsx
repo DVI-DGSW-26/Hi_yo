@@ -68,5 +68,5 @@ export function ChangeAssigneeDialog({ schedule, members, onClose }: Props) {
 
 function dateText(schedule: DutySchedule): string {
   const base = `${schedule.dutyDate} (${weekdayText(schedule.dutyDate)})`;
-  return schedule.slotCode === null ? base : `${base} · ${slotText(schedule.slotCode)}`;
+  return schedule.slotCode == null ? base : `${base} · ${slotText(schedule.slotCode)}`;
 }

@@ -43,6 +43,6 @@ export function periodText(request: Pick<LeaveRequest, 'startDate' | 'endDate'>)
  */
 export function timeText(request: Pick<LeaveRequest, 'startTime' | 'endTime'>): string | null {
   const { startTime, endTime } = request;
-  if (startTime === null || endTime === null) return null;
+  if (startTime == null || endTime == null) return null;
   return `${startTime.slice(0, 5)} ~ ${endTime.slice(0, 5)}`;
 }

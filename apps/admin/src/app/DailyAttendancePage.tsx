@@ -63,7 +63,7 @@ export function DailyAttendancePage() {
       key: 'checkIn',
       header: '출근',
       render: (row) =>
-        row.checkInAt === null ? orDash(null) : formatKstClock(row.checkInAt, row.workDate),
+        row.checkInAt == null ? orDash(null) : formatKstClock(row.checkInAt, row.workDate),
     },
     {
       key: 'checkOut',
@@ -71,8 +71,8 @@ export function DailyAttendancePage() {
       // 출근은 찍혔는데 퇴근이 없으면 태그가 빠진 것이다. 둘 다 없으면 안 나온 날이라
       // 누락이 아니다. 두 값을 읽은 것이지 근태를 판정한 것이 아니다.
       render: (row) => {
-        if (row.checkOutAt !== null) return formatKstClock(row.checkOutAt, row.workDate);
-        if (row.checkInAt === null) return orDash(null);
+        if (row.checkOutAt != null) return formatKstClock(row.checkOutAt, row.workDate);
+        if (row.checkInAt == null) return orDash(null);
         return <span className="danger">기록 없어요</span>;
       },
     },

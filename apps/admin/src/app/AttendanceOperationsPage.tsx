@@ -57,15 +57,15 @@ export function AttendanceOperationsPage() {
     {
       key: 'checkIn',
       header: '출근',
-      render: (row) => (row.checkInAt === null ? '—' : formatKstClock(row.checkInAt, row.workDate)),
+      render: (row) => (row.checkInAt == null ? '—' : formatKstClock(row.checkInAt, row.workDate)),
     },
     {
       key: 'checkOut',
       header: '퇴근',
       // 출근은 찍혔는데 퇴근이 없으면 태그가 빠진 것이다. 여기서 고칠 줄이 그 줄이다.
       render: (row) => {
-        if (row.checkOutAt !== null) return formatKstClock(row.checkOutAt, row.workDate);
-        if (row.checkInAt === null) return '—';
+        if (row.checkOutAt != null) return formatKstClock(row.checkOutAt, row.workDate);
+        if (row.checkInAt == null) return '—';
         return <span className="danger">기록 없어요</span>;
       },
     },
