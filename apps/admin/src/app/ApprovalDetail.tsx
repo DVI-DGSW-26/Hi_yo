@@ -1,7 +1,16 @@
 import { useState } from 'react';
 import { Link, useParams } from 'react-router';
 import { formatLeaveDays } from '@hr/format';
-import { Button, DetailList, Dialog, Field, StatusText, Table, type Column } from '@/components';
+import {
+  Button,
+  DetailList,
+  Dialog,
+  Field,
+  SignaturePad,
+  StatusText,
+  Table,
+  type Column,
+} from '@/components';
 import { formatKstDateTime } from '@/lib/datetime';
 import { periodText, statusText, statusTone, timeText } from '@/features/approvals/labels';
 import {
@@ -39,6 +48,7 @@ function Loaded({ request }: { request: LeaveRequest }) {
   const decide = useDecideRequest(request.id);
   const [deciding, setDeciding] = useState<'approve' | 'reject'>();
   const [comment, setComment] = useState('');
+  const [signature, setSignature] = useState('');
 
   const decided = request.status !== 'PENDING';
   const time = timeText(request);
@@ -144,10 +154,15 @@ function Loaded({ request }: { request: LeaveRequest }) {
         onConfirm={() => {
           if (deciding === undefined) return;
           decide.mutate(
-            { approved: deciding === 'approve', ...(comment.trim() ? { comment: comment.trim() } : {}) },
+            {
+              approved: deciding === 'approve',
+              ...(comment.trim() ? { comment: comment.trim() } : {}),
+              ...(signature ? { signatureImage: signature } : {}),
+            },
             {
               onSuccess: () => {
                 setComment('');
+                setSignature('');
                 setDeciding(undefined);
               },
             },
@@ -155,6 +170,12 @@ function Loaded({ request }: { request: LeaveRequest }) {
         }}
       >
         <Field label="의견" value={comment} onChange={setComment} maxLength={255} />
+        {/*
+          결재에는 전자서명이 필수다 (`docs/API_신청결재.md` 8장). 손으로 그리면 그
+          서명으로, 비워두면 누른 것으로 서명한다 — 서버가 `CLICK` 일 때는 이미지를
+          받지 않아도 된다고 답했다 (2026-08-31).
+        */}
+        <SignaturePad label="서명" value={signature} onChange={setSignature} />
         {decide.error && <p className="danger">{decide.error.message}</p>}
       </Dialog>
     </section>

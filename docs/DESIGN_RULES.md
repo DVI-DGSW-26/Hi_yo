@@ -162,6 +162,7 @@ HTTP(`@hr/api`)뿐이다.
 | `Field` · `Select` · `FieldGrid` | 입력·고르기와 그 배치. 한 파일(`Field.tsx`)에 있다. 라벨은 필드 위, 필수는 라벨 뒤 `*` |
 | `Button` | 주 동작. `danger`는 되돌릴 수 없는 동작에만 |
 | `Dialog` | 되돌릴 수 없는 동작을 한 번 더 묻는다 |
+| `SignaturePad` | 손으로 그리는 서명칸. 결재의 `IMAGE` 서명에 쓴다. 캔버스 340×160 · 백킹스토어 2배 고정 |
 | `Pager` | 표 아래 쪽 넘김 |
 | `Calendar` | 한 달 격자 (전 직원 연차) |
 | `StatusText` | 상태 글자. 모바일과 같은 규칙 |
