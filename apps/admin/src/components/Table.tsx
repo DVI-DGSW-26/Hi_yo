@@ -74,10 +74,32 @@ export function Table<T>({
               <Message columns={columns.length}>{emptyText}</Message>
             ) : (
               rows.map((row) => (
+                /*
+                 * **누를 수 있는 줄은 키보드로도 열린다** (2026-09-02).
+                 *
+                 * `DESIGN_ADMIN.md` 8장이 「관리팀은 하루 종일 키보드로 입력한다」고
+                 * 적어 뒀는데, 줄은 `onClick` 하나뿐이라 마우스로만 열렸다.
+                 * 직원 목록에서 스무 줄이 전부 그랬다.
+                 *
+                 * `role` 을 바꾸지 않는다 — `role="button"` 을 주면 표의 줄이 아니게 돼서
+                 * 화면 낭독기가 열·행을 읽어주지 못한다. 초점만 받게 하고 Enter·Space 를
+                 * 클릭과 같이 다룬다. 초점 표시는 전역 `:focus-visible` 이 그린다.
+                 */
                 <tr
                   key={keyOf(row)}
                   className={onRowClick ? 'is-clickable' : undefined}
+                  tabIndex={onRowClick ? 0 : undefined}
                   onClick={onRowClick ? () => onRowClick(row) : undefined}
+                  onKeyDown={
+                    onRowClick
+                      ? (event) => {
+                          if (event.key !== 'Enter' && event.key !== ' ') return;
+                          // Space 는 그냥 두면 화면이 한 쪽 내려간다
+                          event.preventDefault();
+                          onRowClick(row);
+                        }
+                      : undefined
+                  }
                 >
                   {columns.map((column) => (
                     <td key={column.key} className={cellClass(column)}>

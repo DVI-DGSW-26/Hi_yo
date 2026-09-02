@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import { useId, type ReactNode } from 'react';
 import './Field.css';
 
 interface Props {
@@ -28,7 +28,15 @@ export function Field({
   placeholder,
   maxLength,
 }: Props) {
-  const id = `field-${label}`;
+  /*
+   * **라벨로 id 를 만들지 않는다** (2026-09-02).
+   *
+   * 한 화면에 같은 라벨이 둘이면 id 가 겹치고, 그때 `htmlFor` 는 **첫 번째 칸만**
+   * 가리킨다 — 두 번째 칸은 라벨 없는 입력이 된다. 당직 상세에서 실제로 그랬다:
+   * 「대상자 추가하기」와 「순번 바꾸기」 대화상자가 둘 다 `순번` 을 받아
+   * `field-순번` 이 두 번 나왔다.
+   */
+  const id = useId();
 
   if (readOnly) {
     return (
@@ -82,7 +90,8 @@ interface SelectProps {
 
 /** 고정 목록에서 고르는 값. 부서·직무·급여 기간처럼 서버가 목록을 주는 것에 쓴다. */
 export function Select({ label, value, onChange, options, placeholder, error }: SelectProps) {
-  const id = `select-${label}`;
+  /* 라벨로 만들지 않는 이유는 `Field` 와 같다 */
+  const id = useId();
 
   return (
     <div className="field">
