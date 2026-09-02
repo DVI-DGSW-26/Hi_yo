@@ -1,8 +1,8 @@
-import { useState } from 'react';
-import { formatMinutes } from '@hr/format';
+import { useState } from 'react';
 import { Field, Select, StatusText, Summary, Table, type Column } from '@/components';
 import { useDailyAttendance, type AttendanceDaily } from '@/features/attendance/api';
 import { judgedText, judgedTone } from '@/features/attendance/labels';
+import { minutesCell, orDash } from '@/lib/cell';
 import { formatKstClock, todayInKst } from '@/lib/datetime';
 import { departmentOptions, matchesKeyword } from '@/lib/listFilter';
 
@@ -58,11 +58,12 @@ export function DailyAttendancePage() {
       sticky: true,
       render: (row) => row.employeeName ?? `직원 ${row.employeeId}`,
     },
-    { key: 'department', header: '부서', render: (row) => row.departmentName ?? '—' },
+    { key: 'department', header: '부서', render: (row) => orDash(row.departmentName) },
     {
       key: 'checkIn',
       header: '출근',
-      render: (row) => (row.checkInAt === null ? '—' : formatKstClock(row.checkInAt, row.workDate)),
+      render: (row) =>
+        row.checkInAt === null ? orDash(null) : formatKstClock(row.checkInAt, row.workDate),
     },
     {
       key: 'checkOut',
@@ -71,7 +72,7 @@ export function DailyAttendancePage() {
       // 누락이 아니다. 두 값을 읽은 것이지 근태를 판정한 것이 아니다.
       render: (row) => {
         if (row.checkOutAt !== null) return formatKstClock(row.checkOutAt, row.workDate);
-        if (row.checkInAt === null) return '—';
+        if (row.checkInAt === null) return orDash(null);
         return <span className="danger">기록 없어요</span>;
       },
     },
@@ -79,44 +80,44 @@ export function DailyAttendancePage() {
       key: 'payroll',
       header: '급여 기준',
       align: 'right',
-      render: (row) => formatMinutes(row.payrollMinutes),
+      render: (row) => minutesCell(row.payrollMinutes),
     },
     {
       key: 'overtime',
       header: '연장',
       align: 'right',
-      render: (row) => formatMinutes(row.overtimeMinutes),
+      render: (row) => minutesCell(row.overtimeMinutes),
     },
     {
       key: 'night',
       header: '야간',
       align: 'right',
-      render: (row) => formatMinutes(row.nightMinutes),
+      render: (row) => minutesCell(row.nightMinutes),
     },
     {
       key: 'duty',
       header: '당직',
       align: 'right',
-      render: (row) => formatMinutes(row.dutyMinutes),
+      render: (row) => minutesCell(row.dutyMinutes),
     },
     {
       key: 'late',
       header: '지각',
       align: 'right',
-      render: (row) => formatMinutes(row.lateMinutes),
+      render: (row) => minutesCell(row.lateMinutes),
     },
     {
       key: 'earlyLeave',
       header: '조퇴',
       align: 'right',
-      render: (row) => formatMinutes(row.earlyLeaveMinutes),
+      render: (row) => minutesCell(row.earlyLeaveMinutes),
     },
     {
       key: 'corrected',
       header: '보정',
       // 보정된 날은 출퇴근 시각이 태그 원본과 다르다. 값을 의심할 때 필요한 표시라
       // 판정과 한 칸에 섞지 않고 따로 둔다 — 성격이 다른 사실이다.
-      render: (row) => (row.corrected ? '보정됨' : '—'),
+      render: (row) => (row.corrected ? '보정됨' : orDash(null)),
     },
     {
       key: 'judged',

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router';
 import { Button, Field, Pager, Select, StatusText, Table, type Column } from '@/components';
+import { orDash } from '@/lib/cell';
 import {
   useDepartments,
   useEmployees,
@@ -44,11 +45,11 @@ export function EmployeesPage() {
 
   const columns: Column<Employee>[] = [
     { key: 'name', header: '성명', sticky: true, render: (row) => row.name },
-    { key: 'employeeNo', header: '사번', render: (row) => row.employeeNo ?? '—' },
-    { key: 'corporation', header: '법인', render: (row) => row.corporation ?? '—' },
-    { key: 'department', header: '부서', render: (row) => row.departmentName ?? '—' },
-    { key: 'job', header: '직무', render: (row) => row.jobName ?? '—' },
-    { key: 'hireDate', header: '입사일', render: (row) => row.hireDate ?? '—' },
+    { key: 'employeeNo', header: '사번', render: (row) => orDash(row.employeeNo) },
+    { key: 'corporation', header: '법인', render: (row) => orDash(row.corporation) },
+    { key: 'department', header: '부서', render: (row) => orDash(row.departmentName) },
+    { key: 'job', header: '직무', render: (row) => orDash(row.jobName) },
+    { key: 'hireDate', header: '입사일', render: (row) => orDash(row.hireDate) },
     {
       key: 'payrollTarget',
       header: '급여대상',

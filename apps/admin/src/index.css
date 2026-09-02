@@ -103,23 +103,33 @@ a {
   text-wrap: pretty;
 }
 
-/* 제목·리드·요약·표를 한 흐름으로 쌓는다. 화면마다 여백을 다시 정하지 않는다. */
+/*
+ * 제목·리드·요약·표를 한 흐름으로 쌓는다. 화면마다 여백을 다시 정하지 않는다.
+ *
+ * **덩어리들이 같은 폭을 쓴다 (2026-09-02).** 각자 내용만큼만 차지하게 뒀더니 오른쪽
+ * 끝이 제각각이 됐다 — 근태 현황을 1586px에서 재보니 제목 줄 620px · 요약 줄 654px ·
+ * 표 1260px 로 계단이 졌고, 직원 목록은 제목 줄이 545px 라 `직원 등록하기` 버튼이
+ * 화면 왼쪽 3분의 1 지점에 떠 있었다.
+ *
+ * `fit-content(100%)` 는 **가장 넓은 덩어리(대개 표)만큼**만 칸을 잡는다. 화면 폭이
+ * 아니다 — 3800px 짜리 화면에서도 칸은 표 폭에서 멈추므로, 폭을 채우던 시절의 문제
+ * (상자 안이 텅 비고 버튼이 화면 끝으로 달아나던 것)가 돌아오지 않는다.
+ */
 .page-blocks {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: fit-content(100%);
   gap: var(--space-block-gap);
 }
 
 /*
  * 제목·설명·주 동작이 한 덩어리로 읽혀야 한다.
  *
- * **폭을 채우지 않는다.** 채우면 넓은 화면에서 제목은 왼쪽 끝, 버튼은 오른쪽 끝에 서고
- * 그 사이가 텅 빈다 — 3800px에서는 눈이 2미터를 건너가야 버튼을 찾는다 (2026-09-01 확인).
- * 설명이 `readWidth`에서 줄바꿈하므로 덩어리는 저절로 읽기 좋은 폭이 된다.
+ * 폭은 `.page-blocks` 가 잡는다. 주 동작은 그 칸의 오른쪽 끝 — 곧 **표의 오른쪽
+ * 모서리와 같은 선**에 선다. 설명은 `readWidth` 에서 줄바꿈하므로 제목 쪽은 그대로
+ * 읽기 좋은 폭이다.
  */
 .page-head {
   display: flex;
-  align-self: flex-start;
   align-items: flex-start;
   gap: var(--space-block-gap);
   max-width: 100%;
@@ -160,10 +170,9 @@ a {
   display: flex;
   flex-direction: column;
   /*
-   * 상자는 내용만큼만 차지한다. 표·요약·제목 줄과 같은 규칙이다.
-   * 늘리면 넓은 화면에서 안쪽이 텅 비고, 실행 줄의 버튼이 화면 오른쪽 끝으로 달아난다.
+   * 폭은 `.page-blocks` 가 잡는다 — 표·요약·제목 줄과 같은 칸을 쓴다.
+   * 칸 자체가 가장 넓은 덩어리에서 멈추므로 화면 끝까지 늘어나지 않는다.
    */
-  align-self: flex-start;
   max-width: 100%;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-chip);
@@ -220,9 +229,10 @@ a {
 /* 화면 공통 — 여러 화면이 같이 쓴다. 화면별 CSS 에 다시 적지 않는다. */
 
 /* 여백은 .page-blocks 의 gap 이 잡는다. 여기서 margin 을 주지 않는다. */
+/* 밑줄이 칸 끝까지 늘어나지 않게 글자 폭만 쓴다. */
 .back-link {
   display: inline-block;
-  align-self: flex-start;
+  justify-self: start;
   font-size: var(--font-size-label);
   line-height: var(--line-height-label);
   color: var(--color-text-body);
