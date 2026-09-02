@@ -52,8 +52,20 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  cta: { height: 54 },
-  inline: { height: spacing.rowHeight, paddingHorizontal: 16 },
+  /*
+   * 높이를 고정하지 않는다. `minHeight`만 준다 (`DESIGN_RULES.md` 4·7장).
+   *
+   * 지금은 라벨에 `maxFontSizeMultiplier` 1.4가 걸려 있어 글자가 29px에서 멈추고,
+   * 그래서 54·44 안에 한 줄로 들어간다 — **고정 높이로 두어도 오늘은 안 잘린다.**
+   * 다만 상한을 올리거나 라벨이 한 글자만 길어져도 조용히 잘린다. 실측해 보니
+   * 상한이 없으면 `이전 달 보기`가 2배에서 두 줄이 되어 44 안에서 잘렸다 (2026-09-03).
+   *
+   * `minHeight`로 두면 넘칠 때만 자란다. 상하 여백은 주지 않았다 — 8을 주면 글꼴
+   * 1.35배(iOS 기본 최대)에서 버튼이 44에서 45로 자란다. 안 깨지는 자리를 건드리지 않는다.
+   * 입력칸(`TextField`)이 같은 이유로 이미 `minHeight: 54`를 쓰고 있다.
+   */
+  cta: { minHeight: 54 },
+  inline: { minHeight: spacing.rowHeight, paddingHorizontal: 16 },
   primary: { backgroundColor: colors.primary },
   primaryPressed: { backgroundColor: colors.primaryPress },
   secondary: {
