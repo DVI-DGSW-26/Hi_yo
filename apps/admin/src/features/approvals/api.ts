@@ -61,6 +61,13 @@ export interface LeaveRequest {
 export interface DecisionInput {
   approved: boolean;
   comment?: string;
+  /**
+   * 손으로 그린 서명. **base64 문자열이고 data URL 이 아니다** (서버 답변 2026-08-31).
+   *
+   * 비우면 `CLICK` 으로 보낸다 — 누른 것 자체가 서명이라는 뜻이고, 서버가 그때는
+   * 이미지를 받지 않아도 된다고 했다.
+   */
+  signatureImage?: string;
 }
 
 export const approvalKeys = {
@@ -110,7 +117,10 @@ export function useDecideRequest(id: number) {
       const { data } = await api.post<LeaveRequest>(`/requests/${id}/decision`, {
         approved: input.approved,
         ...(input.comment ? { comment: input.comment } : {}),
-        signatureMethod: 'CLICK',
+        // 그린 서명이 있으면 그것으로, 없으면 누른 것으로 서명한다
+        ...(input.signatureImage
+          ? { signatureMethod: 'IMAGE', signatureImage: input.signatureImage }
+          : { signatureMethod: 'CLICK' }),
       });
       return data;
     },
