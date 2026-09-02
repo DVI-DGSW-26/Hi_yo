@@ -26,7 +26,14 @@ interface Props {
  */
 export function Summary({ items, note }: Props) {
   return (
-    <div className="summary">
+    /*
+     * 안내문이 없으면 줄이 내용만큼만 차지한다 (`is-hug`).
+     *
+     * 폭을 채우면 남는 자리를 안내문이 가져가는데, 안내문이 없는 화면은 그 자리가
+     * 그대로 빈다 — 연차 결재에서 재보니 932px 중 93px만 차 있었다 (2026-09-02).
+     * 숫자 한둘을 크게 두는 줄이라 늘려서 얻을 것이 없다.
+     */
+    <div className={note ? 'summary' : 'summary is-hug'}>
       {items.map((item) => (
         <div key={item.label} className="summary-cell">
           <span className="summary-label">{item.label}</span>

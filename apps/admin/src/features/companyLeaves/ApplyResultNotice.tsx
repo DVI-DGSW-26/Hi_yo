@@ -66,7 +66,7 @@ function SkippedList({
             {employee.employeeName ?? `직원 ${employee.employeeId}`}
             {employee.departmentName ? ` · ${employee.departmentName}` : ''} —{' '}
             {/* 잔여는 서버가 준 값을 그대로 쓴다. 여기서 더하거나 빼지 않는다. */}
-            {employee.remaining === null ? '' : `잔여 ${employee.remaining}일 · `}
+            {employee.remaining == null ? '' : `잔여 ${employee.remaining}일 · `}
             {employee.reason ?? '사유를 받지 못했어요'}
           </li>
         ))}

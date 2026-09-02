@@ -65,11 +65,11 @@ export function CorrectionDialog({ open, row, onClose }: Props) {
       <p className="muted">
         {row?.employeeName ?? `직원 ${row?.employeeId}`} · {row?.workDate} · 지금
         {' '}
-        {row?.checkInAt === null || row === undefined
+        {row?.checkInAt == null || row === undefined
           ? '출근 기록 없음'
           : `출근 ${formatKstClock(row.checkInAt, row.workDate)}`}
         {' · '}
-        {row?.checkOutAt === null || row === undefined
+        {row?.checkOutAt == null || row === undefined
           ? '퇴근 기록 없음'
           : `퇴근 ${formatKstClock(row.checkOutAt, row.workDate)}`}
       </p>
