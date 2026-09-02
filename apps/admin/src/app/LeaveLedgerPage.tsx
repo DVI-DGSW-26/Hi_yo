@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { formatLeaveDays } from '@hr/format';
 import { Field, Select, Summary, Table, type Column } from '@/components';
+import { daysCell, orDash } from '@/lib/cell';
 import { departmentOptions, matchesKeyword } from '@/lib/listFilter';
 import {
   selectableLedgerYears,
@@ -63,9 +64,9 @@ export function LeaveLedgerPage() {
       sticky: true,
       render: (row) => row.employeeName ?? `직원 ${row.employeeId}`,
     },
-    { key: 'employeeNo', header: '사번', render: (row) => row.employeeNo ?? '—' },
-    { key: 'corporation', header: '법인', render: (row) => row.corporation ?? '—' },
-    { key: 'department', header: '부서', render: (row) => row.departmentName ?? '—' },
+    { key: 'employeeNo', header: '사번', render: (row) => orDash(row.employeeNo) },
+    { key: 'corporation', header: '법인', render: (row) => orDash(row.corporation) },
+    { key: 'department', header: '부서', render: (row) => orDash(row.departmentName) },
     {
       key: 'granted',
       header: '총 연차',
@@ -78,12 +79,12 @@ export function LeaveLedgerPage() {
           formatLeaveDays(row.granted)
         ),
     },
-    { key: 'used', header: '사용', align: 'right', render: (row) => formatLeaveDays(row.used) },
+    { key: 'used', header: '사용', align: 'right', render: (row) => daysCell(row.used) },
     {
       key: 'pending',
       header: '결재 대기',
       align: 'right',
-      render: (row) => formatLeaveDays(row.pending),
+      render: (row) => daysCell(row.pending),
     },
     {
       key: 'remaining',

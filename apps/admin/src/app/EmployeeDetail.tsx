@@ -117,13 +117,21 @@ export function EmployeeDetail() {
                 ),
               },
               { label: '연락처', value: detail.phone ?? '아직이에요' },
-              { label: '이메일', value: detail.email ?? '아직이에요' },
               {
                 label: '계좌',
                 value: detail.bankAccount?.bankAccount
                   ? `${detail.bankAccount.bankName ?? ''} ${detail.bankAccount.bankAccount}`.trim()
                   : '아직이에요',
               },
+              /*
+               * 이메일만 `wide` 다. 200px 칸에서는 회사 도메인이 붙은 주소가 네 줄로
+               * 접혀 상자 높이를 혼자 키웠다 (2026-09-02 확인). 한 줄을 쓰되
+               * `readWidth` 를 넘지 않는다.
+               *
+               * 마지막에 둔 이유 — `wide` 는 한 행을 통째로 쓰므로 가운데 두면 그 행의
+               * 나머지 칸이 빈다.
+               */
+              { label: '이메일', value: detail.email ?? '아직이에요', wide: true },
             ]}
           />
         </div>

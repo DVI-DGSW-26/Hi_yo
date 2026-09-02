@@ -3,6 +3,7 @@ import { formatMinutes } from '@hr/format';
 import { Field, Select, StatusText, Table, type Column } from '@/components';
 import { useWeeklyWork, type WeeklyWorkSummary } from '@/features/attendance/api';
 import { alertLevelText, alertLevelTone } from '@/features/attendance/labels';
+import { minutesCell, orDash } from '@/lib/cell';
 import { dateRangeText, formatKstDateTime, todayInKst } from '@/lib/datetime';
 import { departmentOptions, matchesKeyword } from '@/lib/listFilter';
 
@@ -49,7 +50,7 @@ export function WeeklyHoursPage() {
       sticky: true,
       render: (row) => row.employeeName ?? `직원 ${row.employeeId}`,
     },
-    { key: 'department', header: '부서', render: (row) => row.departmentName ?? '—' },
+    { key: 'department', header: '부서', render: (row) => orDash(row.departmentName) },
     {
       key: 'week',
       header: '주간',
@@ -59,19 +60,19 @@ export function WeeklyHoursPage() {
       key: 'total',
       header: '총 근로',
       align: 'right',
-      render: (row) => formatMinutes(row.totalMinutes),
+      render: (row) => minutesCell(row.totalMinutes),
     },
     {
       key: 'normal',
       header: '소정',
       align: 'right',
-      render: (row) => formatMinutes(row.normalMinutes),
+      render: (row) => minutesCell(row.normalMinutes),
     },
     {
       key: 'overtime',
       header: '연장',
       align: 'right',
-      render: (row) => formatMinutes(row.overtimeMinutes),
+      render: (row) => minutesCell(row.overtimeMinutes),
     },
     {
       key: 'remaining',
@@ -104,7 +105,7 @@ export function WeeklyHoursPage() {
     {
       key: 'alertedAt',
       header: '알림 보냄',
-      render: (row) => (row.alertedAt === null ? '—' : formatKstDateTime(row.alertedAt)),
+      render: (row) => (row.alertedAt === null ? orDash(null) : formatKstDateTime(row.alertedAt)),
     },
   ];
 
