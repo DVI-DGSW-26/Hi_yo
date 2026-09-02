@@ -56,7 +56,8 @@ import { colors } from '@hr/tokens';
 import { typography, fontFamily } from '@hr/tokens';
 ```
 
-폰트는 **Pretendard** 하나. weight는 **400과 500만**. 600 이상은 프로젝트에 존재하지 않는다.
+폰트는 **Pretendard** 하나. 모바일의 weight는 **400과 500만**이다. **관리팀 화면은 600을 쓴다** —
+화면 제목과 요약 값 둘뿐이고 `DESIGN_ADMIN.md` 11장에서 확정했다 (2026-08-31). 700 이상은 없다.
 
 | 토큰 | 크기 | weight | lineHeight | letterSpacing | 색 | 쓰는 곳 |
 |---|---|---|---|---|---|---|

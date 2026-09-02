@@ -4,6 +4,7 @@ import { Field, Select, StatusText, Table, type Column } from '@/components';
 import { useWeeklyWork, type WeeklyWorkSummary } from '@/features/attendance/api';
 import { alertLevelText, alertLevelTone } from '@/features/attendance/labels';
 import { dateRangeText, formatKstDateTime, todayInKst } from '@/lib/datetime';
+import { departmentOptions, matchesKeyword } from '@/lib/listFilter';
 
 /**
  * A-503 52시간 근접 알림 현황
@@ -22,8 +23,24 @@ import { dateRangeText, formatKstDateTime, todayInKst } from '@/lib/datetime';
 export function WeeklyHoursPage() {
   const [date, setDate] = useState(() => todayInKst());
   const [onlyAlerted, setOnlyAlerted] = useState(true);
+  const [keyword, setKeyword] = useState('');
+  const [department, setDepartment] = useState('');
 
   const weekly = useWeeklyWork(date, onlyAlerted);
+
+  /*
+   * **단계로 거르는 것은 서버가 한다** (`onlyAlerted`). 여기서 하는 것은 이름·부서로
+   * 찾는 것뿐이고, 서버가 준 목록을 좁혀 보여줄 뿐 판정에는 손대지 않는다.
+   *
+   * 주 목록은 통째로 온다. 쪽이 나뉘지 않으므로 화면에서 걸러도 다음 쪽에 숨는
+   * 사람이 없다 (`lib/listFilter.ts`).
+   */
+  const rows = weekly.data?.filter(
+    (row) =>
+      (department === '' || row.departmentName === department) &&
+      matchesKeyword(keyword, row.employeeName),
+  );
+  const filtering = keyword.trim() !== '' || department !== '';
 
   const columns: Column<WeeklyWorkSummary>[] = [
     {
@@ -104,18 +121,27 @@ export function WeeklyHoursPage() {
 
       <Table
         columns={columns}
-        rows={weekly.data}
+        rows={rows}
         keyOf={(row) => row.employeeId}
         isPending={weekly.isPending}
         error={weekly.error}
         emptyText={
-          onlyAlerted
-            ? '이 주에 48시간을 넘긴 사람이 없어요.'
-            : '이 주에 집계된 근무 기록이 없어요.'
+          filtering
+            ? '찾는 조건에 맞는 사람이 없어요.'
+            : onlyAlerted
+              ? '이 주에 48시간을 넘긴 사람이 없어요.'
+              : '이 주에 집계된 근무 기록이 없어요.'
         }
         toolbar={
           <>
             <Field label="기준일" value={date} onChange={setDate} type="date" required />
+            <Field label="검색" value={keyword} onChange={setKeyword} placeholder="이름" />
+            <Select
+              label="부서"
+              value={department}
+              onChange={setDepartment}
+              options={departmentOptions(weekly.data, (row) => row.departmentName)}
+            />
             <Select
               label="보기"
               value={onlyAlerted ? 'alerted' : 'all'}

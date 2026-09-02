@@ -4,6 +4,7 @@ import { Field, Select, StatusText, Summary, Table, type Column } from '@/compon
 import { useDailyAttendance, type AttendanceDaily } from '@/features/attendance/api';
 import { judgedText, judgedTone } from '@/features/attendance/labels';
 import { formatKstClock, todayInKst } from '@/lib/datetime';
+import { departmentOptions, matchesKeyword } from '@/lib/listFilter';
 
 /**
  * A-501 전 직원 근태 현황
@@ -29,6 +30,8 @@ import { formatKstClock, todayInKst } from '@/lib/datetime';
 export function DailyAttendancePage() {
   const [date, setDate] = useState(() => todayInKst());
   const [onlyUnconfirmed, setOnlyUnconfirmed] = useState(false);
+  const [keyword, setKeyword] = useState('');
+  const [department, setDepartment] = useState('');
 
   const daily = useDailyAttendance(date);
 
@@ -36,9 +39,17 @@ export function DailyAttendancePage() {
    * 거르는 것을 화면에서 한다. 52시간 현황과 다른 판단이다 — 그쪽은 서버가 `onlyAlerted`를
    * 주고 단계도 서버가 매기니 화면이 다시 거르면 기준이 어긋난다. 여기는 서버에 거르는
    * 파라미터가 없고 `confirmed`가 서버가 준 참·거짓 그대로다. 다시 판정하는 것이 아니다.
+   *
+   * **하루치가 통째로 온다.** 쪽이 나뉘지 않으므로 화면에서 걸러도 다음 쪽에 숨는
+   * 사람이 없다 (`lib/listFilter.ts`).
    */
-  const rows =
-    daily.data && onlyUnconfirmed ? daily.data.filter((row) => !row.confirmed) : daily.data;
+  const rows = daily.data?.filter(
+    (row) =>
+      (!onlyUnconfirmed || !row.confirmed) &&
+      (department === '' || row.departmentName === department) &&
+      matchesKeyword(keyword, row.employeeName),
+  );
+  const filtering = keyword.trim() !== '' || department !== '';
 
   const columns: Column<AttendanceDaily>[] = [
     {
@@ -153,13 +164,22 @@ export function DailyAttendancePage() {
         isPending={daily.isPending}
         error={daily.error}
         emptyText={
-          onlyUnconfirmed
-            ? '이 날은 전 직원 판정이 끝났어요.'
-            : '이 날에 집계된 근태 기록이 없어요.'
+          filtering
+            ? '찾는 조건에 맞는 사람이 없어요.'
+            : onlyUnconfirmed
+              ? '이 날은 전 직원 판정이 끝났어요.'
+              : '이 날에 집계된 근태 기록이 없어요.'
         }
         toolbar={
           <>
             <Field label="날짜" value={date} onChange={setDate} type="date" required />
+            <Field label="검색" value={keyword} onChange={setKeyword} placeholder="이름" />
+            <Select
+              label="부서"
+              value={department}
+              onChange={setDepartment}
+              options={departmentOptions(daily.data, (row) => row.departmentName)}
+            />
             <Select
               label="보기"
               value={onlyUnconfirmed ? 'unconfirmed' : 'all'}
