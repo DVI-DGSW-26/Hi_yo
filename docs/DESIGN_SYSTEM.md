@@ -122,7 +122,6 @@ import { spacing, radius } from '@hr/tokens';
 | 라운드 | 값 | 쓰는 곳 |
 |---|---|---|
 | `radius.button` | 14 | 버튼 |
-| `radius.gauge` | 5 | 게이지 |
 | `radius.chip` | 8 | 칩, 입력 필드 |
 | (달력 날짜) | 10 | Calendar 내부 고정 |
 
@@ -138,7 +137,6 @@ import { spacing, radius } from '@hr/tokens';
 ├──────────────────────┤
 │ Section              │  흰 배경, 좌우 24, 상하 28
 │   headline           │
-│   Gauge              │
 ├──────────────────────┤
 │ SectionDivider (10)  │  회색 띠, 화면 전체 폭
 ├──────────────────────┤
@@ -168,7 +166,7 @@ import { spacing, radius } from '@hr/tokens';
 ## 5. 컴포넌트
 
 ```ts
-import { Button, ListRow, TextField, SectionTitle, Section, SectionDivider, Gauge, StatusText, Calendar, Sheet, ConfirmSheet, SelectSheet, QueryState, MutationError } from '@/components';
+import { Button, ListRow, TextField, SectionTitle, Section, SectionDivider, StatusText, Calendar, Sheet, ConfirmSheet, SelectSheet, QueryState, MutationError } from '@/components';
 ```
 
 **새 컴포넌트를 즉석에서 만들지 않는다.** 아래를 조합한다. 없으면 사람에게 묻는다.
@@ -242,14 +240,6 @@ TODO: 그 장이 남겨둔 것 둘 — 모바일의 **필수 표시**와 **읽�
 <SectionDivider />
 <Section>...</Section>
 ```
-
-### Gauge
-
-```tsx
-<Gauge ratio={0.73} caption="주 52시간까지 13시간 40분" captionRight="73%" />
-```
-
-`ratio`는 0~1. 1을 넘겨도 바가 깨지지 않는다. **비율 계산은 서버 값으로 하고 앱에서 근무시간을 합산하지 않는다.**
 
 ### StatusText
 
