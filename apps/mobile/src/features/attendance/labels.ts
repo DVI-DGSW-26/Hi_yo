@@ -6,7 +6,7 @@
  *
  * **관리팀 화면(`apps/admin`의 같은 이름 파일)과 문구를 맞춰 둔다.** 같은 값을 두 앱이
  * 다르게 말하면 안 된다. 한쪽을 고치면 다른 쪽도 고친다 — 공용 자리로 올릴지는
- * 문구 규칙(`DESIGN_RULES.md` 6장)이 정해질 때 같이 본다.
+ * 공용 자리로 올릴지는 아직 정하지 않았다 (`DESIGN_RULES.md` 8장).
  */
 
 const LEVEL_LABEL: Record<number, string> = {
