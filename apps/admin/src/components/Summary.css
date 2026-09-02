@@ -20,6 +20,11 @@
   border-radius: var(--radius-chip);
 }
 
+/* 안내문이 없는 줄. 내용만큼만 차지한다 — 늘리면 그 자리가 그대로 빈다. */
+.summary.is-hug {
+  justify-self: start;
+}
+
 .summary-cell {
   display: flex;
   flex-direction: column;
