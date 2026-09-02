@@ -17,6 +17,8 @@
  * **토큰을 로그·오류 메시지에 넣지 않는다** (`CLAUDE.md` 2장).
  */
 
+import { queryClient } from './queryClient';
+
 const TOKEN_KEY = 'hr.accessToken';
 /** 401 자동 재로그인을 한 번만 하기 위한 표시 */
 const RETRIED_KEY = 'hr.loginRetried';
@@ -72,9 +74,17 @@ export function markAuthenticated(): void {
   writeSession(RETRIED_KEY, null);
 }
 
-/** 로그아웃 — 보관한 토큰을 지우는 것이 전부다. 전 서비스 동시 로그아웃은 아직 없다 */
+/**
+ * 로그아웃 — 토큰을 지우고 **받아 둔 것도 같이 버린다.** 전 서비스 동시 로그아웃은 아직 없다.
+ *
+ * 지금 로그아웃은 `window.location`으로 페이지를 통째로 옮겨서 캐시가 어차피 날아간다.
+ * 그래도 여기서 비운다 — **화면 안에서 계정을 바꾸는 길이 생기는 순간** 전 직원 급여와
+ * 주민번호가 앞사람 화면에 남는다. 모바일은 그 일이 이미 일어난다(앱이 살아 있다).
+ * 두 앱이 같은 자리에서 같은 것을 보장하게 둔다 (2026-09-03).
+ */
 export function clearToken(): void {
   memoryToken = null;
+  queryClient.clear();
   writeSession(TOKEN_KEY, null);
 }
 

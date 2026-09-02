@@ -1,9 +1,9 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { QueryClientProvider } from '@tanstack/react-query';
 import { createBrowserRouter, RouterProvider } from 'react-router';
-import { ApiError } from '@hr/api';
 import { applyTokens } from '@/lib/applyTokens';
+import { queryClient } from '@/lib/queryClient';
 import { AppShell } from '@/app/AppShell';
 import { AuthCallback } from '@/app/AuthCallback';
 import { Home } from '@/app/Home';
@@ -26,23 +26,6 @@ import { LeaveLedgerPage } from '@/app/LeaveLedgerPage';
 import { ApprovalsPage } from '@/app/ApprovalsPage';
 import { ApprovalDetail } from '@/app/ApprovalDetail';
 import './index.css';
-
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: 30_000,
-      // 권한 없음·업무 규칙 위반은 다시 불러도 같은 답이 온다. 재시도는 연결·서버 문제에만 한다.
-      retry: (failureCount, error) => {
-        if (error instanceof ApiError && !error.isRetryable) return false;
-        return failureCount < 1;
-      },
-    },
-    mutations: {
-      // 자동 재시도를 켜지 않는다. 급여 확정·발급처럼 두 번 부르면 안 되는 것들이 있다.
-      retry: false,
-    },
-  },
-});
 
 const router = createBrowserRouter([
   // 로그인 콜백은 좌측 메뉴 밖에 둔다. 아직 누가 로그인했는지 모른다.
