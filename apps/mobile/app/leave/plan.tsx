@@ -13,7 +13,16 @@ import { useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { formatLeaveDays } from '@hr/format';
 import { colors, spacing, typography } from '@hr/tokens';
-import { Button, Calendar, ListRow, QueryState, Section, SectionDivider, SectionTitle } from '@/components';
+import {
+  Button,
+  Calendar,
+  ListRow,
+  QueryState,
+  Section,
+  SectionDivider,
+  SectionTitle,
+  SignaturePad,
+} from '@/components';
 import { useLeaveBalance, useLeaveCalendar } from '@/features/leave/api';
 
 /**
@@ -46,6 +55,7 @@ const HALF_DAY = 0.5;
 export default function LeavePlanScreen() {
   const [month, setMonth] = useState(() => new Date());
   const [picked, setPicked] = useState<Record<string, PlanKind>>({});
+  const [signature, setSignature] = useState('');
 
   const balance = useLeaveBalance();
   const calendar = useLeaveCalendar(
@@ -161,6 +171,18 @@ export default function LeavePlanScreen() {
             고른 날을 바꾸려면 3일 전까지 담당자에게 말해주세요. 적어 낸 날은 그 달 안에
             모두 써야 해요.
           </Text>
+        </Section>
+
+        <SectionDivider />
+
+        <Section>
+          <SectionTitle title="서명" />
+          {/*
+            서식의 「제출자 : ______ (서명 또는 인)」 자리다.
+            **보낼 곳이 아직 없다** — 계획서를 낼 경로도 서명을 붙일 자리도 없다.
+            경로가 열리면 이 값을 그대로 실어 보낸다 (물어볼 것 11·12번).
+          */}
+          <SignaturePad label="제출자 서명" value={signature} onChange={setSignature} />
         </Section>
       </ScrollView>
     </>
