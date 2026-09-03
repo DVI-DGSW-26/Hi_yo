@@ -7,12 +7,17 @@
   ],
   "scripts": {
     "mobile": "npm run start --workspace @hr/mobile",
-    "admin": "npm run dev --workspace @hr/admin"
+    "admin": "npm run dev --workspace @hr/admin",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "_overrides_note": "네이티브 빌드는 같은 모듈을 한 버전만 담을 수 있다. expo-modules-core@57.0.13 이 worklets ≤0.10 만 받는데 expo-router 가 0.12 를 끌고 와 C++ 컴파일이 깨졌다. react 는 Expo SDK 57 이 지정한 19.2.3 으로 맞춘다.",
   "overrides": {
     "react": "19.2.3",
     "react-native-reanimated": "4.5.1",
     "react-native-worklets": "0.10.1"
+  },
+  "devDependencies": {
+    "vitest": "^4.1.11"
   }
 }

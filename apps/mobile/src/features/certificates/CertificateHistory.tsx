@@ -33,7 +33,8 @@ export function CertificateHistory({ onSelect }: { onSelect: (id: number) => voi
             {data.map((certificate) => (
               <ListRow
                 key={certificate.id}
-                label={formatInKst(certificate.issuedAt, 'yyyy.MM.dd')}
+                // 발급 이력은 해를 넘긴다. 값 하나만 서는 자리라 긴 형식을 쓴다 (`DESIGN_RULES.md` 8장).
+                label={formatInKst(certificate.issuedAt, 'yyyy년 M월 d일')}
                 value={certificate.purpose ?? undefined}
                 placeholder="용도 없이 발급했어요"
                 onPress={() => onSelect(certificate.id)}

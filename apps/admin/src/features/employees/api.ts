@@ -216,3 +216,52 @@ export function useAssignEmployeeNo(id: number) {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: employeeKeys.all }),
   });
 }
+
+/**
+ * 세콤 인사정보를 직원으로 옮긴 결과 (`PersonSyncResult`).
+ *
+ * 스키마를 살아 있는 `/v3/api-docs`에서 확인했다 (2026-09-03). 문서에는 필드 이름까지
+ * 적혀 있지 않았다.
+ */
+export interface PersonSyncResult {
+  /** 세콤에서 읽은 사람 수 */
+  read: number;
+  /** 새로 만든 직원 수 */
+  created: number;
+  /** 비어 있던 항목을 채운 직원 수 */
+  updated: number;
+  /**
+   * 넣지 못한 사람과 이유.
+   *
+   * **화면에서 지우면 안 되는 값이다.** 스펙이 "조용히 빠지면 그 사람 근태가 통째로
+   * 사라진다"고 적고 있다.
+   */
+  skipped: SyncSkipped[];
+}
+
+/** `Skipped`. 셋 다 있을 것으로 보이지만 스펙이 필수로 표시하지 않아 없을 수 있게 둔다 */
+export interface SyncSkipped {
+  employeeId: number | null;
+  employeeName: string | null;
+  reason: string | null;
+}
+
+/**
+ * 세콤 인사정보를 직원으로 옮긴다.
+ *
+ * **세콤이 아는 것만 채운다.** 쓸 만한 값은 이름·카드번호·입사일 셋뿐이고 사번과 부서는
+ * 비어 있다. 주민번호는 비밀키가 없어 수신 때 버려진다.
+ *
+ * **이미 있는 값은 덮어쓰지 않고, 세콤 명단에서 빠져도 지우지 않는다.** 관리팀이 고친
+ * 이름을 세콤이 되돌리면 안 되고, 퇴사 이력과 과거 급여가 남아야 하기 때문이다.
+ */
+export function useSyncSecom() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async () => {
+      const { data } = await api.post<PersonSyncResult>('/employees/sync-secom');
+      return data;
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: employeeKeys.all }),
+  });
+}

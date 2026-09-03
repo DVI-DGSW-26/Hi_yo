@@ -1,10 +1,12 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router';
-import { Button, Field, Pager, Select, StatusText, Table, type Column } from '@/components';
+import { Button, Dialog, Field, Pager, Select, StatusText, Table, type Column } from '@/components';
 import { orDash } from '@/lib/cell';
+import { SyncSecomNotice } from '@/features/employees/SyncSecomNotice';
 import {
   useDepartments,
   useEmployees,
+  useSyncSecom,
   type Employee,
   type EmployeeListFilter,
   type EmploymentStatus,
@@ -33,6 +35,8 @@ export function EmployeesPage() {
   const [status, setStatus] = useState<EmploymentStatus | ''>('');
   const [departmentId, setDepartmentId] = useState('');
   const [page, setPage] = useState(0);
+  const [syncing, setSyncing] = useState(false);
+  const sync = useSyncSecom();
 
   const filter: EmployeeListFilter = {
     page,
@@ -58,21 +62,19 @@ export function EmployeesPage() {
     {
       key: 'residentNo',
       header: '주민번호',
-      render: (row) =>
-        row.residentNoRegistered ? (
-          '등록됨'
-        ) : (
-          <StatusText label="없음" tone="error" />
-        ),
+      /*
+       * **빨갛게 두지 않는다** (`DESIGN_RULES.md` 2장). 빨강의 기준은 「여기서 고칠 수
+       * 있는가」인데 **이 화면에 주민번호를 등록할 경로가 없다.** 46명이 통째로 빨개지면
+       * 그 색을 무시하는 법만 배운다 — 그 규칙이 바로 이 화면을 보고 만들어졌다 (2026-09-01).
+       */
+      render: (row) => (row.residentNoRegistered ? '등록됨' : <StatusText label="없음" />),
     },
     {
       key: 'status',
       header: '재직상태',
       render: (row) => (
-        <StatusText
-          label={row.employmentStatusLabel ?? row.employmentStatus}
-          tone={row.employmentStatus === 'RESIGNED' ? 'error' : 'neutral'}
-        />
+        // 퇴사는 **오류가 아니라 끝난 사실이다.** 빨갛게 두지 않는다 (2장).
+        <StatusText label={row.employmentStatusLabel ?? row.employmentStatus} />
       ),
     },
   ];
@@ -94,6 +96,11 @@ export function EmployeesPage() {
           </p>
         </div>
         <div className="page-head-action">
+          {/*
+            **여기 primary 는 하나뿐이다** (`DESIGN_RULES.md` 1장 6번). 세콤에서 가져오기는
+            가끔 쓰는 동작이라 secondary 다 — 이 화면의 주 동작은 직원을 등록하는 것이다.
+          */}
+          <Button label="세콤에서 가져오기" onClick={() => setSyncing(true)} />
           <Button
             label="직원 등록하기"
             variant="primary"
@@ -101,6 +108,8 @@ export function EmployeesPage() {
           />
         </div>
       </div>
+
+      {sync.data && <SyncSecomNotice result={sync.data} />}
 
       <Table
         columns={columns}
@@ -142,6 +151,25 @@ export function EmployeesPage() {
       />
 
       <Pager page={employees.data} onChange={setPage} unit="명" />
+
+      {/*
+        직원을 만드는 동작이라 한 번 더 묻는다. **지우는 경로가 없다** —
+        스펙에 `DELETE /employees` 가 없어서 잘못 들어온 사람을 되돌릴 수 없다.
+      */}
+      <Dialog
+        open={syncing}
+        title="세콤에서 직원 가져오기"
+        description="세콤 인사정보에 있는 사람을 직원으로 만들어요. 이미 있는 값은 덮어쓰지 않고, 세콤에서 빠진 사람도 지우지 않아요. 다만 잘못 들어온 직원을 지우는 경로가 없어요."
+        confirmLabel="가져오기"
+        loading={sync.isPending}
+        onClose={() => setSyncing(false)}
+        onConfirm={() => sync.mutate(undefined, { onSuccess: () => setSyncing(false) })}
+      >
+        <p className="muted">
+          세콤이 아는 것은 이름·카드번호·입사일뿐이에요. 사번과 부서는 비어 있어요.
+        </p>
+        {sync.error && <p className="danger">{sync.error.message}</p>}
+      </Dialog>
     </section>
   );
 }
