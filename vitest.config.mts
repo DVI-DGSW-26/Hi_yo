@@ -34,7 +34,19 @@ export default defineConfig({
         },
       },
       {
-        resolve: { alias: { '@': dir('./apps/mobile/src') } },
+        resolve: {
+          alias: {
+            '@': dir('./apps/mobile/src'),
+            /*
+             * **네이티브 모듈을 노드에서 읽히게만 한다** (`tests/stubs`).
+             * 테스트하는 함수들은 이것들을 쓰지 않는데, 같은 파일 위에서 불러오기 때문에
+             * 대역이 없으면 모듈을 못 찾아 파일 자체를 읽을 수 없다.
+             * 대역이 값을 돌려주는 곳은 `createURL` 하나뿐이고 나머지는 타면 던진다.
+             */
+            'expo-linking': dir('./tests/stubs/expo-linking.ts'),
+            'expo-secure-store': dir('./tests/stubs/expo-secure-store.ts'),
+          },
+        },
         test: {
           name: 'mobile',
           include: ['apps/mobile/src/**/*.test.ts'],
