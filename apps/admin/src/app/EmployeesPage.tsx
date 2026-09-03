@@ -62,21 +62,19 @@ export function EmployeesPage() {
     {
       key: 'residentNo',
       header: '주민번호',
-      render: (row) =>
-        row.residentNoRegistered ? (
-          '등록됨'
-        ) : (
-          <StatusText label="없음" tone="error" />
-        ),
+      /*
+       * **빨갛게 두지 않는다** (`DESIGN_RULES.md` 2장). 빨강의 기준은 「여기서 고칠 수
+       * 있는가」인데 **이 화면에 주민번호를 등록할 경로가 없다.** 46명이 통째로 빨개지면
+       * 그 색을 무시하는 법만 배운다 — 그 규칙이 바로 이 화면을 보고 만들어졌다 (2026-09-01).
+       */
+      render: (row) => (row.residentNoRegistered ? '등록됨' : <StatusText label="없음" />),
     },
     {
       key: 'status',
       header: '재직상태',
       render: (row) => (
-        <StatusText
-          label={row.employmentStatusLabel ?? row.employmentStatus}
-          tone={row.employmentStatus === 'RESIGNED' ? 'error' : 'neutral'}
-        />
+        // 퇴사는 **오류가 아니라 끝난 사실이다.** 빨갛게 두지 않는다 (2장).
+        <StatusText label={row.employmentStatusLabel ?? row.employmentStatus} />
       ),
     },
   ];
