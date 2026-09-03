@@ -1,29 +1,12 @@
 /**
- * 52시간 알림 단계의 표기.
+ * 근태 화면의 표기.
  *
- * **단계는 서버가 정한 `alertLevel`을 그대로 쓴다.** 분을 보고 다시 판단하지 않는다 —
- * 스키마가 "프런트가 분 단위로 다시 판단하면 서버와 기준이 어긋난다"고 적고 있다.
- *
- * **관리팀 화면(`apps/admin`의 같은 이름 파일)과 문구를 맞춰 둔다.** 같은 값을 두 앱이
- * 다르게 말하면 안 된다. 한쪽을 고치면 다른 쪽도 고친다 — 공용 자리로 올릴지는
- * 공용 자리로 올릴지는 아직 정하지 않았다 (`DESIGN_RULES.md` 8장).
+ * **52시간 단계 문구는 `@hr/format` 에 있다** (2026-09-03에 올렸다). 관리팀과 같은 값을
+ * 다르게 말하면 안 되는 것이라 두 앱이 각자 갖고 있으면 어긋난다. 여기서는 다시 내보내기만
+ * 한다 — 부르는 자리를 바꾸지 않으려고 남겨 둔 문이다.
  */
 
-const LEVEL_LABEL: Record<number, string> = {
-  0: '여유 있어요',
-  1: '48시간을 넘겼어요',
-  2: '52시간이 코앞이에요',
-  3: '52시간을 넘겼어요',
-};
-
-export function alertLevelText(level: number): string {
-  // 서버가 새 단계를 늘릴 수 있다. 모르는 값은 숫자를 그대로 보여주고 지어내지 않는다.
-  return LEVEL_LABEL[level] ?? `단계 ${level}`;
-}
-
-export function alertLevelTone(level: number): 'done' | 'error' | 'neutral' {
-  return level >= 2 ? 'error' : 'neutral';
-}
+export { alertLevelText, alertLevelTone } from '@hr/format';
 
 const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토'];
 

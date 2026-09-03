@@ -1,3 +1,4 @@
+import { slotName } from '@hr/format';
 import { formatServerDate } from '@/lib/format';
 import type { DutySchedule, DutySwap, DutySwapStatus } from './api';
 
@@ -34,14 +35,14 @@ export function swapStatusTone(status: DutySwapStatus): 'done' | 'error' | 'neut
 }
 
 /**
- * 경비교대 슬롯. 명세서 1.4가 슬롯을 중식·석식으로 적고 있다.
- * 모르는 코드는 서버가 준 값을 그대로 둔다 — 지어내지 않는다.
+ * 경비교대 슬롯.
+ *
+ * **코드를 말로 바꾸는 표는 `@hr/format` 에 있다** — 관리팀과 같은 값을 다르게 말하면
+ * 안 된다. 여기서 하는 것은 **빈 값 처리**뿐이다. 슬롯이 없으면 줄을 아예 안 그린다
+ * (관리팀 표는 같은 자리에 `—` 를 그린다 — 자리의 성질이 달라서다).
  */
 export function slotLabel(slotCode: string | null): string | null {
-  if (slotCode === null) return null;
-  if (slotCode === 'LUNCH') return '중식';
-  if (slotCode === 'DINNER') return '석식';
-  return slotCode;
+  return slotCode === null ? null : slotName(slotCode);
 }
 
 const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토'];

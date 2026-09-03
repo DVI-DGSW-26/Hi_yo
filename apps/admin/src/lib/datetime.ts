@@ -149,7 +149,10 @@ export function formatKstDateTime(value: string): string {
   }).formatToParts(date);
 
   const get = (type: string) => parts.find((part) => part.type === type)?.value ?? '';
-  return `${get('month')}.${get('day')} ${get('hour')}:${get('minute')}`;
+  // `month: 'numeric'` 을 줘도 `en-CA` 는 `08` 로 채워 준다 — 로캘의 숫자 패턴이 이긴다.
+  // 그대로 쓰면 같은 표에서 `shortDate` 는 `8.24`, 이쪽은 `08.24` 가 된다 (2026-09-03).
+  const trim = (type: string) => String(Number(get(type)));
+  return `${trim('month')}.${trim('day')} ${get('hour')}:${get('minute')}`;
 }
 
 /**
