@@ -1,5 +1,6 @@
 import * as Linking from 'expo-linking';
 import * as SecureStore from 'expo-secure-store';
+import { queryClient } from './queryClient';
 
 /**
  * DVI 통합 로그인(Keycloak) 연동 — 모바일.
@@ -75,7 +76,17 @@ export function markAuthenticated(): void {
   loginRetried = false;
 }
 
-/** 로그아웃 — 보관한 토큰을 지우는 것이 전부다. 전 서비스 동시 로그아웃은 아직 없다 */
+/**
+ * 로그아웃 — 토큰을 지우고 **받아 둔 것도 같이 버린다.** 전 서비스 동시 로그아웃은 아직 없다.
+ *
+ * **캐시를 비우는 것이 토큰을 지우는 것만큼 중요하다** (2026-09-03).
+ * 앱은 로그인하러 시스템 브라우저로 갔다 오는 동안에도 **살아 있다.** 토큰만 지우면
+ * 급여명세서 금액·근태·인사정보가 쿼리 캐시에 그대로 남아서, 같은 기기에서 다른 사람이
+ * 로그인하면 **다시 불러오기 전까지 앞사람 값이 그려진다.** 급여를 다루는 앱에서 그건 사고다.
+ *
+ * 관리팀 화면은 로그아웃이 `window.location`으로 페이지를 통째로 옮겨서 지금도 남지 않지만,
+ * 같은 자리에서 같은 것을 보장하도록 그쪽도 여기서 비운다.
+ */
 export async function clearToken(): Promise<void> {
   memoryToken = null;
   try {
@@ -83,6 +94,10 @@ export async function clearToken(): Promise<void> {
   } catch {
     // 지우지 못해도 메모리에서는 사라진다.
   }
+  // **캐시 비우기를 `await` 뒤에 둔다.** `AuthGate`가 401을 만나면 렌더 도중에
+  // `redirectToLoginOnce()`를 부르는데, 그 자리에서 캐시를 비우면 쿼리를 보고 있는
+  // 컴포넌트들이 렌더 중에 갱신된다. `await` 뒤로 미루면 렌더가 끝난 뒤에 돈다.
+  queryClient.clear();
 }
 
 /**
