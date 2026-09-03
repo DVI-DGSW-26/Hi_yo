@@ -1,10 +1,12 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router';
-import { Button, Field, Pager, Select, StatusText, Table, type Column } from '@/components';
+import { Button, Dialog, Field, Pager, Select, StatusText, Table, type Column } from '@/components';
 import { orDash } from '@/lib/cell';
+import { SyncSecomNotice } from '@/features/employees/SyncSecomNotice';
 import {
   useDepartments,
   useEmployees,
+  useSyncSecom,
   type Employee,
   type EmployeeListFilter,
   type EmploymentStatus,
@@ -33,6 +35,8 @@ export function EmployeesPage() {
   const [status, setStatus] = useState<EmploymentStatus | ''>('');
   const [departmentId, setDepartmentId] = useState('');
   const [page, setPage] = useState(0);
+  const [syncing, setSyncing] = useState(false);
+  const sync = useSyncSecom();
 
   const filter: EmployeeListFilter = {
     page,
@@ -94,6 +98,11 @@ export function EmployeesPage() {
           </p>
         </div>
         <div className="page-head-action">
+          {/*
+            **여기 primary 는 하나뿐이다** (`DESIGN_RULES.md` 1장 6번). 세콤에서 가져오기는
+            가끔 쓰는 동작이라 secondary 다 — 이 화면의 주 동작은 직원을 등록하는 것이다.
+          */}
+          <Button label="세콤에서 가져오기" onClick={() => setSyncing(true)} />
           <Button
             label="직원 등록하기"
             variant="primary"
@@ -101,6 +110,8 @@ export function EmployeesPage() {
           />
         </div>
       </div>
+
+      {sync.data && <SyncSecomNotice result={sync.data} />}
 
       <Table
         columns={columns}
@@ -142,6 +153,25 @@ export function EmployeesPage() {
       />
 
       <Pager page={employees.data} onChange={setPage} unit="명" />
+
+      {/*
+        직원을 만드는 동작이라 한 번 더 묻는다. **지우는 경로가 없다** —
+        스펙에 `DELETE /employees` 가 없어서 잘못 들어온 사람을 되돌릴 수 없다.
+      */}
+      <Dialog
+        open={syncing}
+        title="세콤에서 직원 가져오기"
+        description="세콤 인사정보에 있는 사람을 직원으로 만들어요. 이미 있는 값은 덮어쓰지 않고, 세콤에서 빠진 사람도 지우지 않아요. 다만 잘못 들어온 직원을 지우는 경로가 없어요."
+        confirmLabel="가져오기"
+        loading={sync.isPending}
+        onClose={() => setSyncing(false)}
+        onConfirm={() => sync.mutate(undefined, { onSuccess: () => setSyncing(false) })}
+      >
+        <p className="muted">
+          세콤이 아는 것은 이름·카드번호·입사일뿐이에요. 사번과 부서는 비어 있어요.
+        </p>
+        {sync.error && <p className="danger">{sync.error.message}</p>}
+      </Dialog>
     </section>
   );
 }
