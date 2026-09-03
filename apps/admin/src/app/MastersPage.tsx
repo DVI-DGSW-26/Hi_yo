@@ -107,6 +107,7 @@ function activeText(active: boolean) {
   return active ? (
     <StatusText label="쓰는 중" tone="neutral" />
   ) : (
-    <StatusText label="내려둠" tone="error" />
+    // 조회만 하는 화면의 상태다. 고칠 경로가 없으므로 빨갛게 두지 않는다 (2장).
+    <StatusText label="내려둠" />
   );
 }
