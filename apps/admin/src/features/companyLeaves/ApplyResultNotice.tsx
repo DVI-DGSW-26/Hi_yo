@@ -1,6 +1,6 @@
+import { ResultList, ResultNotice } from '@/components';
 import { weekdayText } from '@/lib/datetime';
 import type { CompanyLeaveApplyResult, SkippedEmployee } from './api';
-import './ApplyResultNotice.css';
 
 /**
  * 일괄 차감 결과.
@@ -15,15 +15,12 @@ import './ApplyResultNotice.css';
  */
 export function ApplyResultNotice({ result }: { result: CompanyLeaveApplyResult }) {
   return (
-    <div className="apply-result">
-      <p className="apply-summary">
-        {result.targetDate} ({weekdayText(result.targetDate)}) · {result.reason} —{' '}
-        {result.deductedCount}명 차감했어요.
-      </p>
-
-      {/* 서버가 안내를 주면 그대로 보여준다. 앱에서 문구를 만들지 않는다. */}
-      {result.notice && <p className="apply-notice">{result.notice}</p>}
-
+    <ResultNotice
+      summary={`${result.targetDate} (${weekdayText(result.targetDate)}) · ${result.reason} — ${result.deductedCount}명 차감했어요.`}
+      // 서버가 안내를 주면 그대로 보여준다. 앱에서 문구를 만들지 않는다.
+      note={result.notice ?? undefined}
+    >
+      {/* 잔여 부족은 관리팀이 손대야 하는 줄이라 danger, 이미 쉬는 사람은 정상 동작이라 무채색 */}
       <SkippedList
         title={`${result.insufficient.length}명은 잔여가 모자라 차감하지 못했어요. 사람별로 정해주세요.`}
         employees={result.insufficient}
@@ -34,16 +31,11 @@ export function ApplyResultNotice({ result }: { result: CompanyLeaveApplyResult 
         title={`${result.alreadyOnLeave.length}명은 그날 이미 쉬는 것으로 돼 있어 건너뛰었어요.`}
         employees={result.alreadyOnLeave}
       />
-    </div>
+    </ResultNotice>
   );
 }
 
-/**
- * 빠진 사람 명단.
- *
- * 잔여 부족은 관리팀이 손대야 하는 줄이라 `danger` 글자로 두고, 이미 쉬는 사람은
- * 정상 동작이라 무채색이다. 배경색으로 칠하지 않는다 (`DESIGN_ADMIN.md` 3장).
- */
+/** 빠진 사람 명단. 비어 있으면 그리지 않는다 */
 function SkippedList({
   title,
   employees,
@@ -56,21 +48,16 @@ function SkippedList({
   if (employees.length === 0) return null;
 
   return (
-    <>
-      <p className={tone === 'danger' ? 'apply-skipped-title danger-text' : 'apply-skipped-title'}>
-        {title}
-      </p>
-      <ul className="apply-skipped">
-        {employees.map((employee) => (
-          <li key={employee.employeeId}>
-            {employee.employeeName ?? `직원 ${employee.employeeId}`}
-            {employee.departmentName ? ` · ${employee.departmentName}` : ''} —{' '}
-            {/* 잔여는 서버가 준 값을 그대로 쓴다. 여기서 더하거나 빼지 않는다. */}
-            {employee.remaining == null ? '' : `잔여 ${employee.remaining}일 · `}
-            {employee.reason ?? '사유를 받지 못했어요'}
-          </li>
-        ))}
-      </ul>
-    </>
+    <ResultList title={title} tone={tone}>
+      {employees.map((employee) => (
+        <li key={employee.employeeId}>
+          {employee.employeeName ?? `직원 ${employee.employeeId}`}
+          {employee.departmentName ? ` · ${employee.departmentName}` : ''} —{' '}
+          {/* 잔여는 서버가 준 값을 그대로 쓴다. 여기서 더하거나 빼지 않는다. */}
+          {employee.remaining == null ? '' : `잔여 ${employee.remaining}일 · `}
+          {employee.reason ?? '사유를 받지 못했어요'}
+        </li>
+      ))}
+    </ResultList>
   );
 }

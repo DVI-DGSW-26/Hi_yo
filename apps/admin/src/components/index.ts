@@ -8,4 +8,5 @@ export { Pager } from './Pager';
 export { Summary } from './Summary';
 export { DetailList } from './DetailList';
 export { StatusText } from './StatusText';
+export { ResultNotice, ResultList } from './ResultNotice';
 export { SignaturePad } from './SignaturePad';
