@@ -63,6 +63,5 @@ export const spacing = {
 
 export const radius = {
   button: 14,
-  gauge: 5,
   chip: 8,
 } as const;

@@ -16,14 +16,14 @@ import { colors } from '@hr/tokens';
 
 | 토큰 | 값 | 쓰는 곳 |
 |---|---|---|
-| `primary` | `#00C471` | Primary 버튼 배경, 선택된 날짜, 게이지 채움, 핵심 숫자, `확정` 상태 |
+| `primary` | `#00C471` | Primary 버튼 배경, 선택된 날짜, 핵심 숫자, `확정` 상태 |
 | `primaryPress` | `#00B267` | Primary 버튼 눌림 상태 **전용**. 다른 곳에 쓰지 않는다 |
 | `textStrong` | `#191F28` | 화면 제목, 섹션 제목, 값, 금액 |
 | `textBody` | `#4E5968` | 본문, Secondary 버튼 글자, 부서명 등 |
 | `textWeak` | `#8B95A1` | 라벨, 보조 설명, 요일, 캡션, 중립 상태값 |
 | `textDisabled` | `#D1D6DB` | 값이 아직 없을 때 ("아직이에요"), 누를 수 없는 날짜 |
 | `white` | `#FFFFFF` | 화면 배경, 섹션 배경, Primary 버튼 글자 |
-| `divider` | `#F2F4F6` | 섹션 구분 띠, 게이지 트랙, Secondary 버튼 눌림 배경 |
+| `divider` | `#F2F4F6` | 섹션 구분 띠, Secondary 버튼 눌림 배경 |
 | `border` | `#E5E8EB` | 얇은 구분선 |
 | `borderStrong` | `#D1D6DB` | Secondary 버튼 보더 |
 | `danger` | `#E24B4A` | 오류, 누락, 반려, `danger` 버튼 (`DESIGN_ADMIN.md` 5장) |
@@ -38,15 +38,47 @@ import { colors } from '@hr/tokens';
 
 **한 화면에 `primary`가 등장하는 지점은 최대 2곳.** (`primaryPress`는 세지 않는다)
 
-| 화면 | 1곳 | 2곳 |
-|---|---|---|
-| 근태 현황 | 게이지 채움 | `퇴근하기` 버튼 |
-| 연차 신청 | 선택된 날짜 | `신청하기` 버튼 |
-| 마이페이지 | 근속일수 숫자 | `정보 수정 요청` 버튼 |
-| 재직증명서 | `발급받기` 버튼 | **없음** |
-| 급여명세서 | 실수령액 숫자 | **없음** (`PDF 저장`은 secondary) |
-
 조회가 목적인 화면은 1곳 이하가 정상이다. 억지로 채우지 않는다.
+
+**모바일에서 그린이 나오는 자리는 넷뿐이다.** 이것 말고 `primary`를 쓰는 곳이 없다.
+
+| 무엇 | 어디 |
+|---|---|
+| Primary 버튼 배경 | `Button` (`variant`를 안 주면 이것이다) |
+| 달력의 선택된 날짜 | `Calendar` `daySelected` |
+| 달력의 점 | `Calendar` `dot` — `half`만 회색이고 나머지는 그린이다. **예산에서 세지 않는다** |
+| `확정·완료` 상태 글자 | `StatusText` `tone="done"` |
+
+**달력의 점은 세지 않는다** (2026-09-03). 예산이 막으려는 것은 큰 그린 면이 여러 개
+놓여 눈이 갈 곳을 잃는 것인데 4×4px 점은 그 문제를 만들지 않고, 점은 이미 낸 연차·잡힌
+당직을 달력에서 보여주는 **유일한 수단**이다. 반차 점이 이미 회색이라 연차 점까지
+내리면 둘이 구분되지 않는다.
+
+### 화면마다 몇 곳인가 (2026-09-03 세어봄)
+
+**앞선 표는 화면을 만들기 전에 쓴 예시였다.** 실제로 세어 아래로 바꿨다.
+
+| 화면 | 그린이 나오는 곳 | 곳 |
+|---|---|---|
+| 홈 | 없음 | 0 |
+| S-101 마이페이지 | 없음 | 0 |
+| S-301 연차 | 선택된 날짜 · `신청하기` | 2 |
+| S-302 연차사용계획서 | 선택된 날짜 | 1 |
+| S-401 재직증명서 신청 | `발급받기` | 1 |
+| S-401 발급 상세 | 없음 (`PDF로 받기`는 secondary) | 0 |
+| S-501 내 근태 | 없음 | 0 |
+| S-503 당직 | 보낸 부탁의 `바꿨어요` | 1 |
+| S-503 교체 응답 | `바꿔주기` | 1 |
+| S-601 급여명세서 | 없음 — 실수령액은 `textStrong`이다 | 0 |
+
+**시트는 따로 센다.** `ConfirmSheet`의 실행 버튼과 `SelectSheet`의 `고름`은 시트가 떠
+있는 동안 뒤 화면을 누를 수 없어서, 한 번에 보이는 `primary`는 여전히 하나다
+(`ConfirmSheet` 주석).
+
+**S-301은 세 곳이었다.** 점을 빼고도 신청 목록의 `승인했어요`가 남아 넘쳤다.
+**승인을 회색으로 내렸다** — 낸 것이 대부분 승인되는 목록이라 칠하면 한 줄 걸러 초록이
+되고, 관리팀이 근태 `판정 완료`와 52시간 `여유 있어요`를 칠하지 않는 것과 같은 이유다.
+반려는 빨강 그대로다.
 
 ---
 
@@ -65,7 +97,7 @@ import { typography, fontFamily } from '@hr/tokens';
 | `sectionTitle` | 16 | 500 | 24 | 0 | `textStrong` | 섹션 제목 |
 | `body` | 17 | 400 | 26 | 0 | `textStrong` | 리스트의 값, 본문 |
 | `bodySmall` | 15 | 400 | 23 | 0 | `textStrong` / `textWeak` | 리스트 라벨, 달력 날짜 |
-| `label` | 13 | 400 | 20 | 0 | `textWeak` | 게이지 캡션, 보조 설명 |
+| `label` | 13 | 400 | 20 | 0 | `textWeak` | 보조 설명, 줄 아래 곁들이는 값 |
 | `caption` | 12 | 400 | 18 | 0 | `textWeak` | 요일, 최소 단위 메타 정보 |
 
 ### 별도 취급하는 값
@@ -122,7 +154,6 @@ import { spacing, radius } from '@hr/tokens';
 | 라운드 | 값 | 쓰는 곳 |
 |---|---|---|
 | `radius.button` | 14 | 버튼 |
-| `radius.gauge` | 5 | 게이지 |
 | `radius.chip` | 8 | 칩, 입력 필드 |
 | (달력 날짜) | 10 | Calendar 내부 고정 |
 
@@ -138,7 +169,6 @@ import { spacing, radius } from '@hr/tokens';
 ├──────────────────────┤
 │ Section              │  흰 배경, 좌우 24, 상하 28
 │   headline           │
-│   Gauge              │
 ├──────────────────────┤
 │ SectionDivider (10)  │  회색 띠, 화면 전체 폭
 ├──────────────────────┤
@@ -168,7 +198,7 @@ import { spacing, radius } from '@hr/tokens';
 ## 5. 컴포넌트
 
 ```ts
-import { Button, ListRow, TextField, SectionTitle, Section, SectionDivider, Gauge, StatusText, Calendar, Sheet, ConfirmSheet, SelectSheet, QueryState, MutationError } from '@/components';
+import { Button, ListRow, TextField, SectionTitle, Section, SectionDivider, StatusText, Calendar, Sheet, ConfirmSheet, SelectSheet, QueryState, MutationError } from '@/components';
 ```
 
 **새 컴포넌트를 즉석에서 만들지 않는다.** 아래를 조합한다. 없으면 사람에게 묻는다.
@@ -243,14 +273,6 @@ TODO: 그 장이 남겨둔 것 둘 — 모바일의 **필수 표시**와 **읽�
 <Section>...</Section>
 ```
 
-### Gauge
-
-```tsx
-<Gauge ratio={0.73} caption="주 52시간까지 13시간 40분" captionRight="73%" />
-```
-
-`ratio`는 0~1. 1을 넘겨도 바가 깨지지 않는다. **비율 계산은 서버 값으로 하고 앱에서 근무시간을 합산하지 않는다.**
-
 ### StatusText
 
 ```tsx
@@ -261,11 +283,16 @@ TODO: 그 장이 남겨둔 것 둘 — 모바일의 **필수 표시**와 **읽�
 
 | tone | 색 | 쓰는 상태 |
 |---|---|---|
-| `done` | `primary` | 확정, 완료, 승인 |
+| `done` | `primary` | 되돌릴 수 없는 이정표 — 확정, 차감 완료, 교체 성립 |
 | `error` | `danger` | 오류, 누락, 반려 |
-| `neutral` (기본) | `textWeak` | **그 외 전부** — 대기, 검토중, 진행중, 미기록 |
+| `neutral` (기본) | `textWeak` | **그 외 전부** — 대기, 검토중, 진행중, 미기록, **승인** |
 
 상태를 색으로 구분하려고 새 tone을 만들지 않는다. 뱃지(알약 배경)를 쓰지 않는다.
+
+**정상적으로 끝난 것이 대부분인 목록에는 `done`을 쓰지 않는다** (2026-09-03). 내 연차
+신청 목록의 `승인했어요`가 그렇다 — 낸 것이 대부분 승인되니 칠하면 한 줄 걸러 초록이
+되고, 되물어야 하는 반려가 그 사이에 묻힌다. 관리팀이 근태 `판정 완료`와 52시간
+`여유 있어요`를 칠하지 않는 것과 같은 기준이다 (`DESIGN_RULES.md` 2장).
 
 ### Sheet / ConfirmSheet / SelectSheet
 
