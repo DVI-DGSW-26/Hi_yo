@@ -1,0 +1,46 @@
+/*
+ * 단체연차의 ApplyResultNotice, 급여 계산의 SkippedNotice, 자동 편성의
+ * GenerateResultNotice 와 같은 모양이다. 넷째다 — 공용 컴포넌트로 올릴지는
+ * 아직 정하지 않았다 (`00_문서_인덱스.md` 「결과 알림이 넷째다」).
+ */
+
+.sync-result {
+  margin-bottom: var(--space-section-title-gap);
+  padding: var(--space-row-gap);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-chip);
+}
+
+.sync-summary {
+  margin: 0;
+  font-size: var(--font-size-body-small);
+  line-height: var(--line-height-body-small);
+  color: var(--color-text-strong);
+}
+
+.sync-notice {
+  margin: var(--space-tight) 0 0;
+  font-size: var(--font-size-label);
+  line-height: var(--line-height-label);
+  color: var(--color-text-body);
+}
+
+/* 경고를 배경색으로 칠하지 않는다. 글자로 알린다 (DESIGN_ADMIN.md 3장). */
+.sync-skipped-title {
+  margin: var(--space-tight) 0 0;
+  font-size: var(--font-size-body-small);
+  line-height: var(--line-height-body-small);
+  color: var(--color-text-body);
+}
+
+.sync-skipped-title.danger-text {
+  color: var(--color-danger);
+}
+
+.sync-skipped {
+  margin: var(--space-tight) 0 0;
+  padding-left: var(--space-row-gap);
+  font-size: var(--font-size-label);
+  line-height: var(--line-height-label);
+  color: var(--color-text-body);
+}
