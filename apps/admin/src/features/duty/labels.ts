@@ -1,3 +1,4 @@
+import { slotName } from '@hr/format';
 import type { DutySchedule, RotationCycle } from './api';
 
 /**
@@ -36,14 +37,14 @@ export function scheduleStatusText(status: DutySchedule['status']): string {
 }
 
 /**
- * 경비교대 슬롯. 명세서 1.4가 슬롯을 중식·석식으로 적고 있다.
- * 모르는 코드는 서버가 준 값을 그대로 둔다 — 지어내지 않는다.
+ * 경비교대 슬롯.
+ *
+ * **코드를 말로 바꾸는 표는 `@hr/format` 에 있다** — 모바일과 같은 값을 다르게 말하면
+ * 안 된다. 여기서 하는 것은 **빈 값 처리**뿐이다. 표는 빈 칸에도 자리를 남겨야 한다
+ * (모바일은 줄을 아예 안 그린다 — 자리의 성질이 달라서다).
  */
 export function slotText(slotCode: string | null): string {
-  if (slotCode == null) return '—';
-  if (slotCode === 'LUNCH') return '중식';
-  if (slotCode === 'DINNER') return '석식';
-  return slotCode;
+  return slotCode == null ? '—' : slotName(slotCode);
 }
 
 // 요일은 `lib/datetime.ts`의 `weekdayText`를 쓴다. 당직만 쓰는 값이 아니라 올렸다.
