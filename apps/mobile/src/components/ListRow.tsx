@@ -40,7 +40,7 @@ export function ListRow({
   const content = (
     <>
       <Text style={isNav ? styles.navLabel : styles.label}>{label}</Text>
-      {right ?? (
+      {right === undefined ? (
         text !== undefined && (
           <Text
             style={[
@@ -51,6 +51,9 @@ export function ListRow({
             {text}
           </Text>
         )
+      ) : (
+        // 값 자리에 들어온 요소도 값과 같은 폭을 차지해야 오른쪽 끝에 선다.
+        <View style={styles.rightSlot}>{right}</View>
       )}
     </>
   );
@@ -74,34 +77,53 @@ export function ListRow({
 const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
     // 터치 영역 최소 44. 글꼴을 키우면 이보다 커진다 (고정 높이가 아니다).
     minHeight: spacing.rowHeight,
     marginBottom: spacing.rowGap,
+    /*
+     * 라벨과 값이 한 줄에 못 들어가면 값이 아랫줄로 내려간다 (2026-09-03 실측).
+     *
+     * 시스템 글꼴을 2.2배로 키우면 `지급 합계 / 12,345,678원`이 화면 밖으로 나갔다.
+     * 금액에는 끊을 자리가 없어서(`3,847,200원`은 한 덩어리다) 값을 아무리 좁혀도
+     * 제 폭 아래로 못 줄고, 그대로 잘려 나간다 — **급여명세서에서 금액이 잘리는 것이다.**
+     *
+     * `space-between` 대신 값에 `flexGrow`를 준다. 한 줄에 들어갈 때는 값이 남는 폭을
+     * 채워 오른쪽 끝에 서므로 지금과 똑같이 보이고(1.35배까지 높이·위치가 같다),
+     * 넘칠 때만 아랫줄로 내려가 온전한 금액이 남는다. 관리팀 연차 달력에서 이름을
+     * 지키려고 쓴 처방과 같다 (`00_문서_인덱스.md` 「큰 글꼴·좁은 창 점검」).
+     */
+    flexWrap: 'wrap',
   },
   pressed: { backgroundColor: colors.divider },
+  // 라벨도 줄어들 수 있어야 값이 설 자리가 남는다. 라벨은 끊을 자리가 있어서 접힌다.
   label: {
     ...typography.bodySmall,
     color: colors.textWeak,
     marginRight: spacing.rowGap,
+    flexShrink: 1,
   },
+  // flexGrow가 space-between 자리를 대신한다. 남는 폭을 값이 먹고 글자는 오른쪽에 붙는다.
   value: {
     ...typography.body,
     color: colors.textStrong,
     flexShrink: 1,
+    flexGrow: 1,
     textAlign: 'right',
   },
   navLabel: {
     ...typography.body,
     color: colors.textStrong,
     marginRight: spacing.rowGap,
+    flexShrink: 1,
   },
   navValue: {
     ...typography.bodySmall,
     color: colors.textWeak,
     flexShrink: 1,
+    flexGrow: 1,
     textAlign: 'right',
   },
+  rightSlot: { flexGrow: 1, flexShrink: 1, alignItems: 'flex-end' },
   placeholder: { color: colors.textDisabled },
 });
