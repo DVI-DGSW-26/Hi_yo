@@ -5,25 +5,28 @@
  */
 
 /*
- * 폭은 `.page-blocks` 가 잡는다 — 표·제목 줄과 같은 칸을 쓴다 (2026-09-02).
+ * **내용만큼만 차지한다** (2026-09-03).
  *
- * **화면 폭을 채우는 것이 아니다.** 칸은 가장 넓은 덩어리(대개 표)에서 멈춘다.
- * 2026-09-01에 「2345px에서 60%가 빈 칸」이던 것은 화면 폭을 채웠기 때문이고,
- * 표 폭에 맞추는 지금은 남는 자리를 안내문이 가져간다 (`.summary-note`).
+ * 칸이 본문 폭을 다 쓰게 되면서(`.page-blocks`) 이 줄도 같이 늘어날 수 있는데,
+ * 그러면 **숫자 두어 개와 안내문 뒤가 그대로 빈다** — 「2345px에서 60%가 빈 칸」이던
+ * 것이 정확히 그 모양이었다. 표는 폭을 다 써야 하지만 이 줄은 아니다.
+ *
+ * 안내문은 제 길이만큼 붙고 `readWidth` 에서 줄바꿈한다 (`.summary-note`).
  */
 .summary {
   display: flex;
   align-items: stretch;
   flex-wrap: wrap;
+  justify-self: start;
   max-width: 100%;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-chip);
 }
 
-/* 안내문이 없는 줄. 내용만큼만 차지한다 — 늘리면 그 자리가 그대로 빈다. */
-.summary.is-hug {
-  justify-self: start;
-}
+/*
+ * 안내문이 없는 줄. 위에서 이미 내용만큼만 차지하므로 따로 할 일이 없다 —
+ * 클래스는 `Summary.tsx` 가 이미 붙이고 있어 남겨 둔다.
+ */
 
 .summary-cell {
   display: flex;
