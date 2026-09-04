@@ -1,6 +1,12 @@
 import { useState } from 'react';
 import { ListRow, SelectSheet, TimeField } from '@/components';
-import { HALF_DAY_SLOTS, halfDaySlot, halfDayText, type HalfDaySlot } from './halfDay';
+import {
+  HALF_DAY_SLOTS,
+  halfDayHint,
+  halfDayLabel,
+  halfDayText,
+  type HalfDaySlot,
+} from './halfDay';
 import { useRequestTypes, type RequestType } from './api';
 
 /**
@@ -44,12 +50,12 @@ export function LeaveTypeSection({ value, onChange }: Props) {
         onPress={() => setPickingType(true)}
       />
 
-      {/* 반차는 오전·오후만 고르면 된다. 시각은 인사팀이 정한 값이 들어간다. */}
+      {/* 반차는 오전·오후만 고르면 된다. 시각은 종류 응답에 실려 온 값을 쓴다. */}
       {type?.halfDay && (
         <ListRow
           label="반차"
           variant="nav"
-          value={halfDayText(value.half)}
+          value={halfDayText(type, value.half)}
           onPress={() => setPickingHalf(true)}
         />
       )}
@@ -89,10 +95,12 @@ export function LeaveTypeSection({ value, onChange }: Props) {
       <SelectSheet
         open={pickingHalf}
         title="언제 쉬나요"
-        options={HALF_DAY_SLOTS.map((slot) => {
-          const { label, startTime, endTime } = halfDaySlot(slot);
-          return { value: slot, label, hint: `${startTime.slice(0, 5)} ~ ${endTime.slice(0, 5)}` };
-        })}
+        // 시각이 안 실려 왔으면 곁들임말 없이 이름만 보여준다. 앱이 지어내지 않는다.
+        options={HALF_DAY_SLOTS.map((slot) => ({
+          value: slot,
+          label: halfDayLabel(slot),
+          hint: halfDayHint(type, slot),
+        }))}
         selected={value.half}
         onSelect={(half) => onChange({ ...value, half })}
         onClose={() => setPickingHalf(false)}

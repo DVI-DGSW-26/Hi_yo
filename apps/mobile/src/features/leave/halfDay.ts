@@ -1,44 +1,67 @@
+import type { RequestType } from './api';
+
 /**
- * 반차 시각. **인사팀이 확정한 값이다** (2026-09-01).
+ * 반차 시각. **서버가 준다** (2026-09-02부터).
  *
- * | 반차 | 시각 |
- * |---|---|
- * | 오전 | `09:00` ~ `13:00` |
- * | 오후 | `13:00` ~ `18:00` |
+ * 그전에는 앱이 `09:00`·`13:00`·`18:00`을 갖고 있었다. 회사가 시각을 바꾸면 앱을 다시
+ * 배포해야 해서 종류 응답에 실어달라고 요청했고, `GET /requests/types`가
+ * `amStartTime`·`amEndTime`·`pmStartTime`·`pmEndTime`을 주기 시작했다.
  *
- * **점심시간이 반차 시간에 포함된다.** 그래서 오전과 오후의 길이가 다르다 — 앱이 고칠
- * 일이 아니다. 여기서 시간을 세지도, 몇 일이 깎이는지 계산하지도 않는다. 차감은 서버가
- * 한다 (`CLAUDE.md` 3장).
+ * **시각을 지어내지 않는다.** 안 실려 오면 `undefined`를 돌려주고 화면이 그 사실을 적는다 —
+ * 틀린 시각으로 신청서가 나가는 것보다 안 나가는 편이 낫다.
  *
- * **앱이 이 값을 갖고 있는 이유 —— 서버가 주지 않는다.** `RequestTypeResponse`에는
- * `halfDay` 참·거짓만 있고 시각 필드가 없다. 그래서 회사가 시각을 바꾸면 앱을 다시
- * 배포해야 한다. **종류 응답에 시각을 실어달라고 요청해 뒀다** (`docs/01_물어볼_것.md`).
- * 서버가 주기 시작하면 이 파일을 지운다.
+ * **점심시간이 반차에 포함돼 오전과 오후의 길이가 다르다.** 앱이 고칠 일이 아니다.
+ * 여기서 시간을 세지도, 몇 일이 깎이는지 계산하지도 않는다 — 차감은 서버가 한다
+ * (`CLAUDE.md` 3장).
  */
 
 export type HalfDaySlot = 'AM' | 'PM';
 
-interface Slot {
-  label: string;
-  /** 서버가 돌려주는 것과 같은 `HH:mm:ss` 모양으로 보낸다 */
+/** 고르는 차례. 오전이 먼저다 */
+export const HALF_DAY_SLOTS: HalfDaySlot[] = ['AM', 'PM'];
+
+const LABEL: Record<HalfDaySlot, string> = { AM: '오전', PM: '오후' };
+
+export interface HalfDayTimes {
+  /** 서버가 돌려주는 것과 같은 `HH:mm:ss` 모양으로 그대로 보낸다 */
   startTime: string;
   endTime: string;
 }
 
-const SLOTS: Record<HalfDaySlot, Slot> = {
-  AM: { label: '오전', startTime: '09:00:00', endTime: '13:00:00' },
-  PM: { label: '오후', startTime: '13:00:00', endTime: '18:00:00' },
-};
-
-/** 고르는 차례. 오전이 먼저다 */
-export const HALF_DAY_SLOTS: HalfDaySlot[] = ['AM', 'PM'];
-
-export function halfDaySlot(slot: HalfDaySlot): Slot {
-  return SLOTS[slot];
+/** `오전` · `오후` */
+export function halfDayLabel(slot: HalfDaySlot): string {
+  return LABEL[slot];
 }
 
-/** `09:00 ~ 13:00` — 고른 반차를 화면에 적을 때 */
-export function halfDayText(slot: HalfDaySlot): string {
-  const { label, startTime, endTime } = SLOTS[slot];
-  return `${label} ${startTime.slice(0, 5)} ~ ${endTime.slice(0, 5)}`;
+/** 신청에 실을 시각. **종류에 안 실려 왔으면 `undefined`다** — 앱이 만들어 넣지 않는다 */
+export function halfDayTimes(
+  type: RequestType | undefined,
+  slot: HalfDaySlot,
+): HalfDayTimes | undefined {
+  if (type === undefined) return undefined;
+
+  const startTime = slot === 'AM' ? type.amStartTime : type.pmStartTime;
+  const endTime = slot === 'AM' ? type.amEndTime : type.pmEndTime;
+  if (startTime === null || endTime === null) return undefined;
+
+  return { startTime, endTime };
+}
+
+/** `09:00 ~ 13:00` — 고르는 시트의 곁들임말. 시각이 없으면 아무것도 적지 않는다 */
+export function halfDayHint(
+  type: RequestType | undefined,
+  slot: HalfDaySlot,
+): string | undefined {
+  const times = halfDayTimes(type, slot);
+  if (times === undefined) return undefined;
+  return `${times.startTime.slice(0, 5)} ~ ${times.endTime.slice(0, 5)}`;
+}
+
+/**
+ * `오전 09:00 ~ 13:00` — 고른 반차를 줄에 적을 때.
+ * 시각이 없어도 **이름은 남긴다.** 줄이 통째로 비면 무엇을 골랐는지 알 수 없다.
+ */
+export function halfDayText(type: RequestType | undefined, slot: HalfDaySlot): string {
+  const hint = halfDayHint(type, slot);
+  return hint === undefined ? LABEL[slot] : `${LABEL[slot]} ${hint}`;
 }

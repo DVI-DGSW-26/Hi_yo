@@ -10,7 +10,13 @@ import { LIST_PAGE_SIZE, api, type PageParams, type PageResponse } from '@/lib/a
  * 앱은 연차를 합산하지도, 잔여를 다시 세지도 않는다.
  */
 
-/** 신청 종류. 화면은 이 값을 보고 입력 칸을 정한다 */
+/**
+ * 신청 종류. 화면은 이 값을 보고 입력 칸을 정한다.
+ *
+ * **`halfDay`인 종류에는 반차 시각이 함께 온다** (2026-09-02부터). 그전에는 앱이 갖고
+ * 있어서 회사가 시각을 바꾸면 앱을 다시 배포해야 했다. 서버 문서가 **시각을 앱에
+ * 하드코딩하지 말고 이 값을 그대로 실어 보내라**고 적고 있다 (`halfDay.ts`).
+ */
 export interface RequestType {
   id: number;
   code: string;
@@ -20,6 +26,11 @@ export interface RequestType {
   /** true면 startTime/endTime이 필요하다 */
   needTime: boolean;
   halfDay: boolean;
+  /** `halfDay`가 아닌 종류에는 없다. `09:00:00` 모양이다 */
+  amStartTime: string | null;
+  amEndTime: string | null;
+  pmStartTime: string | null;
+  pmEndTime: string | null;
 }
 
 export interface LeaveGrant {
@@ -105,12 +116,22 @@ export interface LeaveRequestInput {
   /**
    * `needTime`인 종류에만 넣는다. 서버가 돌려주는 것과 같은 `HH:mm:ss` 모양이다.
    *
-   * 반차는 시각이 정해져 있다 (`halfDay.ts`). 그 밖의 `needTime` 종류(외출·조퇴)는
-   * 직접 받아야 하는데 시각을 고르는 칸이 아직 없다.
+   * 반차 시각은 **종류 응답에 실려 온다** (`halfDay.ts`). 그 밖의 `needTime`
+   * 종류(외출·조퇴)는 사람마다 달라 직접 받는다.
    */
   startTime?: string;
   endTime?: string;
   reason?: string;
+  /**
+   * 신청인 서명. base64 PNG 다 — `data:` 앞머리는 붙이지 않는다.
+   *
+   * **종이 서식의 「작성」 칸이다** (2026-09-02부터 서버가 받는다). 결재자 서명과는
+   * 별개로 남고, 응답에서는 `applicantSigned` 로 온다.
+   *
+   * **서버에서는 선택이지만 화면에서는 필수로 받는다** — 서버가 필수로 두지 않은 것은
+   * 관리팀 대리 등록 경로가 있어서다 (`docs/API_신청결재.md` 3장).
+   */
+  signatureImage?: string;
 }
 
 export const leaveKeys = {
@@ -190,8 +211,14 @@ export function useCreateRequest() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (input: LeaveRequestInput) => {
-      const { data } = await api.post<LeaveRequest>('/requests', input);
+    mutationFn: async ({ signatureImage, ...rest }: LeaveRequestInput) => {
+      const { data } = await api.post<LeaveRequest>('/requests', {
+        ...rest,
+        // 서명은 그린 것만 보낸다. **`CLICK` 을 쓰지 않는다** — 결재자에게는 "눌렀다"가
+        // 서명이지만 신청인에게는 그에 해당하는 동작이 없다. 서명 없이 접수되는 자리는
+        // 관리팀 대리 등록이고, 그건 이 화면이 아니다.
+        ...(signatureImage ? { signatureMethod: 'IMAGE', signatureImage } : {}),
+      });
       return data;
     },
     onSuccess: () => {

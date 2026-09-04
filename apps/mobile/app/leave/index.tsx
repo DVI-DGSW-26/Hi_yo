@@ -23,12 +23,13 @@ import {
 import { LeaveBalanceSection } from '@/features/leave/LeaveBalanceSection';
 import { LeaveCalendarSection } from '@/features/leave/LeaveCalendarSection';
 import { LeaveRequestList } from '@/features/leave/LeaveRequestList';
+import { LeaveSignatureSection } from '@/features/leave/LeaveSignatureSection';
 import {
   EMPTY_CHOICE,
   LeaveTypeSection,
   type LeaveTypeChoice,
 } from '@/features/leave/LeaveTypeSection';
-import { halfDaySlot } from '@/features/leave/halfDay';
+import { halfDayTimes } from '@/features/leave/halfDay';
 import { useCreateRequest, useRequestTypes } from '@/features/leave/api';
 
 /**
@@ -54,6 +55,7 @@ export default function LeaveScreen() {
   const [range, setRange] = useState<{ start?: string; end?: string }>({});
   const [reason, setReason] = useState('');
   const [choice, setChoice] = useState<LeaveTypeChoice>(EMPTY_CHOICE);
+  const [signature, setSignature] = useState('');
   const create = useCreateRequest();
 
   // 이 화면은 연차 화면이라 연차휴가로 시작한다. 규칙이 아니라 이 화면의 기본값이다 —
@@ -84,7 +86,10 @@ export default function LeaveScreen() {
     // 시각이 필요한 종류인데 덜 적었으면 보내지 않는다. 반쪽짜리로 보내면 서버가
     // 400을 돌려주는데, 그건 화면이 이미 아는 것이라 물어볼 일이 아니다.
     // 왜 안 나가는지는 아래 `hint`가 버튼 위에 적는다.
-    if (needsTyped(value) && times === undefined) return;
+    if (needsTime(value) && times === undefined) return;
+
+    // 종이 서식의 「작성」 칸이라 화면에서 필수로 받는다. 서버에서는 선택이다.
+    if (!signature) return;
 
     create.mutate(
       {
@@ -94,12 +99,14 @@ export default function LeaveScreen() {
         startTime: times?.startTime,
         endTime: times?.endTime,
         reason: reason.trim() || undefined,
+        signatureImage: signature,
       },
       {
         onSuccess: () => {
           setRange({});
           setReason('');
           setChoice(EMPTY_CHOICE);
+          setSignature('');
         },
       },
     );
@@ -137,14 +144,18 @@ export default function LeaveScreen() {
           </Section>
           <SectionDivider />
           <Section>
+            <LeaveSignatureSection value={signature} onChange={setSignature} />
+          </Section>
+          <SectionDivider />
+          <Section>
             <LeaveRequestList />
           </Section>
         </ScrollView>
 
         <View style={[styles.cta, { paddingBottom: insets.bottom + spacing.ctaX }]}>
           <MutationError mutation={create} />
-          {!create.error && hint(selected.length, value) !== undefined && (
-            <Text style={styles.hint}>{hint(selected.length, value)}</Text>
+          {!create.error && hint(selected.length, value, signature) !== undefined && (
+            <Text style={styles.hint}>{hint(selected.length, value, signature)}</Text>
           )}
           <Button label="신청하기" loading={create.isPending} onPress={submit} />
         </View>
@@ -159,13 +170,24 @@ export default function LeaveScreen() {
  * 잔여 초과처럼 **서버가 판단하는 것은 여기서 말하지 않는다.** 화면이 아는 것,
  * 곧 아직 안 채운 칸만 짚는다. 시작이 끝보다 늦은지도 서버가 본다.
  */
-function hint(dayCount: number, value: LeaveTypeChoice): string | undefined {
+function hint(dayCount: number, value: LeaveTypeChoice, signature: string): string | undefined {
   if (dayCount === 0) return '달력에서 날짜를 골라주세요.';
   if (!value.type) return '무엇을 신청하는지 골라주세요.';
   if (needsTyped(value) && requestTimes(value) === undefined) {
     return '시작 시각과 종료 시각을 적어주세요.';
   }
+  // 반차인데 종류 응답에 시각이 안 실려 왔다. 앱이 만들어 넣지 않으므로 낼 수 없다.
+  if (value.type.halfDay && requestTimes(value) === undefined) {
+    return '반차 시각을 서버에서 받지 못했어요. 관리팀에 알려주세요.';
+  }
+  // 마지막에 본다. 다 채우고 나서 서명하는 것이 종이와 같은 차례다.
+  if (!signature) return '서명을 해주세요.';
   return undefined;
+}
+
+/** 시각을 실어야 하는 종류인가. 반차든 직접 적는 것이든 시각 없이 보내지 않는다 */
+function needsTime(value: LeaveTypeChoice): boolean {
+  return value.type?.halfDay === true || needsTyped(value);
 }
 
 /** 시각을 사용자가 직접 적어야 하는 종류인가. 반차는 값이 정해져 있어 여기 들지 않는다 */
@@ -180,10 +202,8 @@ function needsTyped(value: LeaveTypeChoice): boolean {
  * 보내지 않는다.
  */
 function requestTimes(value: LeaveTypeChoice): { startTime: string; endTime: string } | undefined {
-  if (value.type?.halfDay) {
-    const slot = halfDaySlot(value.half);
-    return { startTime: slot.startTime, endTime: slot.endTime };
-  }
+  // 반차 시각은 종류 응답에 실려 온다. 안 왔으면 undefined 라 신청이 나가지 않는다.
+  if (value.type?.halfDay) return halfDayTimes(value.type, value.half);
   if (!needsTyped(value)) return undefined;
   if (!isCompleteTime(value.startTime) || !isCompleteTime(value.endTime)) return undefined;
   return { startTime: toServerTime(value.startTime), endTime: toServerTime(value.endTime) };

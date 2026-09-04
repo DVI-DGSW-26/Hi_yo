@@ -66,10 +66,9 @@ export const payrollKeys = {
 /**
  * 내 명세서 목록. 최근 달부터 온다.
  *
- * **확정되지 않은 건은 걸러낸다.** 서버에 거르는 파라미터가 없어 화면에서 한다 —
- * `confirmed`는 서버가 준 참·거짓 그대로라 다시 판정하는 것이 아니다.
- * 다만 **거른 값도 응답에는 실려 온다.** 서버가 본인 목록에서 빼주는 편이 낫다고
- * 요청해 뒀다 (`docs/01_물어볼_것.md`).
+ * **확정되지 않은 건은 서버가 뺀다** (2026-09-02). 그전에는 서버가 다 주고 화면이
+ * 걸렀는데, 그러면 **확정 전 금액이 기기까지 왔다.** 목록만이 아니라 단건
+ * (`GET /payroll/{payrollId}`)도 서버가 막는다 — id 를 직접 넣어도 나오지 않는다.
  *
  * 페이지네이션이 없다. 배열이 통째로 온다.
  */
@@ -79,7 +78,7 @@ export function useMyPayrolls(employeeId: number | undefined) {
     enabled: employeeId !== undefined,
     queryFn: async ({ signal }) => {
       const { data } = await api.get<Payroll[]>(`/payroll/employees/${employeeId}`, { signal });
-      return data.filter((payroll) => payroll.confirmed);
+      return data;
     },
   });
 }
