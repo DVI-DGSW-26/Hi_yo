@@ -137,8 +137,9 @@ export function AttendanceOperationsPage() {
         <div className="panel-body">
           <h2 className="section-title">판정</h2>
           <p className="muted">
-            연장·야간·지각·조퇴가 판정에서 나와요. 여러 번 돌려도 같은 결과라 되돌릴 일이
-            없어요.
+            연장·야간·지각·조퇴가 판정에서 나와요. 여러 번 돌려도 결과는 같아요.
+            다만 <b>이미 확정한 날에 다시 돌리면 확정이 풀려요</b> — 확정은 아래에서 다시
+            하면 돼요.
           </p>
           {judge.data && (
             <p className="muted">
@@ -180,7 +181,7 @@ export function AttendanceOperationsPage() {
       <Dialog
         open={confirming}
         title="근태 확정"
-        description={`${date} 근태를 확정하면 이 날이 급여 계산에 들어가요. 확정을 되돌리는 경로가 스펙에 없어요.`}
+        description={`${date} 근태를 확정하면 이 날이 급여 계산에 들어가요. 잘못 확정했으면 판정을 다시 돌려서 잠정으로 되돌릴 수 있어요.`}
         confirmLabel="확정하기"
         loading={judge.isPending}
         onClose={() => setConfirming(false)}

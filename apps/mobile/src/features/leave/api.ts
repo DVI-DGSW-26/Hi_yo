@@ -10,7 +10,13 @@ import { LIST_PAGE_SIZE, api, type PageParams, type PageResponse } from '@/lib/a
  * 앱은 연차를 합산하지도, 잔여를 다시 세지도 않는다.
  */
 
-/** 신청 종류. 화면은 이 값을 보고 입력 칸을 정한다 */
+/**
+ * 신청 종류. 화면은 이 값을 보고 입력 칸을 정한다.
+ *
+ * **`halfDay`인 종류에는 반차 시각이 함께 온다** (2026-09-02부터). 그전에는 앱이 갖고
+ * 있어서 회사가 시각을 바꾸면 앱을 다시 배포해야 했다. 서버 문서가 **시각을 앱에
+ * 하드코딩하지 말고 이 값을 그대로 실어 보내라**고 적고 있다 (`halfDay.ts`).
+ */
 export interface RequestType {
   id: number;
   code: string;
@@ -20,6 +26,11 @@ export interface RequestType {
   /** true면 startTime/endTime이 필요하다 */
   needTime: boolean;
   halfDay: boolean;
+  /** `halfDay`가 아닌 종류에는 없다. `09:00:00` 모양이다 */
+  amStartTime: string | null;
+  amEndTime: string | null;
+  pmStartTime: string | null;
+  pmEndTime: string | null;
 }
 
 export interface LeaveGrant {
@@ -105,8 +116,8 @@ export interface LeaveRequestInput {
   /**
    * `needTime`인 종류에만 넣는다. 서버가 돌려주는 것과 같은 `HH:mm:ss` 모양이다.
    *
-   * 반차는 시각이 정해져 있다 (`halfDay.ts`). 그 밖의 `needTime` 종류(외출·조퇴)는
-   * 직접 받아야 하는데 시각을 고르는 칸이 아직 없다.
+   * 반차 시각은 **종류 응답에 실려 온다** (`halfDay.ts`). 그 밖의 `needTime`
+   * 종류(외출·조퇴)는 사람마다 달라 직접 받는다.
    */
   startTime?: string;
   endTime?: string;
