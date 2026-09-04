@@ -57,7 +57,14 @@ export interface CalendarEntry {
   requestId: number | null;
 }
 
-export type RequestStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'CANCELED';
+/**
+ * **`REVIEWED`는 검토를 마치고 승인을 기다리는 상태다** (2026-09-02 서버 변경).
+ * 결재가 검토·승인 두 단계가 되면서 생겼다.
+ *
+ * 본인용 화면에서는 `PENDING`과 똑같이 `결재 기다리는 중`으로 보여준다 — 신청한 사람에게
+ * 관리팀 내부의 단계는 알 바가 아니고, 어느 쪽이든 아직 기다리는 것이다.
+ */
+export type RequestStatus = 'PENDING' | 'REVIEWED' | 'APPROVED' | 'REJECTED' | 'CANCELED';
 
 /** 주말·공휴일이라 차감에서 빠진 날 */
 export interface ExcludedDate {
