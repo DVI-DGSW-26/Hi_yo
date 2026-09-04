@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router';
 import { formatLeaveDays } from '@hr/format';
-import { Pager, Summary, Table, type Column } from '@/components';
-import { periodText } from '@/features/approvals/labels';
+import { Pager, StatusText, Summary, Table, type Column } from '@/components';
+import { periodText, statusText, statusTone } from '@/features/approvals/labels';
 import { usePendingRequests, type LeaveRequest } from '@/features/approvals/api';
 
 /**
@@ -10,9 +10,12 @@ import { usePendingRequests, type LeaveRequest } from '@/features/approvals/api'
  *
  * 이 화면이 전달할 단 하나의 메시지 — **지금 몇 건이 내 결재를 기다리고 있는가.**
  *
- * **여기서 바로 승인하지 않는다.** 요구사항의 "검토"는 `GET /requests/{id}`로 내용을
- * 읽어보는 것이고, 그것 없이 결정하면 서버가 422로 막는다고 적혀 있다
- * (`docs/API_신청결재.md` 7장 2번). 줄을 눌러 상세로 들어가야 결재 버튼이 나온다.
+ * **여기서 바로 결재하지 않는다.** 결재는 2단계(검토 → 승인)이고 단계마다 서명이 필요하다.
+ * 줄을 눌러 상세로 들어가야 버튼이 나온다 — 목록에서 바로 누르게 만들면 내용을 안 보고
+ * 도장을 찍게 된다.
+ *
+ * **상태 칸을 반드시 둔다.** `검토 대기`와 `승인 대기`가 한 목록에 섞여 오고, 둘은 눌러야
+ * 할 사람이 다르다 — 색이 같아 구분이 없으면 열어봐야만 알 수 있다.
  *
  * 차감 일수는 서버가 준 `leaveDays`를 그대로 쓴다. 주말·공휴일을 앱에서 빼지 않는다.
  */
@@ -41,6 +44,11 @@ export function ApprovalsPage() {
       render: (row) => formatLeaveDays(row.leaveDays),
     },
     { key: 'reason', header: '사유', render: (row) => row.reason ?? '—' },
+    {
+      key: 'status',
+      header: '상태',
+      render: (row) => <StatusText label={statusText(row.status)} tone={statusTone(row.status)} />,
+    },
   ];
 
   return (
@@ -49,7 +57,8 @@ export function ApprovalsPage() {
         <div className="page-head-text">
           <h1 className="page-title">연차 결재</h1>
           <p className="page-lead">
-            줄을 눌러 신청서를 열면 승인·반려할 수 있어요. 내용을 열어보는 것이 검토예요.
+            결재는 검토하고 승인하는 두 단계예요. 줄을 눌러 신청서를 열면 지금 할 수 있는 게
+            나와요.
           </p>
         </div>
       </div>
