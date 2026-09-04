@@ -236,6 +236,10 @@ export function useCorrectAttendance(employeeId: number | undefined) {
  *
  * `confirm`을 켜면 그 날 근태가 **확정**된다. 확정돼야 급여 계산에 들어간다 —
  * 미확정 근태가 있는 직원은 급여에서 `skipped`로 빠진다 (`docs/API_급여.md`).
+ *
+ * **`confirm`은 확정 상태를 넘긴 값으로 덮는다** (2026-09-02 서버 답). 그대로 두는 것이
+ * 아니다 — 기본값이 `false`라 **확정을 빼고 부르면 그 날이 잠정으로 돌아간다.**
+ * 되돌리는 경로가 따로 있는 것이 아니라 이것이 그 경로다.
  */
 export function useJudgeAttendance() {
   const queryClient = useQueryClient();

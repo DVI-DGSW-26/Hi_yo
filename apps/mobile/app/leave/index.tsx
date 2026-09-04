@@ -28,7 +28,7 @@ import {
   LeaveTypeSection,
   type LeaveTypeChoice,
 } from '@/features/leave/LeaveTypeSection';
-import { halfDaySlot } from '@/features/leave/halfDay';
+import { halfDayTimes } from '@/features/leave/halfDay';
 import { useCreateRequest, useRequestTypes } from '@/features/leave/api';
 
 /**
@@ -84,7 +84,7 @@ export default function LeaveScreen() {
     // 시각이 필요한 종류인데 덜 적었으면 보내지 않는다. 반쪽짜리로 보내면 서버가
     // 400을 돌려주는데, 그건 화면이 이미 아는 것이라 물어볼 일이 아니다.
     // 왜 안 나가는지는 아래 `hint`가 버튼 위에 적는다.
-    if (needsTyped(value) && times === undefined) return;
+    if (needsTime(value) && times === undefined) return;
 
     create.mutate(
       {
@@ -165,7 +165,16 @@ function hint(dayCount: number, value: LeaveTypeChoice): string | undefined {
   if (needsTyped(value) && requestTimes(value) === undefined) {
     return '시작 시각과 종료 시각을 적어주세요.';
   }
+  // 반차인데 종류 응답에 시각이 안 실려 왔다. 앱이 만들어 넣지 않으므로 낼 수 없다.
+  if (value.type.halfDay && requestTimes(value) === undefined) {
+    return '반차 시각을 서버에서 받지 못했어요. 관리팀에 알려주세요.';
+  }
   return undefined;
+}
+
+/** 시각을 실어야 하는 종류인가. 반차든 직접 적는 것이든 시각 없이 보내지 않는다 */
+function needsTime(value: LeaveTypeChoice): boolean {
+  return value.type?.halfDay === true || needsTyped(value);
 }
 
 /** 시각을 사용자가 직접 적어야 하는 종류인가. 반차는 값이 정해져 있어 여기 들지 않는다 */
@@ -180,10 +189,8 @@ function needsTyped(value: LeaveTypeChoice): boolean {
  * 보내지 않는다.
  */
 function requestTimes(value: LeaveTypeChoice): { startTime: string; endTime: string } | undefined {
-  if (value.type?.halfDay) {
-    const slot = halfDaySlot(value.half);
-    return { startTime: slot.startTime, endTime: slot.endTime };
-  }
+  // 반차 시각은 종류 응답에 실려 온다. 안 왔으면 undefined 라 신청이 나가지 않는다.
+  if (value.type?.halfDay) return halfDayTimes(value.type, value.half);
   if (!needsTyped(value)) return undefined;
   if (!isCompleteTime(value.startTime) || !isCompleteTime(value.endTime)) return undefined;
   return { startTime: toServerTime(value.startTime), endTime: toServerTime(value.endTime) };
