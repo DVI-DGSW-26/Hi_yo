@@ -122,6 +122,16 @@ export interface LeaveRequestInput {
   startTime?: string;
   endTime?: string;
   reason?: string;
+  /**
+   * 신청인 서명. base64 PNG 다 — `data:` 앞머리는 붙이지 않는다.
+   *
+   * **종이 서식의 「작성」 칸이다** (2026-09-02부터 서버가 받는다). 결재자 서명과는
+   * 별개로 남고, 응답에서는 `applicantSigned` 로 온다.
+   *
+   * **서버에서는 선택이지만 화면에서는 필수로 받는다** — 서버가 필수로 두지 않은 것은
+   * 관리팀 대리 등록 경로가 있어서다 (`docs/API_신청결재.md` 3장).
+   */
+  signatureImage?: string;
 }
 
 export const leaveKeys = {
@@ -201,8 +211,14 @@ export function useCreateRequest() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (input: LeaveRequestInput) => {
-      const { data } = await api.post<LeaveRequest>('/requests', input);
+    mutationFn: async ({ signatureImage, ...rest }: LeaveRequestInput) => {
+      const { data } = await api.post<LeaveRequest>('/requests', {
+        ...rest,
+        // 서명은 그린 것만 보낸다. **`CLICK` 을 쓰지 않는다** — 결재자에게는 "눌렀다"가
+        // 서명이지만 신청인에게는 그에 해당하는 동작이 없다. 서명 없이 접수되는 자리는
+        // 관리팀 대리 등록이고, 그건 이 화면이 아니다.
+        ...(signatureImage ? { signatureMethod: 'IMAGE', signatureImage } : {}),
+      });
       return data;
     },
     onSuccess: () => {

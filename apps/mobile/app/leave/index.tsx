@@ -23,6 +23,7 @@ import {
 import { LeaveBalanceSection } from '@/features/leave/LeaveBalanceSection';
 import { LeaveCalendarSection } from '@/features/leave/LeaveCalendarSection';
 import { LeaveRequestList } from '@/features/leave/LeaveRequestList';
+import { LeaveSignatureSection } from '@/features/leave/LeaveSignatureSection';
 import {
   EMPTY_CHOICE,
   LeaveTypeSection,
@@ -54,6 +55,7 @@ export default function LeaveScreen() {
   const [range, setRange] = useState<{ start?: string; end?: string }>({});
   const [reason, setReason] = useState('');
   const [choice, setChoice] = useState<LeaveTypeChoice>(EMPTY_CHOICE);
+  const [signature, setSignature] = useState('');
   const create = useCreateRequest();
 
   // 이 화면은 연차 화면이라 연차휴가로 시작한다. 규칙이 아니라 이 화면의 기본값이다 —
@@ -86,6 +88,9 @@ export default function LeaveScreen() {
     // 왜 안 나가는지는 아래 `hint`가 버튼 위에 적는다.
     if (needsTime(value) && times === undefined) return;
 
+    // 종이 서식의 「작성」 칸이라 화면에서 필수로 받는다. 서버에서는 선택이다.
+    if (!signature) return;
+
     create.mutate(
       {
         typeCode: picked.code,
@@ -94,12 +99,14 @@ export default function LeaveScreen() {
         startTime: times?.startTime,
         endTime: times?.endTime,
         reason: reason.trim() || undefined,
+        signatureImage: signature,
       },
       {
         onSuccess: () => {
           setRange({});
           setReason('');
           setChoice(EMPTY_CHOICE);
+          setSignature('');
         },
       },
     );
@@ -137,14 +144,18 @@ export default function LeaveScreen() {
           </Section>
           <SectionDivider />
           <Section>
+            <LeaveSignatureSection value={signature} onChange={setSignature} />
+          </Section>
+          <SectionDivider />
+          <Section>
             <LeaveRequestList />
           </Section>
         </ScrollView>
 
         <View style={[styles.cta, { paddingBottom: insets.bottom + spacing.ctaX }]}>
           <MutationError mutation={create} />
-          {!create.error && hint(selected.length, value) !== undefined && (
-            <Text style={styles.hint}>{hint(selected.length, value)}</Text>
+          {!create.error && hint(selected.length, value, signature) !== undefined && (
+            <Text style={styles.hint}>{hint(selected.length, value, signature)}</Text>
           )}
           <Button label="신청하기" loading={create.isPending} onPress={submit} />
         </View>
@@ -159,7 +170,7 @@ export default function LeaveScreen() {
  * 잔여 초과처럼 **서버가 판단하는 것은 여기서 말하지 않는다.** 화면이 아는 것,
  * 곧 아직 안 채운 칸만 짚는다. 시작이 끝보다 늦은지도 서버가 본다.
  */
-function hint(dayCount: number, value: LeaveTypeChoice): string | undefined {
+function hint(dayCount: number, value: LeaveTypeChoice, signature: string): string | undefined {
   if (dayCount === 0) return '달력에서 날짜를 골라주세요.';
   if (!value.type) return '무엇을 신청하는지 골라주세요.';
   if (needsTyped(value) && requestTimes(value) === undefined) {
@@ -169,6 +180,8 @@ function hint(dayCount: number, value: LeaveTypeChoice): string | undefined {
   if (value.type.halfDay && requestTimes(value) === undefined) {
     return '반차 시각을 서버에서 받지 못했어요. 관리팀에 알려주세요.';
   }
+  // 마지막에 본다. 다 채우고 나서 서명하는 것이 종이와 같은 차례다.
+  if (!signature) return '서명을 해주세요.';
   return undefined;
 }
 
