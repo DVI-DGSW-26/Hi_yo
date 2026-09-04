@@ -7,13 +7,19 @@ import { api, type PageResponse } from '@/lib/api';
  * A-302가 쓴다. **본인용 화면에서 `GET /requests/pending`을 부르지 않는다** —
  * 관리팀 전용이고 `apps/mobile`에 넣지 않는다.
  *
- * **"검토"에는 별도 API가 없다.** `GET /requests/{id}`로 내용을 읽어보는 것 자체가 검토이고,
- * 상태를 바꾸는 행위는 결정 하나뿐이다. 그래서 화면을 목록과 상세로 나눴다 — 목록에서 바로
- * 승인하게 만들면 검토 없이 결정하는 셈이 되고, 서버가 그것을 422로 막는다고 적고 있다
- * (`docs/API_신청결재.md` 7장 2번. 무엇이 검토로 집계되는지는 아직 확인되지 않았다).
+ * **결재는 2단계다 (2026-09-02 서버 변경).** 회사 「휴가(근태)신청서」(DV-MP-120-004)의
+ * 결재란이 「작성 · 검토 · 승인」 세 칸이고, 작성은 신청인 자리라 결재는 **검토와 승인**
+ * 둘이다. 그래서 경로도 둘이다 — `/review`가 첫 단계, `/decision`이 마지막 단계다.
+ *
+ * **검토한 사람은 승인할 수 없다.** 같은 사람이 두 칸을 채우면 단계를 나눈 뜻이 없어
+ * 서버가 422로 막는다. 종이 서식에서도 두 사람이 도장을 찍는다.
  */
 
-export type RequestStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'CANCELED';
+/**
+ * `REVIEWED`는 검토를 마치고 승인을 기다리는 상태다 (2026-09-02에 생겼다).
+ * **상태를 열거하는 곳을 늘릴 때 여기부터 본다** — 목록 필터·뱃지·정렬이 전부 이것을 쓴다.
+ */
+export type RequestStatus = 'PENDING' | 'REVIEWED' | 'APPROVED' | 'REJECTED' | 'CANCELED';
 
 /** 차감에서 빠진 날. "왜 3일 신청인데 2일만 깎였나"에 답한다 */
 export interface ExcludedDate {
@@ -43,6 +49,13 @@ export interface LeaveRequest {
   status: RequestStatus;
   companyLeave: boolean;
   excludedDates: ExcludedDate[] | null;
+  /** 신청인이 서명했는가. 결재자 서명인 `signed`와 다른 값이다 */
+  applicantSigned: boolean;
+  /** 검토(첫 단계)를 한 사람. 이 사람은 승인할 수 없다 */
+  reviewerId: number | null;
+  reviewerName: string | null;
+  reviewComment: string | null;
+  reviewedAt: string | null;
   approverId: number | null;
   approverName: string | null;
   decisionComment: string | null;
@@ -52,11 +65,11 @@ export interface LeaveRequest {
 }
 
 /**
- * 결재 요청.
+ * 결재 요청. **검토와 승인이 같은 몸통을 쓴다** (`RequestDecisionRequest`).
  *
- * **`signatureMethod`가 필수다.** 지금은 `CLICK`만 쓴다 — `IMAGE`는 크기 상한과 배경이
- * 아직 정해지지 않았다 (`docs/API_신청결재.md` 8장). `CLICK`일 때는 이미지를 보내지
- * 않아도 된다는 답을 받았다 (2026-08-31).
+ * **`signatureMethod`가 필수다.** `CLICK`일 때는 이미지를 보내지 않아도 된다는 답을
+ * 받았다 (2026-08-31). `IMAGE`는 **base64 128KB**가 상한이고 배경은 투명 PNG다
+ * (2026-09-02 서버 답).
  */
 export interface DecisionInput {
   approved: boolean;
@@ -102,8 +115,41 @@ export function useLeaveRequest(id: number | undefined) {
   });
 }
 
+/** 검토와 승인이 같은 몸통을 쓴다. 만드는 곳을 하나로 둔다 */
+function decisionBody(input: DecisionInput) {
+  return {
+    approved: input.approved,
+    ...(input.comment ? { comment: input.comment } : {}),
+    // 그린 서명이 있으면 그것으로, 없으면 누른 것으로 서명한다
+    ...(input.signatureImage
+      ? { signatureMethod: 'IMAGE', signatureImage: input.signatureImage }
+      : { signatureMethod: 'CLICK' }),
+  };
+}
+
 /**
- * 승인 · 반려. 엔드포인트는 하나고 `approved`로 갈린다.
+ * 검토 — 결재의 **첫 단계**.
+ *
+ * 통과하면 상태가 `REVIEWED`가 되어 승인을 기다린다.
+ * **`approved: false`면 검토 단계에서 반려되고 거기서 끝난다** — 승인까지 갈 이유가 없다.
+ */
+export function useReviewRequest(id: number) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (input: DecisionInput) => {
+      const { data } = await api.post<LeaveRequest>(`/requests/${id}/review`, decisionBody(input));
+      return data;
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: approvalKeys.all }),
+  });
+}
+
+/**
+ * 승인 · 반려 — 결재의 **마지막 단계**. `approved`로 갈린다.
+ *
+ * **검토를 거친 신청만 처리할 수 있다** (`REVIEWED`). 그리고 **검토한 사람은 승인할 수
+ * 없다** — 화면이 미리 막지만 서버도 막는다.
  *
  * **반려는 되돌릴 수 없다.** 신청자에게 즉시 알림이 가고 재신청은 새 건이다
  * (`DESIGN_ADMIN.md` 5장). 승인도 되돌리기 어렵다 — 승인된 건은 시작 전에만 취소된다.
@@ -114,14 +160,10 @@ export function useDecideRequest(id: number) {
 
   return useMutation({
     mutationFn: async (input: DecisionInput) => {
-      const { data } = await api.post<LeaveRequest>(`/requests/${id}/decision`, {
-        approved: input.approved,
-        ...(input.comment ? { comment: input.comment } : {}),
-        // 그린 서명이 있으면 그것으로, 없으면 누른 것으로 서명한다
-        ...(input.signatureImage
-          ? { signatureMethod: 'IMAGE', signatureImage: input.signatureImage }
-          : { signatureMethod: 'CLICK' }),
-      });
+      const { data } = await api.post<LeaveRequest>(
+        `/requests/${id}/decision`,
+        decisionBody(input),
+      );
       return data;
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: approvalKeys.all }),
