@@ -83,14 +83,16 @@ export interface DutySwap {
   respondedAt: string | null;
 }
 
-export interface DutyMember {
-  id: number;
+/**
+ * 교체를 부탁할 수 있는 사람. **`employeeId`와 `name`만 온다** (2026-09-02 서버 회신).
+ *
+ * 명단 대상자 조회(`/duty/rosters/{id}/members`)와 다른 경로다. 그쪽은 순번·부서까지
+ * 실어 주지만 관리팀 전용이라 본인용 화면에서 부를 수 없다. 서버가 본인용으로 따로
+ * 열어 준 것이 이 경로고, **누구를 고를 수 있는지에 필요한 것만** 담겨 있다.
+ */
+export interface DutySwapCandidate {
   employeeId: number;
-  employeeName: string | null;
-  departmentName: string | null;
-  /** 관리팀이 정하는 순번. 가나다순이 아니며 자동 편성이 이 순서대로 돈다 */
-  rotationSeq: number;
-  active: boolean;
+  name: string | null;
 }
 
 export interface DutySwapInput {
@@ -108,7 +110,7 @@ export interface DutyDecisionInput {
 export const dutyKeys = {
   all: ['duty'] as const,
   rosters: () => [...dutyKeys.all, 'rosters'] as const,
-  members: (rosterId: number) => [...dutyKeys.all, 'members', rosterId] as const,
+  candidates: (scheduleId: number) => [...dutyKeys.all, 'candidates', scheduleId] as const,
   schedules: (employeeId: number, from: string, to: string) =>
     [...dutyKeys.all, 'schedules', employeeId, from, to] as const,
   inbox: () => [...dutyKeys.all, 'swaps', 'inbox'] as const,
@@ -130,18 +132,23 @@ export function useDutyRosters() {
 }
 
 /**
- * 교체 상대 후보. 이 명단에 속한 사람만 받을 수 있다.
+ * 그 당직을 대신 서 줄 수 있는 사람. **일반 직원이 부를 수 있다** (2026-09-02에 열렸다).
  *
- * **본인용 화면에서는 아직 쓸 수 없다.** 일반 직원이 부르면 403이다 (2026-08-28 실호출).
- * Swagger에는 `관리팀만` 표시가 없는데 실제로는 막혀 있다. 교체 신청 화면이 이것 때문에
- * 막혀 있어 남겨만 둔다 — 서버가 열어주면 바로 붙인다.
+ * 그전에는 명단 대상자도 당직표 전체도 403이라 `targetId`를 고를 방법 자체가 없었고,
+ * 그래서 교체 신청 화면을 만들지 못하고 있었다.
+ *
+ * **후보를 앱에서 더 추리지 않는다.** 그날 이미 배정됐는지, 명단 안의 사람인지는 서버가
+ * 보고 걸러 준 결과가 이 목록이다. 배정마다 후보가 다르므로 `scheduleId`별로 캐시한다.
  */
-export function useDutyMembers(rosterId: number | undefined) {
+export function useSwapCandidates(scheduleId: number | undefined) {
   return useQuery({
-    queryKey: dutyKeys.members(rosterId ?? -1),
-    enabled: rosterId !== undefined,
+    queryKey: dutyKeys.candidates(scheduleId ?? -1),
+    enabled: scheduleId !== undefined,
     queryFn: async ({ signal }) => {
-      const { data } = await api.get<DutyMember[]>(`/duty/rosters/${rosterId}/members`, { signal });
+      const { data } = await api.get<DutySwapCandidate[]>(
+        `/duty/schedules/${scheduleId}/swap-candidates`,
+        { signal },
+      );
       return data;
     },
   });
@@ -208,8 +215,6 @@ export function useSentSwaps() {
  *
  * 상대가 명단 밖이거나 내 당직이 아니면 서버가 막는다. 앱에서 미리 판정하지 않는다 —
  * 버튼은 항상 눌리고, 막힌 이유는 서버가 준 문구로 알린다.
- *
- * **화면은 아직 없다.** `targetId`를 고를 수가 없어서다 — `useDutyMembers` 주석 참고.
  */
 export function useRequestSwap() {
   const queryClient = useQueryClient();
