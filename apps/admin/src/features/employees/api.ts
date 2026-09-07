@@ -35,7 +35,12 @@ export interface Employee {
   residentNoRegistered: boolean;
 }
 
-/** 서버가 마스킹한 값이 온다. 원본을 받지 않는다 */
+/**
+ * **원문이 온다.** 마스킹된 값이 아니다 (2026-09-02 회신 10번).
+ *
+ * 화면에 그릴 때 `maskAccountNo`(`@hr/format`)를 거친다. 모바일과 같은 함수를 쓴다 —
+ * 같은 값을 두 앱이 다르게 그리면 어느 쪽이 맞는지 알 수 없다.
+ */
 export interface BankAccount {
   bankName: string | null;
   bankAccount: string | null;

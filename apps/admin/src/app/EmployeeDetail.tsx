@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Link, useParams } from 'react-router';
+import { maskAccountNo } from '@hr/format';
 import {
   Button,
   DetailList,
@@ -28,7 +29,10 @@ import {
  * 주민등록번호는 어떤 조회 응답으로도 읽을 수 없어 다시 채워 보낼 수가 없다. 수정할 때마다
  * 주민번호가 지워지면 재직증명서 발급이 막힌다. 서버가 부분 수정을 지원해야 붙일 수 있다.
  *
- * 계좌정보는 서버가 마스킹한 값을 그대로 보여준다. 여기서 가리거나 풀지 않는다.
+ * **계좌번호는 서버가 가려주지 않는다** (2026-09-02 회신 10번). 원문이 내려오므로
+ * 화면이 `maskAccountNo`로 가린다 — 모바일 마이페이지와 같은 함수다.
+ * 관리팀 화면도 가리기로 정했다 (2026-09-07). 급여 이체에 원문이 필요해지면 그때
+ * 그 화면에서 따로 연다 — **직원 상세는 사람을 확인하는 자리지 이체하는 자리가 아니다.**
  */
 const STATUS_LABEL: Record<EmploymentStatus, string> = {
   ACTIVE: '재직',
@@ -73,9 +77,7 @@ export function EmployeeDetail() {
             직원 목록으로
           </Link>
           <h1 className="page-title">{summary.name}</h1>
-          <p className="page-lead">
-            계좌는 서버가 마스킹한 값을 그대로 보여줘요. 여기서 가리거나 풀지 않아요.
-          </p>
+          <p className="page-lead">계좌번호는 뒤 네 자리만 보여줘요.</p>
         </div>
       </div>
 
@@ -117,8 +119,11 @@ export function EmployeeDetail() {
               { label: '연락처', value: detail.phone ?? '아직이에요' },
               {
                 label: '계좌',
+                // 서버가 원문을 준다. 그리기 직전에 가린다 (2026-09-02 회신 10번).
                 value: detail.bankAccount?.bankAccount
-                  ? `${detail.bankAccount.bankName ?? ''} ${detail.bankAccount.bankAccount}`.trim()
+                  ? `${detail.bankAccount.bankName ?? ''} ${maskAccountNo(
+                      detail.bankAccount.bankAccount,
+                    )}`.trim()
                   : '아직이에요',
               },
               /*
