@@ -1,29 +1,23 @@
-import {
-  addMonths,
-  endOfMonth,
-  format,
-  getDay,
-  isSameMonth,
-  parseISO,
-  startOfMonth,
-  subMonths,
-} from 'date-fns';
-import { Stack } from 'expo-router';
+import { Stack, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
-import { formatLeaveDays } from '@hr/format';
+import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, spacing, typography } from '@hr/tokens';
 import {
   Button,
-  Calendar,
-  ListRow,
-  QueryState,
+  MutationError,
   Section,
   SectionDivider,
   SectionTitle,
   SignaturePad,
+  TextField,
 } from '@/components';
-import { useLeaveBalance, useLeaveCalendar } from '@/features/leave/api';
+import { useSubmitLeavePlan } from '@/features/leave/api';
+import { LeaveCalendarSection } from '@/features/leave/LeaveCalendarSection';
+import { LeavePlanBalanceSection } from '@/features/leave/LeavePlanBalanceSection';
+import { LeavePlanPickedSection } from '@/features/leave/LeavePlanPickedSection';
+import { LeavePlanResult } from '@/features/leave/LeavePlanResult';
+import { cycleDay, sortedDates, toPlannedDays, type PickedDays } from '@/features/leave/planDays';
 
 /**
  * S-302 연차사용계획서
@@ -35,173 +29,166 @@ import { useLeaveBalance, useLeaveCalendar } from '@/features/leave/api';
  * **서식에 「날짜 선택할 수 있는 달력 필요!」라는 메모가 붙어 있었다** (2026-09-02).
  * 종이의 ②(음영은 휴무일)는 달력이 대신하므로 옮기지 않았다.
  *
- * **제출 버튼이 없다. 낼 곳이 아직 없기 때문이다.**
- * `GET /v3/api-docs`의 63개 경로에 촉진·계획서가 하나도 없다 — 계획서를 낼 경로도,
- * 서명을 붙일 자리도 없다 (`docs/API_연차.md` 10장, 물어볼 것 11·12번).
- * **없는 엔드포인트를 부르는 코드를 쓰지 않는다** (`CLAUDE.md` 4장).
- * 경로가 열리면 붙일 것은 셋이다 — 제출 뮤테이션, 서명, 그리고 S-301에서 이 화면으로
- * 들어오는 줄. **그때까지 어디에서도 이 화면으로 보내지 않는다** — 낼 수 없는 화면을
- * 직원에게 보여주지 않는다.
+ * **제출은 `POST /leave/promotions/{promotionId}/plan`이다** (2026-09-02에 열렸다).
+ * 서명이 필수다 — 결재 서명과 달리 대리 등록 경로가 없고, 계획서는 직원 본인의
+ * 의사표시라는 것이 증빙의 핵심이기 때문이다.
  *
- * **공휴일을 달력에 깔지 않았다.** `Calendar`가 날짜당 점 하나를 그리는데 그 자리는
- * 이미 낸 연차가 쓴다. 고르는 것을 막지도 않는다 — 판정은 서버가 한다 (S-301과 같은 원칙).
+ * **`promotionId`는 라우트 파라미터로 받는다. 아직 이 화면으로 보내는 곳이 없다.**
+ * 직원이 자기 촉진 통보를 조회할 경로가 명세 78개 어디에도 없다 — `POST /leave/promotions`
+ * (관리팀이 발송할 때)의 응답에만 id가 담긴다. 본인용 조회가 열려야 S-301에서 이 화면으로
+ * 들어오는 줄을 놓을 수 있다. **없는 엔드포인트를 지어내지 않는다** (`CLAUDE.md` 4장).
+ *
+ * 달력은 S-301과 같은 `LeaveCalendarSection`이다. 고르는 것을 막지 않는 것도 같다 —
+ * 주말·공휴일·중복·기한은 전부 서버가 422로 판정한다.
  */
-
-/** 서식의 표기. 연차는 1, 반차는 0.5다 (`docs/API_연차.md` 10장) */
-type PlanKind = 'FULL' | 'HALF';
-
-const HALF_DAY = 0.5;
-
 export default function LeavePlanScreen() {
+  const insets = useSafeAreaInsets();
+  const params = useLocalSearchParams<{ promotionId?: string }>();
+  const promotionId = Number(params.promotionId);
+
   const [month, setMonth] = useState(() => new Date());
-  const [picked, setPicked] = useState<Record<string, PlanKind>>({});
+  const [picked, setPicked] = useState<PickedDays>({});
   const [signature, setSignature] = useState('');
+  const [note, setNote] = useState('');
 
-  const balance = useLeaveBalance();
-  const calendar = useLeaveCalendar(
-    format(startOfMonth(month), 'yyyy-MM-dd'),
-    format(endOfMonth(month), 'yyyy-MM-dd'),
-  );
+  const submit = useSubmitLeavePlan(promotionId);
 
-  const dates = Object.keys(picked).sort();
-  const planned = dates.reduce((sum, iso) => sum + (picked[iso] === 'HALF' ? HALF_DAY : 1), 0);
+  const dates = sortedDates(picked);
 
-  /** 한 번 누르면 연차, 두 번이면 반차, 세 번이면 뺀다 */
-  function cycle(iso: string) {
-    setPicked((prev) => {
-      const next = { ...prev };
-      if (next[iso] === undefined) next[iso] = 'FULL';
-      else if (next[iso] === 'FULL') next[iso] = 'HALF';
-      else delete next[iso];
-      return next;
+  function send() {
+    // 서명은 서버에서도 필수다. 날짜 판정은 서버가 하므로 여기서 거르지 않는다.
+    if (dates.length === 0 || !signature) return;
+
+    submit.mutate({
+      days: toPlannedDays(picked),
+      signatureImage: signature,
+      note: note.trim() || undefined,
     });
+  }
+
+  // 낸 뒤에는 결과만 보여준다. 한 통보당 계획서는 하나라 다시 낼 수 없다(409).
+  if (submit.data) {
+    return (
+      <>
+        <Stack.Screen options={{ title: '연차사용계획서' }} />
+        <ScrollView contentContainerStyle={styles.scroll}>
+          <LeavePlanResult plan={submit.data} />
+        </ScrollView>
+      </>
+    );
+  }
+
+  // 어느 통보에 대한 계획서인지 모르면 낼 수 없다. 지어내지 않고 그대로 알린다.
+  if (!Number.isFinite(promotionId)) {
+    return (
+      <>
+        <Stack.Screen options={{ title: '연차사용계획서' }} />
+        <Section>
+          <Text style={styles.lead}>
+            어떤 촉진 통보에 대한 계획서인지 알 수 없어요. 알림에서 다시 들어와 주세요.
+          </Text>
+        </Section>
+      </>
+    );
   }
 
   return (
     <>
       <Stack.Screen options={{ title: '연차사용계획서' }} />
+      <KeyboardAvoidingView
+        style={styles.flex}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      >
+        <ScrollView style={styles.flex} keyboardShouldPersistTaps="handled">
+          <Section>
+            {/*
+              서식 머리말을 옮기되 **「계획서를 내면 쉬는 것」으로 읽히지 않게 적는다.**
+              서버 문서가 그렇게 안내하면 직원이 신청을 빠뜨려 무단결근이 된다고 못 박았다.
+            */}
+            <Text style={styles.lead}>
+              쓰지 않은 연차는 다음 해로 넘어가지도, 수당으로 나오지도 않고 그해 12월 31일에
+              사라져요. 아래에서 쉬려는 날을 골라 계획서를 내주세요. 계획서는 미리 알리는
+              것이고, 실제로 쉬려면 그날 휴가를 따로 신청해야 해요.
+            </Text>
+          </Section>
 
-      <ScrollView contentContainerStyle={styles.scroll}>
-        <Section>
-          {/* 서식 머리말을 그대로 옮겼다. 앱이 문구를 만들지 않는다 */}
-          <Text style={styles.lead}>
-            쓰지 않은 연차는 다음 해로 넘어가지도, 수당으로 나오지도 않고 그해 12월 31일에
-            사라져요. 아래에서 쉬려는 날을 고르고 계획서를 내주세요.
-          </Text>
-        </Section>
+          <SectionDivider />
 
-        <SectionDivider />
+          <Section>
+            <LeavePlanBalanceSection />
+          </Section>
 
-        <Section>
-          <SectionTitle title="내 연차" />
-          <QueryState query={balance}>
-            {(data) => (
-              <>
-                <ListRow label="총 연차" value={formatLeaveDays(data.granted)} />
-                <ListRow label="사용" value={formatLeaveDays(data.used)} />
-                <ListRow label="잔여" value={formatLeaveDays(data.remaining)} />
-              </>
-            )}
-          </QueryState>
-        </Section>
+          <SectionDivider />
 
-        <SectionDivider />
+          <Section>
+            <Text style={styles.hint}>누르면 연차, 한 번 더 누르면 반차, 또 누르면 빠져요.</Text>
+            <LeaveCalendarSection
+              month={month}
+              onChangeMonth={setMonth}
+              selected={dates}
+              onPressDate={(iso) => setPicked((prev) => cycleDay(prev, iso))}
+            />
+          </Section>
 
-        <Section>
-          <SectionTitle title={format(month, 'yyyy년 M월')} />
-          <Text style={styles.hint}>
-            누르면 연차, 한 번 더 누르면 반차, 또 누르면 빠져요.
-          </Text>
+          <SectionDivider />
 
-          {/* 이미 낸 연차를 점으로 깐다. 서버가 준 것을 그대로 찍는다 */}
-          <QueryState query={calendar}>
-            {(data) => (
-              <Calendar
-                month={month}
-                markers={Object.fromEntries(
-                  data.map((entry) => [entry.date, entry.days === HALF_DAY ? 'half' : 'full']),
-                )}
-                selected={dates.filter((iso) => isSameMonth(parseISO(iso), month))}
-                onPressDate={cycle}
-              />
-            )}
-          </QueryState>
+          <Section>
+            <LeavePlanPickedSection picked={picked} />
+          </Section>
 
-          <View style={styles.monthNav}>
-            <View style={styles.navButton}>
-              <Button
-                label="이전 달 보기"
-                variant="secondary"
-                size="inline"
-                onPress={() => setMonth(subMonths(month, 1))}
-              />
-            </View>
-            <View style={styles.navButton}>
-              <Button
-                label="다음 달 보기"
-                variant="secondary"
-                size="inline"
-                onPress={() => setMonth(addMonths(month, 1))}
-              />
-            </View>
-          </View>
-        </Section>
+          <SectionDivider />
 
-        <SectionDivider />
+          <Section>
+            {/* 255는 서버가 받는 한계다 (`LeavePlanSubmitRequest`) */}
+            <TextField label="남길 말" value={note} onChangeText={setNote} maxLength={255} />
+            <Text style={styles.note}>안 적어도 낼 수 있어요.</Text>
+          </Section>
 
-        <Section>
-          <SectionTitle title="고른 날" />
+          <SectionDivider />
 
-          {dates.length === 0 ? (
-            <Text style={styles.hint}>아직 고른 날이 없어요.</Text>
-          ) : (
-            dates.map((iso) => (
-              <ListRow
-                key={iso}
-                label={dayLabel(iso)}
-                value={picked[iso] === 'HALF' ? '반차' : '연차'}
-              />
-            ))
+          <Section>
+            <SectionTitle title="서명" />
+            {/*
+              서식의 「제출자」 자리다. **서버에서도 필수다** — 대리 등록 경로가 없어
+              본인 의사표시가 증빙의 핵심이다.
+            */}
+            <SignaturePad label="제출자 서명" value={signature} onChange={setSignature} />
+          </Section>
+        </ScrollView>
+
+        <View style={[styles.cta, { paddingBottom: insets.bottom + spacing.ctaX }]}>
+          <MutationError mutation={submit} />
+          {!submit.error && blockedReason(dates.length, signature) !== undefined && (
+            <Text style={styles.hint}>{blockedReason(dates.length, signature)}</Text>
           )}
-
-          <ListRow label="사용계획일수" value={formatLeaveDays(planned)} />
-
-          {/* 서식의 ③·④를 옮겼다 */}
-          <Text style={styles.note}>
-            고른 날을 바꾸려면 3일 전까지 담당자에게 말해주세요. 적어 낸 날은 그 달 안에
-            모두 써야 해요.
-          </Text>
-        </Section>
-
-        <SectionDivider />
-
-        <Section>
-          <SectionTitle title="서명" />
-          {/*
-            서식의 「제출자 : ______ (서명 또는 인)」 자리다.
-            **보낼 곳이 아직 없다** — 계획서를 낼 경로도 서명을 붙일 자리도 없다.
-            경로가 열리면 이 값을 그대로 실어 보낸다 (물어볼 것 11·12번).
-          */}
-          <SignaturePad label="제출자 서명" value={signature} onChange={setSignature} />
-        </Section>
-      </ScrollView>
+          <Button label="계획서 내기" loading={submit.isPending} onPress={send} />
+        </View>
+      </KeyboardAvoidingView>
     </>
   );
 }
 
-/** `9월 3일 (목)`. `date-fns` 로케일을 더하지 않고 요일만 우리 배열에서 꺼낸다 */
-const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토'];
-
-function dayLabel(iso: string): string {
-  const date = parseISO(iso);
-  return `${format(date, 'M월 d일')} (${WEEKDAYS[getDay(date)]})`;
+/**
+ * 아직 낼 수 없는 이유. 버튼은 항상 눌리므로(확정 결정) 막힌 이유를 이 자리에 적는다.
+ *
+ * **서버가 판단하는 것은 여기서 말하지 않는다** — 주말·공휴일·중복·기한은 422로 온다.
+ * 화면이 아는 것, 곧 아직 안 채운 칸만 짚는다.
+ */
+function blockedReason(dayCount: number, signature: string): string | undefined {
+  if (dayCount === 0) return '달력에서 쉬려는 날을 골라주세요.';
+  if (!signature) return '서명을 남겨주세요.';
+  return undefined;
 }
 
 const styles = StyleSheet.create({
+  flex: { flex: 1, backgroundColor: colors.white },
   scroll: { paddingBottom: spacing.sectionY },
   lead: { ...typography.bodySmall, color: colors.textBody },
   hint: { ...typography.label, color: colors.textWeak, marginBottom: spacing.tight },
   note: { ...typography.label, color: colors.textWeak, marginTop: spacing.tight },
-  monthNav: { flexDirection: 'row', gap: spacing.tight, marginTop: spacing.rowGap },
-  navButton: { flex: 1 },
+  cta: {
+    paddingHorizontal: spacing.ctaX,
+    paddingTop: spacing.ctaX,
+    backgroundColor: colors.white,
+  },
 });
