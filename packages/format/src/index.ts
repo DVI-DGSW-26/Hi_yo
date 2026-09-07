@@ -86,6 +86,35 @@ export function formatRatePercent(ratePercent: number): string {
   return `${trimZeros(ratePercent)}%`;
 }
 
+/**
+ * 계좌번호를 가린다.
+ *
+ *   "1002-345-678901" → "****-***-**8901"
+ *   "110234567890"    → "********7890"
+ *
+ * **서버가 원문을 준다** (2026-09-02 회신 10번). 계좌는 은행명·계좌번호·예금주 셋 다
+ * 마스킹되지 않은 채 내려온다 — 그래서 화면에서 가린다.
+ *
+ * `CLAUDE.md` 2장의 표기(`국민 ****-**-**1234`)를 그대로 따른다. 뒤 네 자리만 남기고
+ * 숫자를 `*`로 바꾸며 **하이픈은 건드리지 않는다** — 자릿수 모양이 남아 있어야 본인이
+ * 자기 계좌인지 알아본다.
+ *
+ * **숫자가 넷 이하면 전부 가린다.** 남기는 것이 곧 전부가 되는 자리다.
+ *
+ * 이것은 표기일 뿐이다. **가린 값을 서버로 되돌려 보내지 않는다** — 급여가 엉뚱한
+ * 계좌로 간다. 바꾸는 화면은 새 값을 처음부터 받는다.
+ */
+export function maskAccountNo(accountNo: string): string {
+  const digits = accountNo.replace(/\D/g, '').length;
+  const maskUpTo = digits > 4 ? digits - 4 : digits;
+
+  let seen = 0;
+  return accountNo.replace(/\d/g, (digit) => {
+    seen += 1;
+    return seen > maskUpTo ? digit : '*';
+  });
+}
+
 /** Hermes의 Intl 지원 편차를 타지 않도록 세 자리 구분을 직접 처리한다. */
 function groupDigits(value: number): string {
   const sign = value < 0 ? '-' : '';

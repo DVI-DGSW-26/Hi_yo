@@ -5,6 +5,7 @@ import {
   formatMinutes,
   formatRatePercent,
   formatTargetYm,
+  maskAccountNo,
 } from './index';
 
 /**
@@ -132,5 +133,38 @@ describe('formatRatePercent — 요율', () => {
   it('자릿수를 임의로 맞추지 않는다', () => {
     expect(formatRatePercent(13.14)).toBe('13.14%');
     expect(formatRatePercent(3.595)).toBe('3.595%');
+  });
+});
+
+/**
+ * 계좌번호는 **서버가 원문을 준다** (2026-09-02 회신 10번). 가리는 것이 화면 몫이라
+ * 여기가 틀리면 전 직원의 계좌번호가 그대로 보인다.
+ */
+describe('maskAccountNo — 계좌번호', () => {
+  it('뒤 네 자리만 남긴다', () => {
+    expect(maskAccountNo('1002-345-678901')).toBe('****-***-**8901');
+  });
+
+  it('하이픈이 없어도 뒤 네 자리만 남긴다', () => {
+    expect(maskAccountNo('110234567890')).toBe('********7890');
+  });
+
+  // 자릿수 모양이 남아 있어야 본인이 자기 계좌인지 알아본다 (CLAUDE.md 2장).
+  it('하이픈을 건드리지 않는다', () => {
+    expect(maskAccountNo('123-45-678901')).toBe('***-**-**8901');
+  });
+
+  it('숫자가 넷 이하면 전부 가린다', () => {
+    expect(maskAccountNo('1234')).toBe('****');
+    expect(maskAccountNo('12')).toBe('**');
+  });
+
+  it('빈 값을 넣으면 빈 값이 나온다', () => {
+    expect(maskAccountNo('')).toBe('');
+  });
+
+  // CLAUDE.md 2장의 표기를 그대로 따른다.
+  it('CLAUDE.md의 예시와 같은 모양이 나온다', () => {
+    expect(`국민 ${maskAccountNo('1234-56-781234')}`).toBe('국민 ****-**-**1234');
   });
 });
