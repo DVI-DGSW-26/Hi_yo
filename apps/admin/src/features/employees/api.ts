@@ -5,10 +5,16 @@ import { api, type PageParams, type PageResponse } from '@/lib/api';
  * 직원 (A-102). 관리팀 전용이다.
  *
  * **주민등록번호는 어떤 조회 응답에도 담기지 않는다.** `residentNoRegistered` 로 등록 여부만 온다.
- * 화면에 주민번호를 표시하거나 상태에 담지 않는다.
+ * 넣을 수는 있어도 **읽을 수는 없다.** 등록 폼의 값은 성공하는 즉시 지운다.
  *
- * `PUT /employees/{id}` 는 **전체 교체**다. 보내지 않은 필드는 지워진다 (2026-08-26 실호출 확인).
- * 그래서 수정 화면을 만들지 않았다 — `docs/00_문서_인덱스.md` 참고.
+ * `PUT /employees/{id}` 는 여전히 **전체 교체**다. 보내지 않은 필드는 지워진다
+ * (2026-08-26 실호출 확인). **이 파일은 `PUT` 을 부르지 않는다** — 주민번호를 되돌려
+ * 보낼 방법이 없어 한 번 수정할 때마다 지워지기 때문이다.
+ *
+ * 대신 2026-09-02 회신으로 **바꿔야 할 것 둘이 `PATCH` 로 빠져나왔다** —
+ * 주민번호(`/resident-no`)와 부서·직무(`/assignment`)다. `employee-no`·`status` 가
+ * 이미 같은 이유로 나와 있어 패턴이 넷이 됐다. 이름·연락처·주소처럼 `PUT` 으로만
+ * 바꿀 수 있는 항목은 **아직 만들지 않았다** (`docs/01_물어볼_것.md` 25번).
  */
 
 export type EmploymentStatus = 'ACTIVE' | 'ON_LEAVE' | 'RESIGNED';
@@ -21,7 +27,13 @@ export interface Employee {
   legalName: string | null;
   nationality: string | null;
   corporation: string | null;
+  /**
+   * 2026-09-02 회신으로 조회에 실리기 시작했다. **이름으로 id 를 역매핑하지 않는다** —
+   * 부서명이 겹치거나 바뀌면 엉뚱한 부서로 옮겨진다.
+   */
+  departmentId: number | null;
   departmentName: string | null;
+  jobId: number | null;
   jobName: string | null;
   jobGrade: string | null;
   workSite: string | null;
@@ -204,6 +216,54 @@ export function useChangeStatus(id: number) {
   return useMutation({
     mutationFn: async (input: StatusChangeInput) => {
       const { data } = await api.patch<Employee>(`/employees/${id}/status`, input);
+      return data;
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: employeeKeys.all }),
+  });
+}
+
+/**
+ * 부서 · 직무 변경. `PATCH /employees/{id}/assignment` (2026-09-02에 열렸다)
+ *
+ * **`null` 은 「비운다」다. 「그대로 둔다」가 아니다.** 한쪽만 바꾸려면 나머지는 조회에서
+ * 받은 현재 값을 그대로 실어 보낸다 — 화면이 그렇게 한다.
+ *
+ * 직무가 비면 **근태가 판정되지 않는다** (`GET /jobs` 스펙). 비우는 것이 되는 동작이라
+ * 막지는 않되 화면이 그 사실을 적는다.
+ */
+export interface AssignmentInput {
+  departmentId: number | null;
+  jobId: number | null;
+}
+
+export function useChangeAssignment(id: number) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: AssignmentInput) => {
+      const { data } = await api.patch<Employee>(`/employees/${id}/assignment`, input);
+      return data;
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: employeeKeys.all }),
+  });
+}
+
+/**
+ * 주민등록번호 등록. `PATCH /employees/{id}/resident-no` (2026-09-02에 열렸다)
+ *
+ * **`PUT` 에서 빠져나온 경로다.** 전에는 인적사항을 한 번 고칠 때마다 주민번호가 지워졌고,
+ * 지워지면 그 직원은 재직증명서를 발급받지 못했다.
+ *
+ * **응답에 값이 없다.** `residentNoRegistered` 가 `true` 로 바뀔 뿐이다 — 넣을 수는 있어도
+ * 다시 읽을 수는 없다. 서버가 암호화 경로와 접근 로그를 걸어 둔 값이라 그렇다.
+ *
+ * **값을 로그·에러 메시지에 넣지 않는다** (`CLAUDE.md` 2장). 실패해도 서버가 준 문구만
+ * 그대로 보여준다.
+ */
+export function useRegisterResidentNo(id: number) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (residentNo: string) => {
+      const { data } = await api.patch<Employee>(`/employees/${id}/resident-no`, { residentNo });
       return data;
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: employeeKeys.all }),
