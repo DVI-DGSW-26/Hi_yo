@@ -85,6 +85,21 @@ describe('isCallbackUrl — 이 딥링크가 콜백인가', () => {
     expect(isCallbackUrl('exp://192.168.0.2:8081/--/auth/callback#token=abc')).toBe(true);
   });
 
+  /*
+   * **슬래시가 3개여도 알아봐야 한다.**
+   *
+   * `callbackUrl()` 이 `Linking.createURL('/auth/callback')` 이던 동안 배포 빌드가
+   * `hr:///auth/callback` 을 만들었다 (2026-09-08 실기기 확인). 지금은 앞 슬래시를 빼서
+   * 2개가 나오지만, **서버에 이미 3개짜리가 등록돼 있으면 그 주소로 앱이 깨어난다.**
+   * 여기서 못 알아보면 토큰을 받고도 로그인 화면에 머문다.
+   */
+  it('슬래시가 3개인 주소도 알아본다', () => {
+    expect(isCallbackUrl('hr:///auth/callback#token=abc')).toBe(true);
+    expect(readCallbackUrl('hr:///auth/callback#token=abc.def.ghi')).toEqual({
+      token: 'abc.def.ghi',
+    });
+  });
+
   it('다른 딥링크는 아니다', () => {
     expect(isCallbackUrl('hr://leave')).toBe(false);
     expect(isCallbackUrl('')).toBe(false);
