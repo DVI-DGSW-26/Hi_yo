@@ -1,15 +1,17 @@
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { currentYear } from '@/lib/datetime';
 
 /**
- * 연차 — 관리팀 (A-301 · A-303. Swagger `6. 연차`). 명세는 `docs/API_연차.md` 에 있다.
+ * 연차 — 관리팀 (A-301 · A-303 · A-306. Swagger `6. 연차`).
+ * 명세는 `docs/API_연차.md` 에 있다.
  *
  * **잔여는 서버가 계산한다.** `granted - used - pending` 을 화면에서 하지 않는다
  * (명세서 7.2, `CLAUDE.md` 3장). 대장은 서버가 준 네 숫자를 그대로 표기한다.
  *
- * 발생 등록·수정·삭제(`/leave/grants`)는 아직 넣지 않았다. 발생 규칙과 `grantType`
- * 다섯 개의 뜻이 정해지지 않아 등록 화면을 만들 수 없다 (`docs/API_연차.md` 7장 1·4번).
+ * **발생 등록(A-306)이 열렸다** (2026-09-02 회신으로 `grantType` 다섯 개의 뜻이
+ * 확정됐다). 수정(`PUT /leave/grants/{id}`)은 넣지 않았다 — 잘못 넣은 것은 지우고
+ * 다시 넣으면 되고, 폼이 하나 더 생기는 만큼의 값이 없다.
  */
 
 /**
@@ -117,6 +119,167 @@ export function useLeaveCalendarAll(from: string, to: string) {
         signal,
       });
       return data;
+    },
+  });
+}
+/**
+ * 연차 발생 종류. **다섯 개의 뜻은 2026-09-02 서버 회신으로 확정됐다** —
+ * 이름만 보고 짝지어 쓰지 않는다 (`docs/01_물어볼_것.md` 5번, `docs/API_연차.md` 5장).
+ */
+export type GrantType = 'MONTHLY' | 'REGULAR' | 'SENIORITY' | 'NEW_HIRE' | 'CARRY_DEDUCT';
+
+/**
+ * 고르는 칸에 그대로 쓰는 설명.
+ *
+ * **일수를 화면이 계산하지 않는다.** 괄호 안의 숫자는 관리팀이 무엇을 넣는 자리인지
+ * 알아보라고 적은 것이지 앱이 그 값을 채우지 않는다 (`CLAUDE.md` 3장).
+ */
+export const GRANT_TYPES: { value: GrantType; label: string; hint: string }[] = [
+  { value: 'MONTHLY', label: '월 단위 발생', hint: '1년 미만. 개근한 달마다 1일 (최대 11일)' },
+  { value: 'REGULAR', label: '연 단위 발생', hint: '1년차부터 15일' },
+  { value: 'SENIORITY', label: '근속 가산', hint: '3년차부터 2년마다 1일 (최대 25일)' },
+  { value: 'NEW_HIRE', label: '신입휴가', hint: '규칙 밖에서 관리팀이 산정해 넣는 값' },
+  {
+    value: 'CARRY_DEDUCT',
+    label: '과거 초과사용분',
+    hint: '엑셀에서 넘어온 것 전용. 값이 음수다 — 평상시 쓰지 않는다',
+  },
+];
+
+export function grantTypeLabel(type: GrantType): string {
+  return GRANT_TYPES.find((each) => each.value === type)?.label ?? type;
+}
+
+/** 발생 한 건 (`LeaveGrantResponse`) */
+export interface LeaveGrant {
+  id: number;
+  employeeId: number;
+  employeeName: string | null;
+  fiscalYear: number;
+  grantType: GrantType;
+  grantedDays: number;
+  /** 생긴 날. 비어 있을 수 있다 */
+  grantedOn: string | null;
+  /** 사라지는 날. **비우고 넣으면 서버가 그해 12월 31일로 잡는다** — 이월이 없다 */
+  expiresOn: string | null;
+  note: string | null;
+  createdByName: string | null;
+}
+
+export interface LeaveGrantInput {
+  employeeId: number;
+  fiscalYear: number;
+  grantType: GrantType;
+  grantedDays: number;
+  grantedOn?: string;
+  expiresOn?: string;
+  note?: string;
+}
+
+/** 그 직원의 잔여 (`GET /leave/balance/{employeeId}`) */
+export interface EmployeeLeaveBalance {
+  employeeId: number;
+  employeeName: string | null;
+  fiscalYear: number;
+  granted: number;
+  used: number;
+  pending: number;
+  remaining: number;
+}
+
+export const grantKeys = {
+  all: ['leave-grants'] as const,
+  ofEmployee: (employeeId: number, year: number) =>
+    [...grantKeys.all, employeeId, year] as const,
+  balance: (employeeId: number, year: number) =>
+    ['leave', 'balance', employeeId, year] as const,
+};
+
+/**
+ * 그 직원 그 해의 발생 내역.
+ *
+ * **`employeeId` 가 필수다** — 전 직원을 한 번에 보는 경로가 아니다. 그래서 이 화면은
+ * 대장(A-303)에서 한 사람을 눌러 들어온다.
+ */
+export function useLeaveGrants(employeeId: number, year: number) {
+  return useQuery({
+    queryKey: grantKeys.ofEmployee(employeeId, year),
+    queryFn: async ({ signal }) => {
+      const { data } = await api.get<LeaveGrant[]>('/leave/grants', {
+        params: { employeeId, year },
+        signal,
+      });
+      return data;
+    },
+  });
+}
+
+/**
+ * 그 직원의 잔여. **화면이 다시 세지 않는다** — 서버가 준 값을 그대로 적는다.
+ *
+ * 발생 표만 봐서는 지금 잔여가 얼마인지 알 수 없다. 사용·결재대기가 빠져 있어서다.
+ */
+export function useEmployeeLeaveBalance(employeeId: number, year: number) {
+  return useQuery({
+    queryKey: grantKeys.balance(employeeId, year),
+    queryFn: async ({ signal }) => {
+      const { data } = await api.get<EmployeeLeaveBalance>(`/leave/balance/${employeeId}`, {
+        params: { year },
+        signal,
+      });
+      return data;
+    },
+  });
+}
+
+/**
+ * 발생 등록.
+ *
+ * **서버는 계산하지 않고 보관·표시만 한다** (`LeaveGrantCreateRequest` 설명).
+ * 관리팀이 산정한 값을 그대로 넣는 자리다.
+ *
+ * `expiresOn` 을 비우면 서버가 **그해 12월 31일**로 잡는다. 이월이 없어서다 —
+ * 화면에서 날짜를 만들어 채우지 않는다.
+ *
+ * 대장(`leaveKeys`)도 같이 무효화한다. 한 사람에게 넣으면 그 해 대장의 「연차 미입력」
+ * 수가 바뀐다.
+ */
+export function useCreateLeaveGrant() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (input: LeaveGrantInput) => {
+      const { data } = await api.post<LeaveGrant>('/leave/grants', input);
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: grantKeys.all });
+      queryClient.invalidateQueries({ queryKey: leaveKeys.all });
+    },
+  });
+}
+
+/**
+ * 발생 삭제. **잘못 넣은 건을 지우는 용도다.**
+ *
+ * **이미 쓴 연차가 있으면 서버가 막는다** — 지웠을 때 잔여가 음수가 되기 때문이다.
+ * 화면에서 미리 판정하지 않는다. 막힌 이유는 서버 문구로 나온다.
+ *
+ * 서버 문서에 **자동 부여된 건을 지우면 다음 배치가 되살린다**는 경고가 있다
+ * (멱등 키가 행과 함께 사라진다). 지금은 스케줄러가 꺼져 있어(`docs/01_물어볼_것.md`
+ * 23번) 그런 행이 없고, 응답에 `accrualKey` 가 없어 **화면이 구분할 방법도 없다.**
+ * 자동 부여를 켤 때 다시 봐야 한다.
+ */
+export function useDeleteLeaveGrant() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (id: number) => {
+      await api.delete(`/leave/grants/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: grantKeys.all });
+      queryClient.invalidateQueries({ queryKey: leaveKeys.all });
     },
   });
 }

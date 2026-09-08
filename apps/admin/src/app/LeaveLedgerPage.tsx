@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router';
 import { formatLeaveDays } from '@hr/format';
 import { Field, Select, Summary, Table, type Column } from '@/components';
 import { daysCell, orDash } from '@/lib/cell';
@@ -27,8 +28,9 @@ import {
  * **`0일` 과 `아직 안 넣었어요` 를 구분해 적는다.** 둘을 다 `0일` 로 그리면 이 화면이
  * 할 일이 없어진다.
  *
- * **발생을 넣는 화면(A-306)은 아직 없다.** 발생 규칙과 `grantType` 다섯 개의 뜻이
- * 정해지지 않았다 (`docs/API_연차.md` 7장 1·4번). 그래서 조회만 하는 화면이고
+ * **한 줄을 누르면 그 사람의 발생 등록(A-306)으로 간다.** 이 표가 누락을 찾는 명단이니
+ * 찾은 자리에서 바로 넣을 수 있어야 한다. 화면 자체의 주 동작은 없다 — 넣을 사람을
+ * 고르는 것이 이 화면의 일이고, 넣는 것은 다음 화면의 일이다. 그래서 여기엔 여전히
  * primary 버튼도 그린도 없다 (`DESIGN_ADMIN.md` 7장).
  */
 export function LeaveLedgerPage() {
@@ -38,6 +40,7 @@ export function LeaveLedgerPage() {
   const [keyword, setKeyword] = useState('');
   const [department, setDepartment] = useState('');
 
+  const navigate = useNavigate();
   const ledger = useLeaveLedger(year);
 
   /*
@@ -121,6 +124,7 @@ export function LeaveLedgerPage() {
         columns={columns}
         rows={rows}
         keyOf={(row) => row.employeeId}
+        onRowClick={(row) => navigate(`/leave-ledger/${row.employeeId}`)}
         isPending={ledger.isPending}
         error={ledger.error}
         emptyText={
