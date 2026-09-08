@@ -101,13 +101,25 @@ export async function clearToken(): Promise<void> {
 }
 
 /**
- * 서버가 돌려보낼 앱 주소.
+ * 서버가 돌려보낼 앱 주소. 배포 빌드에서 `hr://auth/callback`이 된다.
  *
- * `app.json`의 `scheme`이 `hr`이라 `hr://auth/callback`이 된다. 개발 중 Expo 개발 빌드에서는
- * 앞이 달라질 수 있어 `expo-linking`에게 만들게 한다 — 그 값을 그대로 서버에 등록한다.
+ * **경로에 앞 슬래시를 붙이지 않는다.** `'/auth/callback'`으로 부르면 배포 빌드에서
+ * **`hr:///auth/callback`(슬래시 3개)이 나온다** — 2026-09-08 실기기에서 확인했다.
+ * `expo-linking`의 `createURL`이 마지막을 `scheme + ':' + '/' + hostUri + path` 로
+ * 조립하는데, 커스텀 스킴 배포 빌드는 `hostUri`가 비어서 `ensureLeadingSlash('', true)`가
+ * `/` 를 돌려주고 거기에 경로의 앞 슬래시가 또 붙는다.
+ *
+ * **개발 빌드에서는 드러나지 않는다** — `hostUri`가 `192.168.x.x:8081`이라 슬래시가 채워진다.
+ * 브라우저로도 개발 빌드로도 못 잡고, 배포 APK를 실기기에 올려야 보이는 버그였다.
+ *
+ * 앞 슬래시를 뺀 지금도 개발 빌드는 그대로다. expo-hosted 분기가 `removeLeadingSlash` 를
+ * 거쳐 `exp://192.168.x.x:8081/--/auth/callback` 을 만든다.
+ *
+ * 서버에 등록할 주소는 빌드마다 다르므로 값은 `expo-linking` 이 만들게 두고, 그 값을
+ * 그대로 서버에 등록한다.
  */
 export function callbackUrl(): string {
-  return Linking.createURL('/auth/callback');
+  return Linking.createURL('auth/callback');
 }
 
 /**

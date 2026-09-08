@@ -19,10 +19,12 @@ import { useMe } from '@/features/employees/api';
  * 그래서 답할 것을 맨 위에 둔다. 상대는 24시간 안의 답을 기다리고 있고, 그 시간이 지나면
  * 자동으로 반려돼 원 담당자가 그대로 간다. 내 일정을 먼저 보여주면 남의 마감을 놓친다.
  *
- * **교체를 부탁하는 쪽은 만들지 않았다.** 신청에 `targetId`가 필요한데 일반 직원은 후보를
- * 알아낼 수 없다 — 명단 대상자도 당직표 전체도 403이다 (2026-08-28 실호출 확인).
- * 화면 이름이 "확인·교체 신청"이지만 지금 만들 수 있는 것은 확인과 응답까지다
- * (`docs/00_문서_인덱스.md` — 교체 상대 후보를 본인이 볼 수 없다).
+ * **교체를 부탁하는 쪽이 열렸다** (2026-09-07). 신청에 필요한 `targetId`를 고를 방법이
+ * 없어 8-28부터 확인과 응답까지만 만들어 뒀는데, 9-02에 서버가 후보 조회를 본인용으로
+ * 열어 주면서 화면 이름대로 "확인·교체 신청"이 전부 된다.
+ *
+ * 내 당직 한 줄을 누르면 부탁하는 화면으로 간다. **배정의 날짜·명단을 같이 넘긴다** —
+ * 단건 조회 API가 없어서다. 이름 같은 개인정보는 넘기지 않는다 (`CLAUDE.md` 2장).
  */
 export default function DutyScreen() {
   const router = useRouter();
@@ -53,7 +55,20 @@ export default function DutyScreen() {
         </Section>
         <SectionDivider />
         <Section>
-          <DutyScheduleList schedules={schedules} />
+          <DutyScheduleList
+            schedules={schedules}
+            onPressSchedule={(schedule) =>
+              router.push({
+                pathname: '/duty/swap-request/[scheduleId]',
+                params: {
+                  scheduleId: schedule.id,
+                  dutyDate: schedule.dutyDate,
+                  rosterName: schedule.rosterName ?? '',
+                  slotCode: schedule.slotCode ?? '',
+                },
+              })
+            }
+          />
         </Section>
         <SectionDivider />
         <Section>

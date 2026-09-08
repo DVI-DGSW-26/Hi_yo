@@ -1,5 +1,6 @@
-import { Stack } from 'expo-router';
+import { Stack, useRouter } from 'expo-router';
 import { ScrollView, StyleSheet, Text } from 'react-native';
+import { maskAccountNo } from '@hr/format';
 import { colors, typography } from '@hr/tokens';
 import { ListRow, QueryState, Section, SectionDivider, SectionTitle } from '@/components';
 import { useMe } from '@/features/employees/api';
@@ -15,16 +16,19 @@ import { formatServerDate } from '@/lib/format';
  * **개인 항목(생년월일·성별·연락처·이메일·주소·비상연락처)은 뺐다** — 어깨너머로 보이는
  * 자리에 둘 이유가 없다는 판단이다.
  *
- * 그 결정으로 마스킹 확인이 걸린 값이 **계좌번호 하나로 줄었다.** 서버가 마스킹해서
- * 준다는 전제로 받은 값을 그대로 그린다 — 앱에서 가리거나 풀지 않는다 (`CLAUDE.md` 2장).
- * 인증이 풀리면 실제로 마스킹돼 오는지부터 확인한다.
+ * 그 결정으로 마스킹 확인이 걸린 값이 **계좌번호 하나로 줄었다.** 그리고 9-02에 답이
+ * 왔다 — **서버는 계좌를 마스킹하지 않는다.** 셋 다 원문이다. 「서버가 마스킹해서 준다」는
+ * 전제로 받은 값을 그대로 그리고 있었으니 **계좌번호가 통째로 보이고 있었다.**
+ * 이제 `maskAccountNo`로 가린다 (`docs/01_물어볼_것.md` 서버 10번).
  *
- * **통장정보 수정은 만들지 않았다.** `PUT /employees/{id}/bank-account`가 은행명·계좌번호·
- * 예금주 셋을 다 받는데, 그중 무엇이 마스킹돼 오는지와 일부만 보내면 나머지가 지워지는지가
- * 확인되지 않았다. 마스킹된 값을 되돌려 보내면 **급여가 엉뚱한 계좌로 간다**
- * (`docs/01_물어볼_것.md` 서버 10번).
+ * 원칙은 서버가 가린 값을 받는 것이다 (`CLAUDE.md` 2장). 지금은 원문이 내려오므로
+ * **서버에 다시 물을 것으로 남겨 뒀다** — 개발자 도구·네트워크 로그에는 그대로 보인다.
+ *
+ * **통장정보 수정을 만들었다** (2026-09-07). `PUT`이 셋을 전부 덮어쓰는 것과, 무엇이
+ * 마스킹돼 오는지가 9-02에 확정되면서 풀렸다 — 바꾸는 화면은 따로 둔다.
  */
 export default function ProfileScreen() {
+  const router = useRouter();
   const me = useMe();
 
   return (
@@ -108,10 +112,10 @@ export default function ProfileScreen() {
                     value={data.bankAccount?.bankName ?? undefined}
                     placeholder="아직이에요"
                   />
-                  {/* 서버가 마스킹한 값을 그대로 그린다. 앱에서 가리거나 풀지 않는다. */}
+                  {/* 서버가 원문을 준다. 그리기 직전에 가린다 (2026-09-02 회신 10번). */}
                   <ListRow
                     label="계좌번호"
-                    value={data.bankAccount?.bankAccount ?? undefined}
+                    value={accountText(data.bankAccount?.bankAccount ?? null)}
                     placeholder="아직이에요"
                   />
                   <ListRow
@@ -119,8 +123,13 @@ export default function ProfileScreen() {
                     value={data.bankAccount?.accountHolder ?? undefined}
                     placeholder="아직이에요"
                   />
+                  <ListRow
+                    label="계좌 바꾸기"
+                    variant="nav"
+                    onPress={() => router.push('/profile/bank-account')}
+                  />
                   <Text style={styles.note}>
-                    지금은 앱에서 바꿀 수 없어요. 계좌를 바꾸려면 관리팀에 알려주세요.
+                    바꾸면 다음 급여부터 새 계좌로 들어가요.
                   </Text>
                 </Section>
 
@@ -152,6 +161,11 @@ export default function ProfileScreen() {
 /** 서버 날짜를 `2026년 8월 24일`로. 없으면 빈 칸이 아니라 무엇이 없는지 적는다 */
 function dateText(value: string | null): string {
   return value === null ? '아직이에요' : formatServerDate(value, 'yyyy년 M월 d일');
+}
+
+/** 계좌번호는 가려서 그린다. 없으면 `undefined`를 돌려 `placeholder`가 나오게 둔다 */
+function accountText(value: string | null): string | undefined {
+  return value === null ? undefined : maskAccountNo(value);
 }
 
 const styles = StyleSheet.create({

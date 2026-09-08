@@ -242,3 +242,76 @@ export function useCancelRequest() {
     },
   });
 }
+/**
+ * 연차사용계획서 하루치. **값은 `1`(연차) 또는 `0.5`(반차)뿐이다** —
+ * 연차 단위가 하루와 반차뿐이라서다 (ADR 0002, `PlannedDay` 스키마).
+ */
+export interface PlannedDay {
+  date: string;
+  days: number;
+}
+
+/**
+ * 제출된 연차사용계획서.
+ *
+ * **`plannedDays`는 차감된 일수가 아니다.** 계획서는 연차를 깎지 않는다 —
+ * 실제 차감은 신청(`POST /requests`)이 결재를 받아야 일어난다. 화면이 이 값을
+ * 「쓴 연차」로 보여주면 안 된다 (`LeavePlanResponse` 스키마).
+ */
+export interface LeavePlan {
+  id: number;
+  promotionId: number;
+  fiscalYear: number;
+  round: 'FIRST' | 'SECOND';
+  submittedAt: string;
+  planDueOn: string;
+  /** 마감(통보 + 10일)을 넘겨 낸 건. 서버가 막지 않고 표시만 한다 */
+  late: boolean;
+  plannedDays: number;
+  /** **참고용 계산값이다.** 연차가 그만큼 줄었다는 뜻이 아니다 */
+  remainingAfterPlan: number;
+  signed: boolean;
+  days: PlannedDay[];
+  note: string | null;
+  /** 화면에 그대로 띄워도 되는 한국어 안내. 늦게 낸 사정 등이 담긴다 */
+  notice: string | null;
+}
+
+export interface LeavePlanInput {
+  days: PlannedDay[];
+  /** 손으로 그린 base64 PNG. `data:` 앞머리는 붙이지 않는다 */
+  signatureImage: string;
+  note?: string;
+}
+
+/**
+ * 연차사용계획서 제출. `POST /leave/promotions/{promotionId}/plan` (2026-09-02에 열렸다)
+ *
+ * **서명이 필수다.** 결재 서명과 달리 대리 등록 경로가 없다 — 계획서는 직원 본인의
+ * 의사표시라는 것이 증빙의 핵심이라고 서버 문서가 적고 있다. 그래서 `signatureImage`를
+ * 선택으로 두지 않았다. 신청서(`useCreateRequest`)와 같은 이유로 `CLICK`은 쓰지 않는다.
+ *
+ * **날짜를 앱에서 거르지 않는다.** 주말·공휴일, 통보일 이전, 그해 12월 31일 이후, 중복은
+ * 전부 서버가 422로 거른다. 버튼은 항상 눌리고 막힌 이유는 서버 문구로 알린다 —
+ * 신청서와 같은 원칙이다.
+ *
+ * 한 통보당 계획서는 하나다. 두 번째 제출은 409고, 그 문구도 서버가 준다.
+ *
+ * **잔여를 다시 읽는다.** 계획서가 연차를 깎지는 않지만 서버가 `remainingAfterPlan`을
+ * 새로 세어 주고, 화면이 그 값을 쓴다.
+ */
+export function useSubmitLeavePlan(promotionId: number) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ note, ...rest }: LeavePlanInput) => {
+      const { data } = await api.post<LeavePlan>(`/leave/promotions/${promotionId}/plan`, {
+        ...rest,
+        signatureMethod: 'IMAGE',
+        ...(note ? { note } : {}),
+      });
+      return data;
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: leaveKeys.all }),
+  });
+}

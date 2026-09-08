@@ -50,9 +50,9 @@ const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토'];
 /**
  * `8.29 (토)` — 당직은 무슨 요일인지가 중요하다.
  *
- * 요일은 날짜에서 뽑는다. `DutyScheduleResponse.dayOfWeek`도 있지만 어떤 형태로 오는지
- * (`SATURDAY`인지 `토`인지) 확인하지 못했다 — 개발 서버에 배정이 한 건도 없다.
- * 확인되면 서버 값을 쓰도록 바꾼다.
+ * 요일은 날짜에서 뽑는다. `DutyScheduleResponse.dayOfWeek`도 있고 **형식은 확인됐지만**
+ * (한글 한 글자 `"월"` … `"일"`, 2026-09-02 서버 회신) 그대로 둔다 — `null`로 올 수 있는
+ * 필드라 날짜에서 세는 편이 빈 자리를 만들지 않는다.
  */
 export function dutyDateText(dutyDate: string): string {
   // date-fns의 `i`는 월요일이 1, 일요일이 7이다. 일요일부터 시작하는 배열에 맞춰 나머지를 쓴다.
