@@ -21,6 +21,7 @@ import {
   type Adjustment,
   type PayrollItem,
 } from '@/features/payroll/api';
+import { PayslipSection } from '@/features/payroll/PayslipSection';
 import './PayrollDetail.css';
 
 /**
@@ -174,6 +175,9 @@ export function PayrollDetail() {
         error={adjustments.error}
         emptyText="고친 적이 없어요."
       />
+
+      {/* A-602 명세서 — 내려받기와 교부 기록. 서로 다른 일이라 묶지 않았다 */}
+      <PayslipSection payroll={data} />
 
       <AdjustDialog
         open={adjusting}
