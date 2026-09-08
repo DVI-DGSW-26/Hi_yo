@@ -24,6 +24,7 @@ import { CompanyLeavePage } from '@/app/CompanyLeavePage';
 import { LeaveCalendarPage } from '@/app/LeaveCalendarPage';
 import { LeaveGrantsPage } from '@/app/LeaveGrantsPage';
 import { LeaveLedgerPage } from '@/app/LeaveLedgerPage';
+import { LeavePromotionsPage } from '@/app/LeavePromotionsPage';
 import { ApprovalsPage } from '@/app/ApprovalsPage';
 import { ApprovalDetail } from '@/app/ApprovalDetail';
 import './index.css';
@@ -46,6 +47,7 @@ const router = createBrowserRouter([
       { path: 'leave-calendar', element: <LeaveCalendarPage /> },
       { path: 'leave-ledger', element: <LeaveLedgerPage /> },
       { path: 'leave-ledger/:employeeId', element: <LeaveGrantsPage /> },
+      { path: 'leave-promotions', element: <LeavePromotionsPage /> },
       { path: 'holidays', element: <HolidaysPage /> },
       { path: 'payroll', element: <PayrollPage /> },
       { path: 'payroll/:payrollId', element: <PayrollDetail /> },

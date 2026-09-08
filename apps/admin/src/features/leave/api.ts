@@ -283,3 +283,153 @@ export function useDeleteLeaveGrant() {
     },
   });
 }
+
+/**
+ * 연차촉진 (A-305. Swagger `6. 연차`, 2026-09-02에 열렸다).
+ * 조건은 회사 서식 두 장에서 확정됐다 — `docs/API_연차.md` 10장.
+ *
+ * **이 API 는 메일을 보내지 않는다.** 스펙이 직접 그렇게 적고 있다 — 관리팀이 서면이나
+ * 메일로 보낸 뒤 **보냈다는 사실을 남기는** 것이 전부다. 알림 발송 경로는 아직 없다.
+ * 화면이 「보내기」라고 적으면 관리팀이 누르고 나서 보낸 줄 안다.
+ *
+ * **날짜·잔여를 화면이 만들지 않는다.** 마감(통보 + 10일)도 통보서에 찍히는 잔여도
+ * 서버가 계산해 박는다 (`CLAUDE.md` 3장). 요청에 잔여를 싣는 자리 자체가 없다.
+ */
+export type PromotionRound = 'FIRST' | 'SECOND';
+
+/** 앱 푸시는 근로기준법 제61조의 통지 수단이 아니라 값이 없다 (스펙 설명) */
+export type PromotionChannel = 'EMAIL' | 'WRITTEN';
+
+/**
+ * 촉진 대상자 한 명.
+ *
+ * **여기 잔여는 「목록을 연 순간」 값이다.** 통보 기록에 남는 잔여는 서버가 발송 시점에
+ * 다시 계산해 박은 스냅샷이라 두 값이 갈릴 수 있다 (스펙 설명). 화면에서 같은 값으로
+ * 다루지 않는다 — 목록의 숫자를 통보서 숫자라고 적으면 문의가 온다.
+ */
+export interface PromotionTarget {
+  employeeId: number;
+  employeeNo: string | null;
+  employeeName: string | null;
+  departmentName: string | null;
+  /** 통보 발송처. **비어 있으면 `EMAIL` 로 기록할 수 없다** — 서면으로 교부하고 남긴다 */
+  email: string | null;
+  fiscalYear: number;
+  round: PromotionRound;
+  /** 결재 대기중까지 뺀 잔여. **통보에 쓰는 값**이다 */
+  remainingDays: number;
+  /** 승인분만 뺀 잔여. 대기중 신청이 반려되면 이쪽으로 돌아온다 */
+  confirmedRemainingDays: number;
+  /** 기록이 없는 사람만 목록에 담기므로 항상 `false` 다 */
+  alreadyNotified: boolean;
+  /** 오늘 보내면 계획서 마감이 언제가 되는지 (오늘 + 10일) */
+  planDueOnIfSentToday: string | null;
+}
+
+/**
+ * 남길 통보 기록.
+ *
+ * **`bodySnapshot` 은 보낸 본문 원문이다. 요약이 아니다.** 미사용 연차 소멸의 법적
+ * 근거라 이것이 없으면 나중에 연차수당을 지급해야 할 수 있다고 스펙이 적고 있다.
+ * 그래서 서버가 필수로 받는다 — 화면도 붙여넣을 자리를 제대로 준다.
+ */
+export interface PromotionNoticeInput {
+  employeeId: number;
+  fiscalYear: number;
+  round: PromotionRound;
+  channel: PromotionChannel;
+  /** `EMAIL` 이면 필수다 — 「어디로 보냈는지」가 없으면 증빙이 되지 않는다 */
+  sentTo?: string;
+  /** 실제로 보낸 시각. 비우면 서버가 지금으로 잡는다. **미래 시각은 거부한다** */
+  sentAt?: string;
+  bodySnapshot: string;
+}
+
+/** 기록된 통보. `bodySnapshot` 은 응답에 담기지 않는다 (본문이 길어서다) */
+export interface PromotionNotice {
+  id: number;
+  employeeId: number;
+  employeeName: string | null;
+  fiscalYear: number;
+  round: PromotionRound;
+  /** 통보 시점 잔여 **스냅샷**. 통보서에 찍힌 숫자는 이쪽이다 */
+  remainingDays: number;
+  channel: PromotionChannel;
+  sentAt: string | null;
+  sentTo: string | null;
+  /** 계획서 제출 마감 = 통보일 + 10일. 넘겨서 내도 막지 않고 `late` 로 표시만 한다 */
+  planDueOn: string | null;
+  planSubmitted: boolean;
+  createdByName: string | null;
+}
+
+/**
+ * 차수. **서버가 쓰는 말을 그대로 쓴다** — `FIRST`(1차 촉구, 7월 1일 기준) ·
+ * `SECOND`(2차 통보, 11월 1일 기준). 시점은 서식에서 확정된 값이다
+ * (소멸 6개월 전 · 2개월 전, `docs/API_연차.md` 10장).
+ */
+export const PROMOTION_ROUNDS: { value: PromotionRound; label: string; hint: string }[] = [
+  { value: 'FIRST', label: '1차 촉구', hint: '소멸 6개월 전' },
+  { value: 'SECOND', label: '2차 통보', hint: '소멸 2개월 전' },
+];
+
+export const PROMOTION_CHANNELS: { value: PromotionChannel; label: string }[] = [
+  { value: 'EMAIL', label: '이메일' },
+  { value: 'WRITTEN', label: '서면' },
+];
+
+export function promotionRoundLabel(round: PromotionRound): string {
+  return PROMOTION_ROUNDS.find((each) => each.value === round)?.label ?? round;
+}
+
+export function promotionChannelLabel(channel: PromotionChannel): string {
+  return PROMOTION_CHANNELS.find((each) => each.value === channel)?.label ?? channel;
+}
+
+/** 서버가 받는 한계 (`LeavePromotionNoticeRequest`) */
+export const SENT_TO_MAX = 255;
+
+export const promotionKeys = {
+  all: ['leave-promotions'] as const,
+  targets: (year: number, round: PromotionRound) =>
+    [...promotionKeys.all, 'targets', year, round] as const,
+};
+
+/**
+ * 그 해 그 차수의 촉진 대상자.
+ *
+ * **이미 기록이 있는 사람은 목록에 담기지 않는다.** 그래서 이 목록은 「아직 안 보낸
+ * 사람」이고, 기록하면 그 줄이 사라지는 것이 정상이다.
+ *
+ * `round` 는 서버가 필수로 받는다 — 비우고 부르지 않는다.
+ */
+export function usePromotionTargets(year: number, round: PromotionRound) {
+  return useQuery({
+    queryKey: promotionKeys.targets(year, round),
+    queryFn: async ({ signal }) => {
+      const { data } = await api.get<PromotionTarget[]>('/leave/promotions/targets', {
+        params: { year, round },
+        signal,
+      });
+      return data;
+    },
+  });
+}
+
+/**
+ * 통보를 보냈다는 기록을 남긴다.
+ *
+ * **되돌리는 경로가 없다.** 지우는 API 도, 기록을 다시 조회하는 API 도 없다
+ * (`docs/01_물어볼_것.md`). 확인 대화상자에서 그 사실을 적는다.
+ */
+export function useRecordPromotionNotice() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (input: PromotionNoticeInput) => {
+      const { data } = await api.post<PromotionNotice>('/leave/promotions', input);
+      return data;
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: promotionKeys.all }),
+  });
+}
