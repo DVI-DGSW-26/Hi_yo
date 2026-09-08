@@ -1,3 +1,4 @@
+import { useRouter } from 'expo-router';
 import { StyleSheet, Text, View } from 'react-native';
 import { colors, typography } from '@hr/tokens';
 import { ListRow, MoreButton, QueryState, SectionTitle, StatusText } from '@/components';
@@ -13,6 +14,7 @@ import { useMyRequests, type LeaveRequest, type RequestStatus } from './api';
  * 한 쪽씩 받아 이어 붙인다. 전에는 첫 20건에서 잘렸고 잘렸다는 표시도 없었다.
  */
 export function LeaveRequestList() {
+  const router = useRouter();
   const requests = useMyRequests();
 
   // 받은 쪽들을 한 줄로 편다. QueryState 는 배열을 그대로 받아 빈 상태를 판정한다.
@@ -37,6 +39,16 @@ export function LeaveRequestList() {
               <ListRow
                 key={request.id}
                 label={`${period(request)} · ${request.typeName ?? request.typeCode}`}
+                /*
+                 * **서명이 빠진 줄만 눌린다.** 단체연차와 관리팀 대리 등록은 그 자리에
+                 * 직원이 없어 서명 없이 접수된다 — 종이로는 나중에 각자 도장을 찍는
+                 * 자리다. 여기가 그 자리로 가는 유일한 입구다.
+                 */
+                onPress={
+                  request.applicantSigned
+                    ? undefined
+                    : () => router.push(`/leave/sign/${request.id}`)
+                }
                 right={
                   <View style={styles.right}>
                     <Text style={styles.days}>{formatLeaveDays(request.leaveDays)}</Text>
@@ -44,6 +56,7 @@ export function LeaveRequestList() {
                       label={statusLabel(request.status)}
                       tone={statusTone(request.status)}
                     />
+                    {!request.applicantSigned && <StatusText label="서명이 빠졌어요" />}
                   </View>
                 }
               />
