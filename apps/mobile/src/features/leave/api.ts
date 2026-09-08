@@ -105,6 +105,15 @@ export interface LeaveRequest {
   approverId: number | null;
   approverName: string | null;
   decisionComment: string | null;
+  /**
+   * **신청인 서명 여부다** (2026-09-02부터 온다).
+   *
+   * `signed`(결재자 서명)와 다른 값이다. 단체연차와 관리팀 대리 등록은 그 자리에 직원이
+   * 없어 서명을 못 받고 접수되므로 이 값이 `false`로 시작한다 — 종이로는 나중에 각자
+   * 도장을 찍는 자리다. `PATCH /requests/{id}/signature`로 채운다.
+   */
+  applicantSigned: boolean;
+  /** 결재자 서명. 신청인 것과 별개다 */
   signed: boolean;
   decidedAt: string | null;
 }
@@ -313,5 +322,54 @@ export function useSubmitLeavePlan(promotionId: number) {
       return data;
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: leaveKeys.all }),
+  });
+}
+
+/**
+ * 신청서 단건. **서명하려면 무엇에 대한 서명인지 보여줘야 한다.**
+ *
+ * 목록에서 넘겨받지 않고 다시 받는다 — 목록을 거치지 않고 들어오는 길이 생겨도
+ * 화면이 혼자 설 수 있어야 한다.
+ */
+export function useRequest(id: number) {
+  return useQuery({
+    queryKey: ['requests', 'one', id],
+    queryFn: async ({ signal }) => {
+      const { data } = await api.get<LeaveRequest>(`/requests/${id}`, { signal });
+      return data;
+    },
+  });
+}
+
+/**
+ * 이미 접수된 신청서에 **신청인 서명을 나중에 붙인다.**
+ * `PATCH /requests/{id}/signature` (2026-09-02에 열렸다)
+ *
+ * **단체연차가 이 경로를 쓰는 이유** — 관리팀이 적용을 누르는 순간 서버가 직원마다
+ * 신청서를 대신 만든다. 그 자리에 직원이 없어 서명을 받을 수 없다. 관리팀 대리 등록도
+ * 같다. 종이로는 나중에 각자 도장을 찍는 자리다.
+ *
+ * **차감은 이미 끝나 있다.** 전원의 서명을 기다리면 급여 마감이 막혀서, 서버가 차감을
+ * 서명 뒤로 미루지 않는다. 그래서 이 화면은 「신청」이 아니라 **「빠진 서명을 채우는」**
+ * 자리다 — 문구가 그 사실을 숨기면 직원이 아직 안 쉬어도 되는 줄 안다.
+ *
+ * `CLICK`을 쓰지 않는다. 신청서(`useCreateRequest`)와 같은 이유다 — 결재자에게는
+ * 「눌렀다」가 서명이지만 신청인에게는 그에 해당하는 동작이 없다.
+ *
+ * **다시 서명하면 옛 서명은 지워진다.** 결재가 끝난 뒤에는 서버가 막는데
+ * **단체연차는 예외**다. 화면에서 미리 판정하지 않는다 — 막힌 이유는 서버 문구로 온다.
+ */
+export function useSignRequest(id: number) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (signatureImage: string) => {
+      const { data } = await api.patch<LeaveRequest>(`/requests/${id}/signature`, {
+        signatureMethod: 'IMAGE',
+        signatureImage,
+      });
+      return data;
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['requests'] }),
   });
 }
