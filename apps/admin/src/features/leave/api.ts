@@ -393,6 +393,7 @@ export const promotionKeys = {
   all: ['leave-promotions'] as const,
   targets: (year: number, round: PromotionRound) =>
     [...promotionKeys.all, 'targets', year, round] as const,
+  notices: (year: number) => [...promotionKeys.all, 'notices', year] as const,
 };
 
 /**
@@ -417,10 +418,33 @@ export function usePromotionTargets(year: number, round: PromotionRound) {
 }
 
 /**
+ * 그 해에 남긴 통보 기록. `GET /leave/promotions` (2026-09-09에 열렸다)
+ *
+ * **차수를 싣지 않고 부른다 — 그 해 1차·2차를 다 받는다.** 2차 대상인지가 1차 계획서를
+ * 냈는지(`planSubmitted`)로 갈린다고 스펙이 적고 있어서, 2차를 준비하는 사람이 1차
+ * 기록을 같이 봐야 한다.
+ *
+ * 이것이 열리기 전에는 남긴 기록을 **아무 데서도 볼 수 없었다.** 대상 목록
+ * (`/targets`)이 기록이 없는 사람만 주므로, 기록하면 그 줄이 사라질 뿐이었다.
+ */
+export function usePromotionNotices(year: number) {
+  return useQuery({
+    queryKey: promotionKeys.notices(year),
+    queryFn: async ({ signal }) => {
+      const { data } = await api.get<PromotionNotice[]>('/leave/promotions', {
+        params: { year },
+        signal,
+      });
+      return data;
+    },
+  });
+}
+
+/**
  * 통보를 보냈다는 기록을 남긴다.
  *
- * **되돌리는 경로가 없다.** 지우는 API 도, 기록을 다시 조회하는 API 도 없다
- * (`docs/01_물어볼_것.md`). 확인 대화상자에서 그 사실을 적는다.
+ * **되돌리는 경로가 없다.** 지우는 API 가 없다 — 확인 대화상자에서 그 사실을 적는다.
+ * 남긴 것을 다시 보는 것은 `usePromotionNotices` 로 된다 (2026-09-09).
  */
 export function useRecordPromotionNotice() {
   const queryClient = useQueryClient();
