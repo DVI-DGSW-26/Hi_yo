@@ -279,20 +279,76 @@ export function useRegisterResidentNo(id: number) {
 /**
  * 인적사항 수정. `PUT /employees/{id}`
  *
- * **전체 교체 경로지만 안 실은 값은 보존된다** (2026-09-09 회신 25번). 그래서 폼이
- * 건드리는 셋만 싣는다. `corporation`·`hireDate` 는 스펙이 필수로 잡고 있어
- * **지금 값을 그대로 되돌려 보낸다** — 바꾸는 값이 아니다.
+ * **전체 교체다. 안 실은 값은 지워진다** (2026-09-09 서버 정정). 그 전에 「미전송 시
+ * 보존」으로 알고 부분 몸통을 보내고 있었는데, 그러면 이름만 고쳐도 연락처·주소·이메일에
+ * 더해 **부서·직무까지 지워졌다** — 직무가 비면 그 사람 근태가 판정되지 않고 급여
+ * 계산에서 빠진다.
  *
- * **빈 칸은 「그대로 둔다」이지 「비운다」가 아니다.** 값을 지우는 방법은 확인되지 않아
- * 화면도 그렇게 적는다. 지우는 동작이 필요해지면 서버에 먼저 묻는다 (`CLAUDE.md` 9장).
+ * **그래서 조회로 읽은 값을 전부 다시 싣는다.** 화면이 건드리지 않는 항목까지 넣는다.
+ * `toUpdateInput`이 그 몸통을 만든다 — 새 화면이 `PUT`을 부를 때도 이것을 지나게 한다.
+ *
+ * **비우는 방법은 넷이고 결과가 같다** — 키 생략 · `null` · `''` · 공백만. 날짜와
+ * `departmentId`·`jobId`에 `''`를 보내도 400이 아니라 「지움」이다.
+ * **비울 수 없는 것은 셋뿐이다** — `name`·`corporation`·`hireDate`. 비우면 400이다.
+ *
+ * 부서·직무만 바꿀 때는 `PATCH /employees/{id}/assignment`를 쓴다 — 다른 값을 건드리지
+ * 않는다 (`useChangeAssignment`).
  */
 export interface EmployeeUpdateInput {
-  /** 스펙 필수. 지금 값을 그대로 싣는다 */
+  /** 비울 수 없다. 비우면 400 */
   name: string;
   corporation: string;
   hireDate: string;
-  phone?: string;
-  address?: string;
+
+  /** 아래는 전부 「안 실으면 지워지는」 값이다. 조회에서 읽은 값을 그대로 되돌려 보낸다 */
+  legalName: string | null;
+  nationality: string | null;
+  departmentId: number | null;
+  jobId: number | null;
+  jobGrade: string | null;
+  workSite: string | null;
+  originalHireDate: string | null;
+  birthDate: string | null;
+  gender: string | null;
+  phone: string | null;
+  email: string | null;
+  address: string | null;
+  emergencyContact: string | null;
+}
+
+/**
+ * 조회로 읽은 직원을 `PUT` 몸통으로 옮긴다.
+ *
+ * **여기서 값을 고르지 않는다.** 화면은 이 결과에 자기가 바꾼 칸만 덮어쓴다 —
+ * 어떤 항목을 빠뜨렸는지 화면마다 따로 판단하면 그 항목이 조용히 지워진다.
+ *
+ * `corporation`·`hireDate`가 비어 있으면 만들지 않는다. 스펙이 필수로 잡고 있어
+ * 없는 값을 지어내 실어야 하기 때문이다 — 화면이 그때는 수정을 막는다.
+ */
+export function toUpdateInput(
+  employee: Employee,
+  detail: Omit<EmployeeDetail, 'summary'>,
+): EmployeeUpdateInput | undefined {
+  if (employee.corporation === null || employee.hireDate === null) return undefined;
+
+  return {
+    name: employee.name,
+    corporation: employee.corporation,
+    hireDate: employee.hireDate,
+    legalName: employee.legalName,
+    nationality: employee.nationality,
+    departmentId: employee.departmentId,
+    jobId: employee.jobId,
+    jobGrade: employee.jobGrade,
+    workSite: employee.workSite,
+    originalHireDate: employee.originalHireDate,
+    birthDate: detail.birthDate,
+    gender: detail.gender,
+    phone: detail.phone,
+    email: detail.email,
+    address: detail.address,
+    emergencyContact: detail.emergencyContact,
+  };
 }
 
 export function useUpdateEmployee(id: number) {
