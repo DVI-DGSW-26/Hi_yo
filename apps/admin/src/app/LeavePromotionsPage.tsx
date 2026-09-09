@@ -5,6 +5,7 @@ import { shortDate } from '@/lib/datetime';
 import { departmentOptions, matchesKeyword } from '@/lib/listFilter';
 import { PromotionNoticeDialog } from '@/features/leave/PromotionNoticeDialog';
 import { RecordedNoticeTable } from '@/features/leave/RecordedNoticeTable';
+import { SubmittedPlanTable } from '@/features/leave/SubmittedPlanTable';
 import {
   PROMOTION_ROUNDS,
   promotionRoundLabel,
@@ -32,7 +33,7 @@ import {
  * (`CLAUDE.md` 3장). 통보서에 찍히는 숫자는 서버가 발송 시점에 다시 계산해 박는
  * 스냅샷이라, 이 표의 숫자와 다를 수 있다는 것까지 스펙에 적혀 있다.
  *
- * **남긴 기록을 아래 표에서 다시 본다** (2026-09-09, 29번). `GET /leave/promotions` 가
+ * **남긴 기록과 제출된 계획서를 아래 두 표에서 본다** (2026-09-09, 29번). `GET /leave/promotions` 가
  * 열리기 전에는 기록하면 그 줄이 대상 목록에서 사라질 뿐이라, 무엇을 남겼는지도
  * 누가 계획서를 냈는지도 볼 수 없었다.
  *
@@ -189,6 +190,13 @@ export function LeavePromotionsPage() {
       */}
       <h2 className="section-title">{year}년에 남긴 통보 기록</h2>
       <RecordedNoticeTable year={year} />
+
+      {/*
+        통보 기록이 「누구에게 보냈나」이고 이 표가 「누가 무슨 날짜를 냈나」다.
+        2026-09-09에 조회가 열리기 전에는 낸 날짜를 아무도 볼 수 없었다.
+      */}
+      <h2 className="section-title">{year}년에 제출된 계획서</h2>
+      <SubmittedPlanTable year={year} />
 
       {/* 사람이 바뀌면 새로 만든다. 앞사람의 본문이 남아 있으면 그대로 기록된다. */}
       <PromotionNoticeDialog

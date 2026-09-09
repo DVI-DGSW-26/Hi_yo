@@ -12,11 +12,12 @@ import {
   SignaturePad,
   TextField,
 } from '@/components';
-import { useSubmitLeavePlan } from '@/features/leave/api';
+import { useMyPlans, useSubmitLeavePlan } from '@/features/leave/api';
 import { LeaveCalendarSection } from '@/features/leave/LeaveCalendarSection';
 import { LeavePlanBalanceSection } from '@/features/leave/LeavePlanBalanceSection';
 import { LeavePlanPickedSection } from '@/features/leave/LeavePlanPickedSection';
 import { LeavePlanResult } from '@/features/leave/LeavePlanResult';
+import { QueryState } from '@/components';
 import { cycleDay, sortedDates, toPlannedDays, type PickedDays } from '@/features/leave/planDays';
 
 /**
@@ -51,9 +52,15 @@ export default function LeavePlanScreen() {
   const [month, setMonth] = useState(() => new Date());
   const [picked, setPicked] = useState<PickedDays>({});
   const [signature, setSignature] = useState('');
+  // 서명하는 동안 스크롤을 끈다 (2026-09-09 실기기 — 안 끄면 그려지지 않는다).
+  const [signing, setSigning] = useState(false);
   const [note, setNote] = useState('');
 
   const submit = useSubmitLeavePlan(promotionId);
+
+  // 이 통보에 대한 계획서를 이미 냈는지. 없으면 undefined 다 — 오류가 아니다.
+  const plans = useMyPlans();
+  const submitted = plans.data?.find((plan) => plan.promotionId === promotionId);
 
   const dates = sortedDates(picked);
 
@@ -73,9 +80,40 @@ export default function LeavePlanScreen() {
     return (
       <>
         <Stack.Screen options={{ title: '연차사용계획서' }} />
-        <ScrollView contentContainerStyle={styles.scroll}>
+        <ScrollView contentContainerStyle={[styles.scroll, { paddingBottom: insets.bottom + spacing.sectionY }]}>
           <LeavePlanResult plan={submit.data} />
         </ScrollView>
+      </>
+    );
+  }
+
+  /*
+   * **이미 낸 건이면 그것을 보여준다** (2026-09-09에 조회가 열렸다).
+   *
+   * 그전에는 낸 사람이 이 화면에 다시 들어오면 빈 폼이 나왔고, 내면 409였다.
+   * 지금은 낸 날짜를 그대로 다시 본다.
+   *
+   * 목록이 아직 안 왔으면 폼을 그리지 않는다 — 낸 사람에게 빈 달력을 잠깐 보여주고
+   * 나서 결과로 바꾸면, 그 사이에 날짜를 고르기 시작한 사람의 입력이 사라진다.
+   */
+  if (submitted !== undefined) {
+    return (
+      <>
+        <Stack.Screen options={{ title: '연차사용계획서' }} />
+        <ScrollView contentContainerStyle={styles.scroll}>
+          <LeavePlanResult plan={submitted} />
+        </ScrollView>
+      </>
+    );
+  }
+
+  if (plans.isPending || plans.error) {
+    return (
+      <>
+        <Stack.Screen options={{ title: '연차사용계획서' }} />
+        <QueryState query={plans} wrapState={(state) => <Section>{state}</Section>}>
+          {() => null}
+        </QueryState>
       </>
     );
   }
@@ -101,7 +139,7 @@ export default function LeavePlanScreen() {
         style={styles.flex}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
-        <ScrollView style={styles.flex} keyboardShouldPersistTaps="handled">
+        <ScrollView style={styles.flex} keyboardShouldPersistTaps="handled" scrollEnabled={!signing}>
           <Section>
             {/*
               서식 머리말을 옮기되 **「계획서를 내면 쉬는 것」으로 읽히지 않게 적는다.**
@@ -154,7 +192,12 @@ export default function LeavePlanScreen() {
               서식의 「제출자」 자리다. **서버에서도 필수다** — 대리 등록 경로가 없어
               본인 의사표시가 증빙의 핵심이다.
             */}
-            <SignaturePad label="제출자 서명" value={signature} onChange={setSignature} />
+            <SignaturePad
+              label="제출자 서명"
+              value={signature}
+              onChange={setSignature}
+              onDrawingChange={setSigning}
+            />
           </Section>
         </ScrollView>
 
@@ -184,6 +227,10 @@ function blockedReason(dayCount: number, signature: string): string | undefined 
 
 const styles = StyleSheet.create({
   flex: { flex: 1, backgroundColor: colors.white },
+  /*
+   * `insets.bottom` 을 쓰는 쪽에서 덮어쓴다. 안드로이드는 내비게이션 바 뒤까지
+   * 화면을 그려서(edge-to-edge) 이 값만으로는 마지막 줄이 가린다 (2026-09-09 실기기).
+   */
   scroll: { paddingBottom: spacing.sectionY },
   lead: { ...typography.bodySmall, color: colors.textBody },
   hint: { ...typography.label, color: colors.textWeak, marginBottom: spacing.tight },

@@ -21,6 +21,9 @@ import { dayLabel } from './planDays';
  *
  * `remainingAfterPlan`을 「잔여」라고 부르지 않는다. 서버 스키마가 **참고용 계산값**이라고
  * 못 박고 있다 — 진짜 잔여는 `GET /leave/balance`다.
+ *
+ * **조회로 받은 건에는 그 값이 없다** (2026-09-09). 그때는 줄을 아예 그리지 않는다 —
+ * 없는 값을 0으로 그리면 「연차를 다 썼다」로 읽힌다.
  */
 export function LeavePlanResult({ plan }: { plan: LeavePlan }) {
   return (
@@ -51,11 +54,20 @@ export function LeavePlanResult({ plan }: { plan: LeavePlan }) {
         {/*
           「잔여」가 아니다. 계획서는 연차를 깎지 않는다 — 아직 신청하지 않은 일수가
           얼마나 남았는지 보려는 참고값이다 (`LeavePlanResponse` 스키마).
+
+          조회로 받은 건에는 이 값이 없다. 0으로 그리면 「연차를 다 썼다」로 읽힌다.
         */}
-        <ListRow label="계획을 뺀 나머지" value={formatLeaveDays(plan.remainingAfterPlan)} />
-        <Text style={styles.note}>
-          「계획을 뺀 나머지」는 참고용이에요. 연차가 줄어든 것은 아니에요.
-        </Text>
+        {plan.remainingAfterPlan !== null && (
+          <>
+            <ListRow
+              label="계획을 뺀 나머지"
+              value={formatLeaveDays(plan.remainingAfterPlan)}
+            />
+            <Text style={styles.note}>
+              「계획을 뺀 나머지」는 참고용이에요. 연차가 줄어든 것은 아니에요.
+            </Text>
+          </>
+        )}
       </Section>
 
       <SectionDivider />
