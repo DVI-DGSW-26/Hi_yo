@@ -48,14 +48,18 @@ export interface Employee {
 }
 
 /**
- * **원문이 온다.** 마스킹된 값이 아니다 (2026-09-02 회신 10번).
+ * **서버가 가려서 준다** (2026-09-09 회신 24번). 그전에는 원문이 내려와 화면이 가렸다.
  *
- * 화면에 그릴 때 `maskAccountNo`(`@hr/format`)를 거친다. 모바일과 같은 함수를 쓴다 —
- * 같은 값을 두 앱이 다르게 그리면 어느 쪽이 맞는지 알 수 없다.
+ * `bankAccountMasked`는 **이미 가려진 값**이다. `maskAccountNo`를 다시 거치지 않는다 —
+ * 두 번 가리면 남은 네 자리까지 지워진다.
+ *
+ * 이체·통장 대조에 원문이 필요하면 `GET /employees/{id}/bank-account`를 그 화면에서
+ * 따로 부른다 — 직원 상세는 사람을 확인하는 자리지 이체하는 자리가 아니다 (기획 5번).
  */
 export interface BankAccount {
   bankName: string | null;
-  bankAccount: string | null;
+  /** `***-***-**6789`. 뒤 네 자리만 남은 값이다 */
+  bankAccountMasked: string | null;
   accountHolder: string | null;
 }
 

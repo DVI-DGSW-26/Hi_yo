@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { Link, useParams } from 'react-router';
-import { maskAccountNo } from '@hr/format';
 import { Button, DetailList, StatusText } from '@/components';
 import { AssignmentDialog } from '@/features/employees/AssignmentDialog';
 import { EmployeeNoDialog } from '@/features/employees/EmployeeNoDialog';
@@ -23,10 +22,12 @@ import { STATUS_LABEL } from '@/features/employees/labels';
  * (`docs/01_물어볼_것.md` 25번). 지워지면 그 직원은 재직증명서를 발급받지 못한다 —
  * **확인 전에는 `PUT` 을 부르지 않는다.**
  *
- * **계좌번호는 서버가 가려주지 않는다** (2026-09-02 회신 10번). 원문이 내려오므로
- * 화면이 `maskAccountNo`로 가린다 — 모바일 마이페이지와 같은 함수다.
- * 관리팀 화면도 가리기로 정했다 (2026-09-07). 급여 이체에 원문이 필요해지면 그때
- * 그 화면에서 따로 연다 — **직원 상세는 사람을 확인하는 자리지 이체하는 자리가 아니다.**
+ * **계좌번호는 서버가 가려서 준다** (2026-09-09 회신 24번). 9-02에는 원문이 내려와
+ * 화면이 가리고 있었는데, 그러면 개발자 도구·네트워크 로그에 전 직원 계좌번호가 남아
+ * 되물었다. 이제 `bankAccountMasked` 를 그대로 그린다 — **다시 가리지 않는다.**
+ *
+ * 이체·통장 대조에 원문이 필요하면 `GET /employees/{id}/bank-account` 를 그 화면에서
+ * 따로 부른다 — **직원 상세는 사람을 확인하는 자리지 이체하는 자리가 아니다** (기획 5번).
  */
 export function EmployeeDetail() {
   const { employeeId: raw } = useParams<{ employeeId: string }>();
@@ -94,11 +95,10 @@ export function EmployeeDetail() {
               { label: '연락처', value: detail.phone ?? '아직이에요' },
               {
                 label: '계좌',
-                // 서버가 원문을 준다. 그리기 직전에 가린다 (2026-09-02 회신 10번).
-                value: detail.bankAccount?.bankAccount
-                  ? `${detail.bankAccount.bankName ?? ''} ${maskAccountNo(
-                      detail.bankAccount.bankAccount,
-                    )}`.trim()
+                // 서버가 가려서 준다 (2026-09-09 회신 24번). 원문이 필요하면
+                // `GET /employees/{id}/bank-account`를 이체 화면에서 따로 부른다.
+                value: detail.bankAccount?.bankAccountMasked
+                  ? `${detail.bankAccount.bankName ?? ''} ${detail.bankAccount.bankAccountMasked}`.trim()
                   : '아직이에요',
               },
               /*
