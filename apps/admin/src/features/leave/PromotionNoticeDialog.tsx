@@ -8,7 +8,6 @@ import {
   promotionRoundLabel,
   useRecordPromotionNotice,
   type PromotionChannel,
-  type PromotionNotice,
   type PromotionTarget,
 } from './api';
 
@@ -18,7 +17,6 @@ interface Props {
   /** 목록을 보고 있는 회계연도. 서버 기본값(올해)에 기대지 않고 명시해 보낸다 */
   year: number;
   onClose: () => void;
-  onRecorded: (notice: PromotionNotice) => void;
 }
 
 /**
@@ -34,7 +32,7 @@ interface Props {
  * **잔여 일수는 보내지 않는다.** 통보서에 찍히는 숫자는 서버가 발송 시점에 다시 계산해
  * 박는다 — 화면 값을 실어 보내면 증빙의 숫자를 클라이언트가 정하게 된다.
  */
-export function PromotionNoticeDialog({ target, year, onClose, onRecorded }: Props) {
+export function PromotionNoticeDialog({ target, year, onClose }: Props) {
   const record = useRecordPromotionNotice();
 
   // 메일 주소가 있으면 이메일로, 없으면 서면이 기본이다. 없는 주소를 채워 넣지 않는다.
@@ -67,10 +65,8 @@ export function PromotionNoticeDialog({ target, year, onClose, onRecorded }: Pro
         bodySnapshot,
       },
       {
-        onSuccess: (notice) => {
-          onRecorded(notice);
-          onClose();
-        },
+        // 기록하면 남긴 목록이 다시 그려진다 (`promotionKeys.all` 무효화).
+        onSuccess: onClose,
       },
     );
   }

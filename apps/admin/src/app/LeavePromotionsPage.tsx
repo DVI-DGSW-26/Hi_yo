@@ -4,13 +4,12 @@ import { daysCell, dim, orDash } from '@/lib/cell';
 import { shortDate } from '@/lib/datetime';
 import { departmentOptions, matchesKeyword } from '@/lib/listFilter';
 import { PromotionNoticeDialog } from '@/features/leave/PromotionNoticeDialog';
-import { RecordedNotices } from '@/features/leave/RecordedNotices';
+import { RecordedNoticeTable } from '@/features/leave/RecordedNoticeTable';
 import {
   PROMOTION_ROUNDS,
   promotionRoundLabel,
   selectableLedgerYears,
   usePromotionTargets,
-  type PromotionNotice,
   type PromotionRound,
   type PromotionTarget,
 } from '@/features/leave/api';
@@ -33,6 +32,10 @@ import {
  * (`CLAUDE.md` 3장). 통보서에 찍히는 숫자는 서버가 발송 시점에 다시 계산해 박는
  * 스냅샷이라, 이 표의 숫자와 다를 수 있다는 것까지 스펙에 적혀 있다.
  *
+ * **남긴 기록을 아래 표에서 다시 본다** (2026-09-09, 29번). `GET /leave/promotions` 가
+ * 열리기 전에는 기록하면 그 줄이 대상 목록에서 사라질 뿐이라, 무엇을 남겼는지도
+ * 누가 계획서를 냈는지도 볼 수 없었다.
+ *
  * **주 동작 버튼이 없다.** 보낼 사람을 고르는 것이 이 화면의 일이고 기록은 사람마다
  * 다른 본문을 받아야 해서 줄에서 연다 — 연차관리대장과 같은 모양이다
  * (`DESIGN_ADMIN.md` 5장, 표 안의 행별 동작은 글자 링크).
@@ -46,7 +49,6 @@ export function LeavePromotionsPage() {
   const [keyword, setKeyword] = useState('');
   const [department, setDepartment] = useState('');
   const [recording, setRecording] = useState<PromotionTarget>();
-  const [recorded, setRecorded] = useState<PromotionNotice[]>([]);
 
   const targets = usePromotionTargets(year, round);
 
@@ -138,12 +140,9 @@ export function LeavePromotionsPage() {
             { label: `${year}년 ${roundLabel} 대상`, value: `${targets.data.length}명` },
             { label: '결재 대기중인 신청 있음', value: `${pendingCount}명` },
           ]}
-          note="이미 기록을 남긴 사람은 목록에서 빠져요. 두 잔여가 다르면 결재 대기중인 신청이 있다는 뜻이라, 통보서 숫자가 반려로 흔들릴 수 있어요."
+          note="이미 기록을 남긴 사람은 목록에서 빠져요 — 아래 「남긴 통보 기록」에서 볼 수 있어요. 두 잔여가 다르면 결재 대기중인 신청이 있다는 뜻이라, 통보서 숫자가 반려로 흔들릴 수 있어요."
         />
       )}
-
-      {/* 기록하면 그 줄이 표에서 사라진다. 무엇을 남겼는지가 여기 말고는 드러날 곳이 없다. */}
-      <RecordedNotices notices={recorded} />
 
       <Table
         columns={columns}
@@ -184,13 +183,19 @@ export function LeavePromotionsPage() {
         }
       />
 
+      {/*
+        차수를 거르지 않는다 — 그 해 1차·2차를 다 보여준다. 2차 대상인지가 1차 계획서를
+        냈는지로 갈려서, 2차를 준비하는 사람이 1차 기록을 같이 봐야 한다.
+      */}
+      <h2 className="section-title">{year}년에 남긴 통보 기록</h2>
+      <RecordedNoticeTable year={year} />
+
       {/* 사람이 바뀌면 새로 만든다. 앞사람의 본문이 남아 있으면 그대로 기록된다. */}
       <PromotionNoticeDialog
         key={recording?.employeeId ?? 'closed'}
         target={recording}
         year={year}
         onClose={() => setRecording(undefined)}
-        onRecorded={(notice) => setRecorded((before) => [...before, notice])}
       />
     </section>
   );
