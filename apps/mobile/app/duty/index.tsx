@@ -2,7 +2,8 @@ import { endOfMonth, format, startOfMonth } from 'date-fns';
 import { Stack, useRouter } from 'expo-router';
 import { useState } from 'react';
 import { ScrollView, StyleSheet } from 'react-native';
-import { colors } from '@hr/tokens';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { colors, spacing } from '@hr/tokens';
 import { Section, SectionDivider } from '@/components';
 import { DutyCalendarSection } from '@/features/duty/DutyCalendarSection';
 import { DutyScheduleList } from '@/features/duty/DutyScheduleList';
@@ -27,6 +28,7 @@ import { useMe } from '@/features/employees/api';
  * 단건 조회 API가 없어서다. 이름 같은 개인정보는 넘기지 않는다 (`CLAUDE.md` 2장).
  */
 export default function DutyScreen() {
+  const insets = useSafeAreaInsets();
   const router = useRouter();
   const [month, setMonth] = useState(() => new Date());
 
@@ -42,7 +44,15 @@ export default function DutyScreen() {
   return (
     <>
       <Stack.Screen options={{ title: '당직' }} />
-      <ScrollView style={styles.flex}>
+      {/*
+        안드로이드는 내비게이션 바 뒤까지 화면을 그린다 (edge-to-edge). 하단 여백을
+        `insets.bottom` 만큼 주지 않으면 마지막 줄이 그 바에 가린다 — 실기기에서
+        드러났다 (2026-09-09). 하단 CTA 가 있는 화면은 그 막대가 같은 일을 한다.
+      */}
+      <ScrollView
+        style={styles.flex}
+        contentContainerStyle={{ paddingBottom: insets.bottom + spacing.sectionY }}
+      >
         <Section>
           <DutySwapInbox
             swaps={inbox}
