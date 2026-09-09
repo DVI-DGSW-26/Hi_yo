@@ -13,6 +13,7 @@ import { colors, spacing, typography } from '@hr/tokens';
 import { Button, MutationError, Section, SectionDivider, TextField } from '@/components';
 import { LeaveBalanceSection } from '@/features/leave/LeaveBalanceSection';
 import { LeaveCalendarSection } from '@/features/leave/LeaveCalendarSection';
+import { LeavePromotionSection } from '@/features/leave/LeavePromotionSection';
 import { LeaveRequestList } from '@/features/leave/LeaveRequestList';
 import { LeaveSignatureSection } from '@/features/leave/LeaveSignatureSection';
 import {
@@ -49,6 +50,9 @@ import { useCreateRequest, useRequestTypes } from '@/features/leave/api';
  *
  * **기간·시각·안내 문구를 판단하는 부분은 `requestDraft.ts`에 있다.** 이 파일은 무엇을
  * 어떤 차례로 보여줄지만 안다.
+ *
+ * **연차촉진 통보를 맨 위에 둔다** (2026-09-09). 마감이 걸린 서류라 잔여보다 먼저 본다.
+ * 받은 통보가 없으면 그 자리는 통째로 사라진다 — 대부분의 직원에게는 통보가 없다.
  */
 export default function LeaveScreen() {
   const insets = useSafeAreaInsets();
@@ -112,6 +116,7 @@ export default function LeaveScreen() {
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
         <ScrollView style={styles.flex} keyboardShouldPersistTaps="handled">
+          <LeavePromotionSection />
           <Section>
             <LeaveBalanceSection />
           </Section>
