@@ -1,6 +1,7 @@
 import { Stack, useRouter } from 'expo-router';
 import { ScrollView, StyleSheet } from 'react-native';
-import { colors } from '@hr/tokens';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { colors, spacing } from '@hr/tokens';
 import { ListRow, QueryState, Section, SectionTitle } from '@/components';
 import { useMe } from '@/features/employees/api';
 
@@ -20,13 +21,22 @@ import { useMe } from '@/features/employees/api';
  * 아무것도 못 보는데, 그렇게 하라는 근거가 문서에 없다.
  */
 export default function Index() {
+  const insets = useSafeAreaInsets();
   const router = useRouter();
   const me = useMe();
 
   return (
     <>
       <Stack.Screen options={{ title: 'HR' }} />
-      <ScrollView style={styles.flex}>
+      {/*
+        안드로이드는 내비게이션 바 뒤까지 화면을 그린다 (edge-to-edge). 하단 여백을
+        `insets.bottom` 만큼 주지 않으면 마지막 줄이 그 바에 가린다 — 실기기에서
+        드러났다 (2026-09-09). 하단 CTA 가 있는 화면은 그 막대가 같은 일을 한다.
+      */}
+      <ScrollView
+        style={styles.flex}
+        contentContainerStyle={{ paddingBottom: insets.bottom + spacing.sectionY }}
+      >
         <Section>
           <SectionTitle title="바로가기" />
           <QueryState query={me}>

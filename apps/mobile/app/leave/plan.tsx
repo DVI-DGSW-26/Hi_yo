@@ -51,6 +51,8 @@ export default function LeavePlanScreen() {
   const [month, setMonth] = useState(() => new Date());
   const [picked, setPicked] = useState<PickedDays>({});
   const [signature, setSignature] = useState('');
+  // 서명하는 동안 스크롤을 끈다 (2026-09-09 실기기 — 안 끄면 그려지지 않는다).
+  const [signing, setSigning] = useState(false);
   const [note, setNote] = useState('');
 
   const submit = useSubmitLeavePlan(promotionId);
@@ -73,7 +75,7 @@ export default function LeavePlanScreen() {
     return (
       <>
         <Stack.Screen options={{ title: '연차사용계획서' }} />
-        <ScrollView contentContainerStyle={styles.scroll}>
+        <ScrollView contentContainerStyle={[styles.scroll, { paddingBottom: insets.bottom + spacing.sectionY }]}>
           <LeavePlanResult plan={submit.data} />
         </ScrollView>
       </>
@@ -101,7 +103,7 @@ export default function LeavePlanScreen() {
         style={styles.flex}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
-        <ScrollView style={styles.flex} keyboardShouldPersistTaps="handled">
+        <ScrollView style={styles.flex} keyboardShouldPersistTaps="handled" scrollEnabled={!signing}>
           <Section>
             {/*
               서식 머리말을 옮기되 **「계획서를 내면 쉬는 것」으로 읽히지 않게 적는다.**
@@ -154,7 +156,12 @@ export default function LeavePlanScreen() {
               서식의 「제출자」 자리다. **서버에서도 필수다** — 대리 등록 경로가 없어
               본인 의사표시가 증빙의 핵심이다.
             */}
-            <SignaturePad label="제출자 서명" value={signature} onChange={setSignature} />
+            <SignaturePad
+              label="제출자 서명"
+              value={signature}
+              onChange={setSignature}
+              onDrawingChange={setSigning}
+            />
           </Section>
         </ScrollView>
 
@@ -184,6 +191,10 @@ function blockedReason(dayCount: number, signature: string): string | undefined 
 
 const styles = StyleSheet.create({
   flex: { flex: 1, backgroundColor: colors.white },
+  /*
+   * `insets.bottom` 을 쓰는 쪽에서 덮어쓴다. 안드로이드는 내비게이션 바 뒤까지
+   * 화면을 그려서(edge-to-edge) 이 값만으로는 마지막 줄이 가린다 (2026-09-09 실기기).
+   */
   scroll: { paddingBottom: spacing.sectionY },
   lead: { ...typography.bodySmall, color: colors.textBody },
   hint: { ...typography.label, color: colors.textWeak, marginBottom: spacing.tight },

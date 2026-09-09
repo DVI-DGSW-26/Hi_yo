@@ -61,6 +61,11 @@ export default function LeaveScreen() {
   const [reason, setReason] = useState('');
   const [choice, setChoice] = useState<LeaveTypeChoice>(EMPTY_CHOICE);
   const [signature, setSignature] = useState('');
+  /*
+   * 서명하는 동안 스크롤을 끈다. 안드로이드 ScrollView 가 세로 드래그를 웹뷰보다
+   * 먼저 가져가서, 끄지 않으면 서명이 안 되고 화면만 움직인다 (2026-09-09 실기기).
+   */
+  const [signing, setSigning] = useState(false);
   const create = useCreateRequest();
 
   // 이 화면은 연차 화면이라 연차휴가로 시작한다. 규칙이 아니라 이 화면의 기본값이다 —
@@ -115,7 +120,7 @@ export default function LeaveScreen() {
         style={styles.flex}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
-        <ScrollView style={styles.flex} keyboardShouldPersistTaps="handled">
+        <ScrollView style={styles.flex} keyboardShouldPersistTaps="handled" scrollEnabled={!signing}>
           <LeavePromotionSection />
           <Section>
             <LeaveBalanceSection />
@@ -141,7 +146,11 @@ export default function LeaveScreen() {
           </Section>
           <SectionDivider />
           <Section>
-            <LeaveSignatureSection value={signature} onChange={setSignature} />
+            <LeaveSignatureSection
+              value={signature}
+              onChange={setSignature}
+              onDrawingChange={setSigning}
+            />
           </Section>
           <SectionDivider />
           <Section>

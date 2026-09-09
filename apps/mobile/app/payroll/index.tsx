@@ -1,7 +1,8 @@
 import { Stack, useRouter } from 'expo-router';
 import { ScrollView, StyleSheet } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { formatAmount, formatTargetYm } from '@hr/format';
-import { colors } from '@hr/tokens';
+import { colors, spacing } from '@hr/tokens';
 import { ListRow, QueryState, Section, SectionTitle } from '@/components';
 import { useAuthMe } from '@/features/auth/api';
 import { useMyPayrolls } from '@/features/payroll/api';
@@ -17,6 +18,7 @@ import { useMyPayrolls } from '@/features/payroll/api';
  * 실수령액은 서버가 준 `finalAmount`다. 지급에서 공제를 빼보지 않는다.
  */
 export default function PayrollListScreen() {
+  const insets = useSafeAreaInsets();
   const router = useRouter();
   const me = useAuthMe();
   const payrolls = useMyPayrolls(me.data?.employeeId);
@@ -24,7 +26,15 @@ export default function PayrollListScreen() {
   return (
     <>
       <Stack.Screen options={{ title: '급여명세서' }} />
-      <ScrollView style={styles.flex}>
+      {/*
+        안드로이드는 내비게이션 바 뒤까지 화면을 그린다 (edge-to-edge). 하단 여백을
+        `insets.bottom` 만큼 주지 않으면 마지막 줄이 그 바에 가린다 — 실기기에서
+        드러났다 (2026-09-09). 하단 CTA 가 있는 화면은 그 막대가 같은 일을 한다.
+      */}
+      <ScrollView
+        style={styles.flex}
+        contentContainerStyle={{ paddingBottom: insets.bottom + spacing.sectionY }}
+      >
         <Section>
           <SectionTitle title="받은 명세서" />
           {/*
