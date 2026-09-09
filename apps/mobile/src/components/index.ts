@@ -1,7 +1,8 @@
 export { Button } from './Button';
 export { ListRow } from './ListRow';
 export { TextField } from './TextField';
-export { TimeField, isCompleteTime, toServerTime } from './TimeField';
+export { TimeField } from './TimeField';
+export { isCompleteTime, toServerTime } from '@/lib/time';
 export { SectionTitle } from './SectionTitle';
 export { Section, SectionDivider } from './Section';
 export { StatusText } from './StatusText';

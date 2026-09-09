@@ -1,3 +1,4 @@
+import { isCompleteTime } from '@/lib/time';
 import { TextField } from './TextField';
 
 /**
@@ -48,16 +49,4 @@ const TIME_LENGTH = 5;
 function maskTime(input: string): string {
   const digits = input.replace(/\D/g, '').slice(0, 4);
   return digits.length <= 2 ? digits : `${digits.slice(0, 2)}:${digits.slice(2)}`;
-}
-
-/** 다 적었고 실제로 있는 시각인가. 시작이 끝보다 늦은지는 **서버가 본다** */
-export function isCompleteTime(value: string): boolean {
-  const matched = /^(\d{2}):(\d{2})$/.exec(value);
-  if (!matched) return false;
-  return Number(matched[1]) <= 23 && Number(matched[2]) <= 59;
-}
-
-/** 서버가 돌려주는 것과 같은 `HH:mm:ss` 로. 초는 화면에서 받지 않는다 */
-export function toServerTime(value: string): string {
-  return `${value}:00`;
 }

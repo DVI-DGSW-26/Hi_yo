@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import { ApiError } from '@hr/api';
 import { Button } from '@/components';
 import { clearToken, hasToken, loginRetryUsed, redirectToLoginOnce, startLogin } from '@/lib/auth';
-import { useAuthMe, type AuthMe } from '@/features/auth/api';
+import { useAuthMe, useTokenRefresh, type AuthMe } from '@/features/auth/api';
 import './AuthScreen.css';
 
 /**
@@ -17,6 +17,13 @@ import './AuthScreen.css';
  */
 export function AuthGate({ children }: { children: (me: AuthMe) => ReactNode }) {
   const me = useAuthMe();
+
+  /*
+   * 토큰 수명이 15분이다 (2026-09-08에 5분에서 늘었다). 갱신이 없으면 관리팀이
+   * 표를 보다가, 폼을 쓰다가 로그인 화면으로 튕긴다. **실패해도 아무 일도 하지 않는다** —
+   * 지금 토큰이 죽는 순간 401 이 오고 아래 경로가 그때 로그인으로 보낸다.
+   */
+  useTokenRefresh();
 
   if (!hasToken()) {
     return (
