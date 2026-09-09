@@ -14,8 +14,13 @@ export interface ApiClientOptions {
   /**
    * 매 요청에 붙일 헤더. 함수로 받는 이유는 토큰이 갱신되어도 인스턴스를 다시
    * 만들지 않기 위해서다.
+   *
+   * **부르는 경로를 같이 넘긴다** (2026-09-08). 토큰을 붙이면 안 되는 경로가 생겼다 —
+   * 갱신·로그아웃은 **세션 쿠키로** 인증한다. 만료된 토큰으로는 신원을 증명할 수 없어서
+   * 서버가 그렇게 만들었다. 어느 경로가 그런지는 **앱이 안다** — 이 파일은 인증 방식을
+   * 모른다.
    */
-  authHeaders?: () => Record<string, string>;
+  authHeaders?: (url: string | undefined) => Record<string, string>;
   /** 기본 10초 */
   timeoutMs?: number;
 }
@@ -32,7 +37,7 @@ export function createApiClient({
   });
 
   client.interceptors.request.use((config) => {
-    for (const [name, value] of Object.entries(authHeaders?.() ?? {})) {
+    for (const [name, value] of Object.entries(authHeaders?.(config.url) ?? {})) {
       config.headers.set(name, value);
     }
     return config;
