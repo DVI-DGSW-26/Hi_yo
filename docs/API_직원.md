@@ -51,10 +51,12 @@ Swagger `1. 직원`과 `2. 마스터` 태그를 옮긴 것이다. 원본이 항�
 | GET | `/employees` | **관리팀** | 목록. `corporation`·`status`·`departmentId`·`keyword` + 페이지 |
 | GET | `/employees/{id}` | 본인 또는 관리팀 | 단건 |
 | POST | `/employees` | **관리팀** | 등록 |
-| PUT | `/employees/{id}` | **관리팀** | 인적사항 수정 — **전체 교체.** 앱이 부르지 않는다 (5장 1번) |
+| PUT | `/employees/{id}` | **관리팀** | 인적사항 수정. **2026-09-09에 `residentNo`가 빠졌다** — 이제 부른다 (5장 1번) |
 | PATCH | `/employees/{id}/assignment` | **관리팀** | 부서 · 직무 (2026-09-02에 열렸다). **`null`은 「비운다」** |
 | PATCH | `/employees/{id}/resident-no` | **관리팀** | 주민등록번호 (2026-09-02에 열렸다). 응답에 값은 없다 |
+| GET | `/employees/{id}/bank-account` | 관리팀 또는 본인 | **계좌 원문.** 급여 이체·통장 대조용 (2026-09-09에 열렸다) |
 | PUT | `/employees/{id}/bank-account` | 본인 | **직원이 수정할 수 있는 유일한 항목** |
+| GET | `/employees/{id}/resident-no` | **관리팀** | 주민등록번호. 기본은 가려서, `?full=true`면 원문 (2026-09-09에 열렸다) |
 | PATCH | `/employees/{id}/status` | **관리팀** | 휴직 · 복직 · 퇴사 |
 | PATCH | `/employees/{id}/employee-no` | **관리팀** | 사번 부여 |
 | GET | `/employees/{id}/status-history` | 관리팀 | 재직상태 변경 이력 |
@@ -101,6 +103,32 @@ Swagger `1. 직원`과 `2. 마스터` 태그를 옮긴 것이다. 원본이 항�
 TODO: **`phone`·`email`·`address`가 마스킹돼 오는지 확인하지 못했다.** 개발 서버 직원
 103명 전원이 이 값들이 `null`이다. `CLAUDE.md` 2장은 연락처·이메일도 마스킹 대상으로 적고 있다.
 
+### `BankAccount` (조회에 실리는 계좌)
+
+`bankName` `bankAccountMasked` `accountHolder`
+
+**2026-09-09에 `bankAccount` → `bankAccountMasked`로 바뀌었다** (회신 24번). 값도
+`***-***-**6789`처럼 뒤 네 자리만 남겨서 온다 — 스키마 설명이 "원문은 어떤 응답에도
+담기지 않는다"고 적고 있다.
+
+**받은 값을 다시 가리지 않는다.** 두 번 가리면 남은 네 자리까지 `*`가 되어 본인도
+자기 계좌인지 알아볼 수 없다.
+
+### `BankAccountRawResponse` (계좌 원문)
+
+`employeeId` `employeeName` `bankName` `bankAccount` `accountHolder`
+
+`GET /employees/{id}/bank-account`로만 나온다. **급여 이체·통장 대조 화면에서만 부른다** —
+사람을 확인하는 자리에서 부르지 않는다.
+
+### `ResidentNoResponse`
+
+`employeeId` `employeeName` `registered` `masked` `full`
+
+`masked`가 `900101-1******`다. `full`은 **`?full=true`로 부른 경우에만** 채워지고
+아니면 `null`이다. **그 호출은 서버가 따로 로그에 남긴다** — 4대보험·연말정산 신고
+기능에서만 부르고, 사람 대조·오타 확인에는 `masked`로 충분하다.
+
 ### `EmployeeCreateRequest`
 
 필수 `name` `corporation` `hireDate`
@@ -113,7 +141,15 @@ TODO: **`phone`·`email`·`address`가 마스킹돼 오는지 확인하지 못�
 
 `name` `legalName` `nationality` `corporation` `departmentId` `jobId` `jobGrade` `workSite`
 `originalHireDate` `hireDate` `birthDate` `gender` `phone` `email` `address`
-`emergencyContact` `residentNo` (필수는 `name` `corporation` `hireDate`)
+`emergencyContact` (필수는 `name` `corporation` `hireDate`)
+
+**`residentNo`가 2026-09-09에 빠졌다** (회신 25번). 등록은 `POST`, 수정은
+`PATCH /employees/{id}/resident-no` 하나다. 그전에는 여기에 필드가 있어서 전체 교체로
+읽혔고, 그래서 앱이 `PUT`을 부르지 않았다.
+
+**안 실은 값은 보존된다.** 서버가 그렇게 확인해 줬다 — 원래도 지우지 않았고 값이 비어
+있으면 기존 값을 그대로 두고 넘어갔다고 한다. 다만 **값을 「비우는」 방법은 확인되지
+않았다** — 빈 문자열이 지우는지 그대로 두는지 모른다. 지우는 동작이 필요해지면 묻는다.
 
 **계좌 필드가 없다.** 스키마 설명이 "계좌정보는 별도 API로 분리했다"고 적고 있다.
 
@@ -127,9 +163,10 @@ TODO: **`phone`·`email`·`address`가 마스킹돼 오는지 확인하지 못�
 **`PUT`이 셋을 전부 덮어쓴다.** 일부만 보내면 나머지가 `null`로 지워진다
 (2026-09-02 「조심할 것」). 그래서 화면(S-101 계좌 바꾸기)이 셋을 모두 받는다.
 
-**조회에서 받은 값을 되돌려 보내지 않는다.** 조회는 원문을 주고 화면은 가려서 그리므로,
+**조회에서 받은 값을 되돌려 보내지 않는다.** 조회가 주는 것은 `bankAccountMasked`(가린 값)라,
 화면에 보이는 문자열을 그대로 실어 보내면 **가린 값이 저장돼 급여가 엉뚱한 계좌로 간다.**
-바꾸는 화면은 새 값을 처음부터 입력받는다 (2026-09-07).
+바꾸는 화면은 새 값을 처음부터 입력받는다 (2026-09-07). 이 요청의 `bankAccount`는
+**원문 필드다** — 조회 쪽 이름만 바뀌었고 여기는 그대로다.
 
 ### `EmploymentStatusChangeRequest`
 
@@ -185,11 +222,10 @@ TODO: **`phone`·`email`·`address`가 마스킹돼 오는지 확인하지 못�
 ## 4. 앱 관점 정리
 
 - 본인용 화면은 `GET /employees/me`만 쓴다. **다른 직원의 id로 조회하지 않는다**
-- ~~계좌·연락처는 서버가 마스킹한 값을 그대로 표시한다~~ — **틀린 정리였다.**
-  **계좌는 서버가 마스킹하지 않는다** (2026-09-02 회신 10번). 은행명·계좌번호·예금주
-  셋 다 원문으로 내려오므로 **화면이 `maskAccountNo`로 가려서 그린다**
-  (`packages/format`). **두 앱이 같은 함수를 쓴다** — 모바일 마이페이지·계좌 변경과
-  관리팀 직원 상세 셋 다 이 함수를 지난다 (2026-09-07)
+- **계좌는 서버가 가려서 준다** (2026-09-09 회신 24번). `bankAccountMasked`를 **그대로
+  그린다** — 화면에서 다시 가리지 않는다. 9-02에는 원문이 내려와 화면이 `maskAccountNo`로
+  가리고 있었는데, 그러면 개발자 도구·네트워크 로그에 전 직원 계좌번호가 남아 되물었다.
+  원문이 필요한 곳은 `GET /employees/{id}/bank-account` 하나고 **급여 이체용이다**
 - **주민번호는 서버가 가려서 준다** — `residentNoMasked`가 `901231-1******`다 (회신 15번).
   이쪽은 원칙대로다. 본인용 화면은 등록 여부만 보여준다
 - 부서·직무 목록은 자주 바뀌지 않는다. 앱은 1시간 캐시한다
@@ -198,7 +234,7 @@ TODO: **`phone`·`email`·`address`가 마스킹돼 오는지 확인하지 못�
 
 ## 5. 미확정 — 확인이 필요한 것
 
-### 1. `PUT /employees/{id}`가 전체 교체다 (서버) — 절반 풀렸다
+### 1. ~~`PUT /employees/{id}`가 전체 교체다~~ — 풀렸다 (2026-09-09)
 
 **2026-09-02에 `PATCH` 둘이 열렸다.** 8-31에 서버가 "방향이 맞다"고 인정한 것이
 그대로 들어왔다.
@@ -210,14 +246,21 @@ TODO: **`phone`·`email`·`address`가 마스킹돼 오는지 확인하지 못�
 
 **A-102에 그 둘을 붙였다** (2026-09-07). 재직상태 · 사번과 합쳐 바꿀 수 있는 것이 넷이다.
 
-**그런데 `PUT` 자체는 그대로다.** 이름 · 연락처 · 주소는 여전히 `PUT`으로만 갈 수 있고,
-**`PUT`이 아직도 `residentNo`를 지우는지 확인되지 않았다** —
-`EmployeeUpdateRequest`에 `residentNo`가 남아 있다면 인적사항을 한 번 고칠 때마다
-방금 등록한 주민번호가 지워진다. **확인 전에는 `PUT`을 부르지 않는다**
-(`docs/01_물어볼_것.md` 25번). 개발 서버가 내려가 있어 실호출로 확인하지 못했다.
+**그리고 2026-09-09에 `PUT`도 풀렸다** (회신 25번). `EmployeeUpdateRequest`에서
+`residentNo`가 빠졌다 — 스펙에 필드가 없으니 전체 교체로 이름을 고쳐도 주민번호가
+지워지지 않는다.
 
-`phone`·`email`·`address`가 마스킹돼 오는지도 여전히 모른다 (5장 4번).
-마스킹돼 온다면 `PUT` 우회는 연락처까지 망가뜨린다.
+서버 확인으로는 **원래도 지우지 않았다.** 값이 비어 있으면 기존 값을 그대로 두고
+넘어갔다고 한다. 스펙에 필드가 있으면 전체 교체로 읽는 것이 맞아서 8-26부터 막아
+뒀던 것인데, 그 판단은 코드를 봐야 뒤집히는 것이었다 — 서버도 그렇게 말했다.
+
+**A-102에 이름·연락처·주소를 붙였다** (2026-09-09). 바꿀 수 있는 것이 다섯이 됐다.
+`corporation`·`hireDate`는 스펙 필수라 지금 값을 그대로 되돌려 보낸다.
+
+**남은 것 하나 — 값을 「비우는」 방법이다.** 안 실으면 보존되므로 이 화면으로는 값을
+지울 수 없다. 연락처가 바뀐 것이 아니라 없어진 경우를 다뤄야 하면 서버에 묻는다.
+
+`phone`·`email`·`address`가 마스킹돼 오는지는 여전히 모른다 (5장 4번).
 
 ### 2. 주민등록번호를 어느 화면에서 누가 입력하는가
 
