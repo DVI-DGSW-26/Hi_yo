@@ -100,7 +100,7 @@ export default function LeavePlanScreen() {
     return (
       <>
         <Stack.Screen options={{ title: '연차사용계획서' }} />
-        <ScrollView contentContainerStyle={styles.scroll}>
+        <ScrollView contentContainerStyle={[styles.scroll, { paddingBottom: insets.bottom + spacing.sectionY }]}>
           <LeavePlanResult plan={submitted} />
         </ScrollView>
       </>
