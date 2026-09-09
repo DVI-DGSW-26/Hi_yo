@@ -1,6 +1,7 @@
 import { Stack, useRouter } from 'expo-router';
 import { ScrollView, StyleSheet, Text } from 'react-native';
-import { colors, typography } from '@hr/tokens';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { colors, spacing, typography } from '@hr/tokens';
 import { ListRow, QueryState, Section, SectionDivider, SectionTitle } from '@/components';
 import { useMe } from '@/features/employees/api';
 import { formatServerDate } from '@/lib/format';
@@ -24,13 +25,22 @@ import { formatServerDate } from '@/lib/format';
  * 마스킹돼 오는지가 9-02에 확정되면서 풀렸다 — 바꾸는 화면은 따로 둔다.
  */
 export default function ProfileScreen() {
+  const insets = useSafeAreaInsets();
   const router = useRouter();
   const me = useMe();
 
   return (
     <>
       <Stack.Screen options={{ title: '내 정보' }} />
-      <ScrollView style={styles.flex}>
+      {/*
+        안드로이드는 내비게이션 바 뒤까지 화면을 그린다 (edge-to-edge). 하단 여백을
+        `insets.bottom` 만큼 주지 않으면 마지막 줄이 그 바에 가린다 — 실기기에서
+        드러났다 (2026-09-09). 하단 CTA 가 있는 화면은 그 막대가 같은 일을 한다.
+      */}
+      <ScrollView
+        style={styles.flex}
+        contentContainerStyle={{ paddingBottom: insets.bottom + spacing.sectionY }}
+      >
         <QueryState query={me} wrapState={(state) => <Section>{state}</Section>}>
           {(data) => {
             const { summary } = data;
