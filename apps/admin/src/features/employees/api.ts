@@ -7,14 +7,16 @@ import { api, type PageParams, type PageResponse } from '@/lib/api';
  * **주민등록번호는 어떤 조회 응답에도 담기지 않는다.** `residentNoRegistered` 로 등록 여부만 온다.
  * 넣을 수는 있어도 **읽을 수는 없다.** 등록 폼의 값은 성공하는 즉시 지운다.
  *
- * `PUT /employees/{id}` 는 여전히 **전체 교체**다. 보내지 않은 필드는 지워진다
- * (2026-08-26 실호출 확인). **이 파일은 `PUT` 을 부르지 않는다** — 주민번호를 되돌려
- * 보낼 방법이 없어 한 번 수정할 때마다 지워지기 때문이다.
+ * **`PUT /employees/{id}` 에서 `residentNo` 가 빠졌다** (2026-09-09 회신 25번).
+ * 스펙에 필드가 없으니 전체 교체로 이름을 고쳐도 주민번호가 지워지지 않는다.
+ * 등록은 `POST`, 수정은 `PATCH /employees/{id}/resident-no` 하나로 정리됐다.
  *
- * 대신 2026-09-02 회신으로 **바꿔야 할 것 둘이 `PATCH` 로 빠져나왔다** —
- * 주민번호(`/resident-no`)와 부서·직무(`/assignment`)다. `employee-no`·`status` 가
- * 이미 같은 이유로 나와 있어 패턴이 넷이 됐다. 이름·연락처·주소처럼 `PUT` 으로만
- * 바꿀 수 있는 항목은 **아직 만들지 않았다** (`docs/01_물어볼_것.md` 25번).
+ * 서버 확인으로는 **원래도 지우지 않았다** — 값이 비어 있으면 기존 값을 그대로 두고
+ * 넘어갔다고 한다. 스펙에 필드가 있으면 전체 교체로 읽는 것이 맞아서 8-26부터
+ * `PUT` 을 막아 뒀던 것인데, 그 판단 자체는 코드를 봐야 뒤집히는 것이었다.
+ *
+ * 그래서 **이름·연락처·주소를 이제 바꾼다.** 나머지 항목은 여전히 각자의 `PATCH` 로
+ * 간다 — `employee-no`·`status`·`resident-no`·`assignment` 넷이다.
  */
 
 export type EmploymentStatus = 'ACTIVE' | 'ON_LEAVE' | 'RESIGNED';
@@ -48,14 +50,18 @@ export interface Employee {
 }
 
 /**
- * **원문이 온다.** 마스킹된 값이 아니다 (2026-09-02 회신 10번).
+ * **서버가 가려서 준다** (2026-09-09 회신 24번). 그전에는 원문이 내려와 화면이 가렸다.
  *
- * 화면에 그릴 때 `maskAccountNo`(`@hr/format`)를 거친다. 모바일과 같은 함수를 쓴다 —
- * 같은 값을 두 앱이 다르게 그리면 어느 쪽이 맞는지 알 수 없다.
+ * `bankAccountMasked`는 **이미 가려진 값**이다. `maskAccountNo`를 다시 거치지 않는다 —
+ * 두 번 가리면 남은 네 자리까지 지워진다.
+ *
+ * 이체·통장 대조에 원문이 필요하면 `GET /employees/{id}/bank-account`를 그 화면에서
+ * 따로 부른다 — 직원 상세는 사람을 확인하는 자리지 이체하는 자리가 아니다 (기획 5번).
  */
 export interface BankAccount {
   bankName: string | null;
-  bankAccount: string | null;
+  /** `***-***-**6789`. 뒤 네 자리만 남은 값이다 */
+  bankAccountMasked: string | null;
   accountHolder: string | null;
 }
 
@@ -264,6 +270,36 @@ export function useRegisterResidentNo(id: number) {
   return useMutation({
     mutationFn: async (residentNo: string) => {
       const { data } = await api.patch<Employee>(`/employees/${id}/resident-no`, { residentNo });
+      return data;
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: employeeKeys.all }),
+  });
+}
+
+/**
+ * 인적사항 수정. `PUT /employees/{id}`
+ *
+ * **전체 교체 경로지만 안 실은 값은 보존된다** (2026-09-09 회신 25번). 그래서 폼이
+ * 건드리는 셋만 싣는다. `corporation`·`hireDate` 는 스펙이 필수로 잡고 있어
+ * **지금 값을 그대로 되돌려 보낸다** — 바꾸는 값이 아니다.
+ *
+ * **빈 칸은 「그대로 둔다」이지 「비운다」가 아니다.** 값을 지우는 방법은 확인되지 않아
+ * 화면도 그렇게 적는다. 지우는 동작이 필요해지면 서버에 먼저 묻는다 (`CLAUDE.md` 9장).
+ */
+export interface EmployeeUpdateInput {
+  /** 스펙 필수. 지금 값을 그대로 싣는다 */
+  name: string;
+  corporation: string;
+  hireDate: string;
+  phone?: string;
+  address?: string;
+}
+
+export function useUpdateEmployee(id: number) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: EmployeeUpdateInput) => {
+      const { data } = await api.put<Employee>(`/employees/${id}`, input);
       return data;
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: employeeKeys.all }),

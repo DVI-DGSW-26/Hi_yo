@@ -1,4 +1,3 @@
-import { eachDayOfInterval, format, parseISO } from 'date-fns';
 import { Stack } from 'expo-router';
 import { useState } from 'react';
 import {
@@ -11,17 +10,10 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, spacing, typography } from '@hr/tokens';
-import {
-  Button,
-  MutationError,
-  Section,
-  SectionDivider,
-  TextField,
-  isCompleteTime,
-  toServerTime,
-} from '@/components';
+import { Button, MutationError, Section, SectionDivider, TextField } from '@/components';
 import { LeaveBalanceSection } from '@/features/leave/LeaveBalanceSection';
 import { LeaveCalendarSection } from '@/features/leave/LeaveCalendarSection';
+import { LeavePromotionSection } from '@/features/leave/LeavePromotionSection';
 import { LeaveRequestList } from '@/features/leave/LeaveRequestList';
 import { LeaveSignatureSection } from '@/features/leave/LeaveSignatureSection';
 import {
@@ -29,7 +21,14 @@ import {
   LeaveTypeSection,
   type LeaveTypeChoice,
 } from '@/features/leave/LeaveTypeSection';
-import { halfDayTimes } from '@/features/leave/halfDay';
+import {
+  needsTime,
+  nextRange,
+  requestTimes,
+  selectedDates,
+  submitHint,
+  type DateRange,
+} from '@/features/leave/requestDraft';
 import { useCreateRequest, useRequestTypes } from '@/features/leave/api';
 
 /**
@@ -48,11 +47,17 @@ import { useCreateRequest, useRequestTypes } from '@/features/leave/api';
  * 요구하는데 오전·오후가 몇 시부터인지가 정해져 있지 않았다.
  *
  * 시각을 직접 적는 종류(외출·조퇴)도 낼 수 있다. `TimeField`를 만들었다.
+ *
+ * **기간·시각·안내 문구를 판단하는 부분은 `requestDraft.ts`에 있다.** 이 파일은 무엇을
+ * 어떤 차례로 보여줄지만 안다.
+ *
+ * **연차촉진 통보를 맨 위에 둔다** (2026-09-09). 마감이 걸린 서류라 잔여보다 먼저 본다.
+ * 받은 통보가 없으면 그 자리는 통째로 사라진다 — 대부분의 직원에게는 통보가 없다.
  */
 export default function LeaveScreen() {
   const insets = useSafeAreaInsets();
   const [month, setMonth] = useState(() => new Date());
-  const [range, setRange] = useState<{ start?: string; end?: string }>({});
+  const [range, setRange] = useState<DateRange>({});
   const [reason, setReason] = useState('');
   const [choice, setChoice] = useState<LeaveTypeChoice>(EMPTY_CHOICE);
   const [signature, setSignature] = useState('');
@@ -65,16 +70,7 @@ export default function LeaveScreen() {
   const value: LeaveTypeChoice = { ...choice, type: picked };
 
   const selected = selectedDates(range);
-
-  function handlePressDate(iso: string) {
-    setRange((prev) => {
-      // 시작일이 없거나 이미 기간이 잡혔으면 새로 시작한다.
-      if (!prev.start || prev.end) return { start: iso };
-      // 시작일보다 앞을 누르면 그 날이 새 시작일이 된다.
-      if (iso < prev.start) return { start: iso };
-      return { start: prev.start, end: iso };
-    });
-  }
+  const hint = submitHint(selected.length, value, signature);
 
   function submit() {
     if (!range.start || !picked) return;
@@ -85,7 +81,7 @@ export default function LeaveScreen() {
 
     // 시각이 필요한 종류인데 덜 적었으면 보내지 않는다. 반쪽짜리로 보내면 서버가
     // 400을 돌려주는데, 그건 화면이 이미 아는 것이라 물어볼 일이 아니다.
-    // 왜 안 나가는지는 아래 `hint`가 버튼 위에 적는다.
+    // 왜 안 나가는지는 `hint`가 버튼 위에 적는다.
     if (needsTime(value) && times === undefined) return;
 
     // 종이 서식의 「작성」 칸이라 화면에서 필수로 받는다. 서버에서는 선택이다.
@@ -120,6 +116,7 @@ export default function LeaveScreen() {
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
         <ScrollView style={styles.flex} keyboardShouldPersistTaps="handled">
+          <LeavePromotionSection />
           <Section>
             <LeaveBalanceSection />
           </Section>
@@ -129,7 +126,7 @@ export default function LeaveScreen() {
               month={month}
               onChangeMonth={setMonth}
               selected={selected}
-              onPressDate={handlePressDate}
+              onPressDate={(iso) => setRange((prev) => nextRange(prev, iso))}
             />
           </Section>
           <SectionDivider />
@@ -154,67 +151,11 @@ export default function LeaveScreen() {
 
         <View style={[styles.cta, { paddingBottom: insets.bottom + spacing.ctaX }]}>
           <MutationError mutation={create} />
-          {!create.error && hint(selected.length, value, signature) !== undefined && (
-            <Text style={styles.hint}>{hint(selected.length, value, signature)}</Text>
-          )}
+          {!create.error && hint !== undefined && <Text style={styles.hint}>{hint}</Text>}
           <Button label="신청하기" loading={create.isPending} onPress={submit} />
         </View>
       </KeyboardAvoidingView>
     </>
-  );
-}
-
-/**
- * 아직 낼 수 없는 이유. 버튼은 항상 눌리므로(확정 결정) 막힌 이유를 이 자리에 적는다.
- *
- * 잔여 초과처럼 **서버가 판단하는 것은 여기서 말하지 않는다.** 화면이 아는 것,
- * 곧 아직 안 채운 칸만 짚는다. 시작이 끝보다 늦은지도 서버가 본다.
- */
-function hint(dayCount: number, value: LeaveTypeChoice, signature: string): string | undefined {
-  if (dayCount === 0) return '달력에서 날짜를 골라주세요.';
-  if (!value.type) return '무엇을 신청하는지 골라주세요.';
-  if (needsTyped(value) && requestTimes(value) === undefined) {
-    return '시작 시각과 종료 시각을 적어주세요.';
-  }
-  // 반차인데 종류 응답에 시각이 안 실려 왔다. 앱이 만들어 넣지 않으므로 낼 수 없다.
-  if (value.type.halfDay && requestTimes(value) === undefined) {
-    return '반차 시각을 서버에서 받지 못했어요. 관리팀에 알려주세요.';
-  }
-  // 마지막에 본다. 다 채우고 나서 서명하는 것이 종이와 같은 차례다.
-  if (!signature) return '서명을 해주세요.';
-  return undefined;
-}
-
-/** 시각을 실어야 하는 종류인가. 반차든 직접 적는 것이든 시각 없이 보내지 않는다 */
-function needsTime(value: LeaveTypeChoice): boolean {
-  return value.type?.halfDay === true || needsTyped(value);
-}
-
-/** 시각을 사용자가 직접 적어야 하는 종류인가. 반차는 값이 정해져 있어 여기 들지 않는다 */
-function needsTyped(value: LeaveTypeChoice): boolean {
-  return value.type?.needTime === true && !value.type.halfDay;
-}
-
-/**
- * 신청에 실을 시각. 필요 없는 종류면 `undefined`다.
- *
- * 직접 적는 종류인데 아직 덜 적었으면 `undefined`를 돌려준다 — 반쪽짜리 시각을
- * 보내지 않는다.
- */
-function requestTimes(value: LeaveTypeChoice): { startTime: string; endTime: string } | undefined {
-  // 반차 시각은 종류 응답에 실려 온다. 안 왔으면 undefined 라 신청이 나가지 않는다.
-  if (value.type?.halfDay) return halfDayTimes(value.type, value.half);
-  if (!needsTyped(value)) return undefined;
-  if (!isCompleteTime(value.startTime) || !isCompleteTime(value.endTime)) return undefined;
-  return { startTime: toServerTime(value.startTime), endTime: toServerTime(value.endTime) };
-}
-
-/** 시작일~종료일 사이를 채운다. 며칠이 깎이는지는 여기서 세지 않는다 — 서버가 센다. */
-function selectedDates(range: { start?: string; end?: string }): string[] {
-  if (!range.start) return [];
-  if (!range.end) return [range.start];
-  return eachDayOfInterval({ start: parseISO(range.start), end: parseISO(range.end) }).map((date) =>
-    format(date, 'yyyy-MM-dd'),
   );
 }
 

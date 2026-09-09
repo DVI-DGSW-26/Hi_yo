@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { Link, useParams } from 'react-router';
-import { maskAccountNo } from '@hr/format';
 import { Button, DetailList, StatusText } from '@/components';
 import { AssignmentDialog } from '@/features/employees/AssignmentDialog';
 import { EmployeeNoDialog } from '@/features/employees/EmployeeNoDialog';
+import { ProfileDialog } from '@/features/employees/ProfileDialog';
 import { ResidentNoDialog } from '@/features/employees/ResidentNoDialog';
 import { StatusDialog } from '@/features/employees/StatusDialog';
 import { StatusHistoryTable } from '@/features/employees/StatusHistoryTable';
@@ -18,15 +18,16 @@ import { STATUS_LABEL } from '@/features/employees/labels';
  * **바꿀 수 있는 것이 넷이 됐다** (2026-09-07). 재직상태 · 사번에 더해
  * **부서·직무**와 **주민등록번호**가 `PATCH` 로 열렸다 (2026-09-02 회신 1·2번).
  *
- * **이름·연락처·주소는 아직 못 바꾼다.** 그 항목들은 전체 교체 `PUT /employees/{id}` 로만
- * 갈 수 있는데, `PUT` 이 아직도 보내지 않은 `residentNo` 를 지우는지 확인되지 않았다
- * (`docs/01_물어볼_것.md` 25번). 지워지면 그 직원은 재직증명서를 발급받지 못한다 —
- * **확인 전에는 `PUT` 을 부르지 않는다.**
+ * **이름·연락처·주소도 바꿀 수 있게 됐다** (2026-09-09 회신 25번). `PUT /employees/{id}`
+ * 에서 `residentNo` 가 빠져서, 전체 교체로 이름을 고쳐도 주민번호가 지워지지 않는다.
+ * 8-26부터 막아 두고 있던 자리다 — 지워지면 그 직원이 재직증명서를 발급받지 못했다.
  *
- * **계좌번호는 서버가 가려주지 않는다** (2026-09-02 회신 10번). 원문이 내려오므로
- * 화면이 `maskAccountNo`로 가린다 — 모바일 마이페이지와 같은 함수다.
- * 관리팀 화면도 가리기로 정했다 (2026-09-07). 급여 이체에 원문이 필요해지면 그때
- * 그 화면에서 따로 연다 — **직원 상세는 사람을 확인하는 자리지 이체하는 자리가 아니다.**
+ * **계좌번호는 서버가 가려서 준다** (2026-09-09 회신 24번). 9-02에는 원문이 내려와
+ * 화면이 가리고 있었는데, 그러면 개발자 도구·네트워크 로그에 전 직원 계좌번호가 남아
+ * 되물었다. 이제 `bankAccountMasked` 를 그대로 그린다 — **다시 가리지 않는다.**
+ *
+ * 이체·통장 대조에 원문이 필요하면 `GET /employees/{id}/bank-account` 를 그 화면에서
+ * 따로 부른다 — **직원 상세는 사람을 확인하는 자리지 이체하는 자리가 아니다** (기획 5번).
  */
 export function EmployeeDetail() {
   const { employeeId: raw } = useParams<{ employeeId: string }>();
@@ -37,6 +38,7 @@ export function EmployeeDetail() {
   const [noDialog, setNoDialog] = useState(false);
   const [assignmentDialog, setAssignmentDialog] = useState(false);
   const [residentNoDialog, setResidentNoDialog] = useState(false);
+  const [profileDialog, setProfileDialog] = useState(false);
 
   if (employee.isPending) return <p className="muted">불러오는 중이에요.</p>;
   if (employee.error) return <p className="danger">{employee.error.message}</p>;
@@ -94,32 +96,41 @@ export function EmployeeDetail() {
               { label: '연락처', value: detail.phone ?? '아직이에요' },
               {
                 label: '계좌',
-                // 서버가 원문을 준다. 그리기 직전에 가린다 (2026-09-02 회신 10번).
-                value: detail.bankAccount?.bankAccount
-                  ? `${detail.bankAccount.bankName ?? ''} ${maskAccountNo(
-                      detail.bankAccount.bankAccount,
-                    )}`.trim()
+                // 서버가 가려서 준다 (2026-09-09 회신 24번). 원문이 필요하면
+                // `GET /employees/{id}/bank-account`를 이체 화면에서 따로 부른다.
+                value: detail.bankAccount?.bankAccountMasked
+                  ? `${detail.bankAccount.bankName ?? ''} ${detail.bankAccount.bankAccountMasked}`.trim()
                   : '아직이에요',
               },
               /*
-               * 이메일만 `wide` 다. 200px 칸에서는 회사 도메인이 붙은 주소가 네 줄로
-               * 접혀 상자 높이를 혼자 키웠다 (2026-09-02 확인). 한 줄을 쓰되
-               * `readWidth` 를 넘지 않는다.
+               * 주소와 이메일만 `wide` 다. 200px 칸에서는 회사 도메인이 붙은 이메일이 네 줄로
+               * 접혀 상자 높이를 혼자 키웠다 (2026-09-02 확인). 주소도 같은 길이다.
+               * 한 줄을 쓰되 `readWidth` 를 넘지 않는다.
                *
-               * 마지막에 둔 이유 — `wide` 는 한 행을 통째로 쓰므로 가운데 두면 그 행의
-               * 나머지 칸이 빈다.
+               * 끝에 둔 이유 — `wide` 는 한 행을 통째로 쓰므로 가운데 두면 그 행의
+               * 나머지 칸이 빈다. 주소도 같은 이유로 여기 붙였다.
                */
+              { label: '주소', value: detail.address ?? '아직이에요', wide: true },
               { label: '이메일', value: detail.email ?? '아직이에요', wide: true },
             ]}
           />
         </div>
 
         <div className="panel-actions">
-          <p className="panel-note">
-            이름·연락처·주소는 아직 못 바꿔요. 그 항목은 전체 교체로만 갈 수 있는데 그때
-            주민등록번호가 지워지는지 확인이 안 됐어요.
-          </p>
           <div className="panel-buttons">
+            {/*
+              법인·입사일이 비어 있으면 열지 않는다. 스펙이 둘을 필수로 잡고 있어
+              없는 값을 지어내 실어야 하기 때문이다.
+            */}
+            <Button
+              label="이름·연락처·주소 바꾸기"
+              onClick={() => setProfileDialog(true)}
+              disabledReason={
+                summary.corporation === null || summary.hireDate === null
+                  ? '법인과 입사일이 채워져야 바꿀 수 있어요.'
+                  : undefined
+              }
+            />
             <Button label="재직상태 바꾸기" onClick={() => setStatusDialog(true)} />
             <Button label="부서·직무 바꾸기" onClick={() => setAssignmentDialog(true)} />
             <Button
@@ -162,6 +173,14 @@ export function EmployeeDetail() {
         open={assignmentDialog}
         employee={summary}
         onClose={() => setAssignmentDialog(false)}
+      />
+      {/* 지금 값으로 시작하므로 바뀐 뒤 다시 열 때를 위해 `key` 로 다시 만든다. */}
+      <ProfileDialog
+        key={`${summary.name}-${detail.phone ?? ''}-${detail.address ?? ''}`}
+        open={profileDialog}
+        employee={summary}
+        detail={detail}
+        onClose={() => setProfileDialog(false)}
       />
       <ResidentNoDialog
         open={residentNoDialog}

@@ -6,10 +6,12 @@ import { api } from '@/lib/api';
  *
  * 이 화면 계열은 **본인용**이다. 다른 직원의 id로 조회하는 코드를 여기에 두지 않는다.
  *
- * **계좌는 서버가 마스킹하지 않는다** (2026-09-02 회신 10번). 은행명·계좌번호·예금주
- * 셋 다 원문으로 내려온다 — 8-28까지는 마스킹돼 온다고 적어 뒀는데 사실이 아니었다.
- * 그래서 **화면이 `maskAccountNo`로 가린다** (`docs/01_물어볼_것.md` 서버 10번).
- * 원칙은 서버가 가린 값을 받는 것이므로(`CLAUDE.md` 2장) 서버에 다시 물을 것으로 남는다.
+ * **계좌는 서버가 가려서 준다** (2026-09-09 회신 24번). `bankAccountMasked`로 이름도
+ * 바뀌었다. 9-02에는 원문이 내려와 화면이 가리고 있었는데, 그러면 개발자 도구·네트워크
+ * 로그에 전 직원 계좌번호가 남아 되물었고 서버가 가려 주기로 했다 (`CLAUDE.md` 2장).
+ *
+ * **받은 값을 다시 가리지 않는다.** 원문은 `GET /employees/{id}/bank-account` 하나로만
+ * 나오고 급여 이체용이라 **본인용 화면에서 부르지 않는다.**
  */
 
 export type EmploymentStatus = 'ACTIVE' | 'ON_LEAVE' | 'RESIGNED';
@@ -37,14 +39,18 @@ export interface EmployeeSummary {
 }
 
 /**
- * **원문이 온다.** 마스킹된 값이 아니다 (2026-09-02 회신 10번).
+ * **서버가 가려서 준다** (2026-09-09 회신 24번). 그전에는 원문이 내려와 화면이 가렸다.
  *
- * 화면에 그릴 때 `maskAccountNo`를 거친다. 뒤집어 말하면 **이 값을 그대로 그리는 코드는
- * 계좌번호를 통째로 노출하는 코드다.**
+ * `bankAccountMasked`는 **이미 가려진 값**이다. `maskAccountNo`를 다시 거치지 않는다 —
+ * 두 번 가리면 남은 네 자리까지 지워진다.
+ *
+ * 원문은 `GET /employees/{id}/bank-account` 하나로만 나오고 급여 이체용이다.
+ * **본인용 화면에서 부르지 않는다.**
  */
 export interface BankAccount {
   bankName: string | null;
-  bankAccount: string | null;
+  /** `***-***-**6789`. 뒤 네 자리만 남은 값이다 */
+  bankAccountMasked: string | null;
   accountHolder: string | null;
 }
 

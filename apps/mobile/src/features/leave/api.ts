@@ -149,6 +149,7 @@ export const leaveKeys = {
   calendar: (from: string, to: string) => [...leaveKeys.all, 'calendar', from, to] as const,
   types: () => ['requests', 'types'] as const,
   requests: (params: PageParams) => ['requests', 'list', params] as const,
+  myPromotions: (year?: number) => [...leaveKeys.all, 'promotions', 'me', year ?? 'all'] as const,
 };
 
 export function useLeaveBalance() {
@@ -291,6 +292,50 @@ export interface LeavePlanInput {
   /** 손으로 그린 base64 PNG. `data:` 앞머리는 붙이지 않는다 */
   signatureImage: string;
   note?: string;
+}
+
+/**
+ * 내가 받은 연차촉진 통보. `GET /leave/promotions/me` (2026-09-09에 열렸다)
+ *
+ * **S-302로 들어가는 유일한 길이다.** 그전에는 `promotionId`가 관리팀이 발송할 때의
+ * 응답에만 담겨서, 계획서 화면을 만들어 두고도 어디에서도 연결하지 못했다 (26번).
+ *
+ * `year`를 비우면 전체가 온다. 촉진은 해마다 많아야 두 건(1차·2차)이라 나눠 담지 않는다.
+ *
+ * **`planSubmitted`가 이미 낸 건인지를 말해 준다.** 한 통보당 계획서는 하나고 두 번째
+ * 제출은 409라, 낸 건은 들어가는 줄을 놓지 않는다.
+ */
+export interface LeavePromotion {
+  id: number;
+  employeeId: number;
+  employeeName: string;
+  fiscalYear: number;
+  round: 'FIRST' | 'SECOND';
+  /**
+   * **통보 시점의 잔여 스냅샷이다.** 지금 잔여와 다를 수 있다 —
+   * 통보서에 찍힌 숫자가 이쪽이라고 스펙이 적고 있다.
+   */
+  remainingDays: number;
+  channel: 'EMAIL' | 'WRITTEN';
+  sentAt: string;
+  sentTo: string | null;
+  /** 계획서 제출 마감 = 통보일 + 10일. 넘겨서 내도 막지 않고 표시만 한다 */
+  planDueOn: string;
+  planSubmitted: boolean;
+  createdByName: string | null;
+}
+
+export function useMyPromotions(year?: number) {
+  return useQuery({
+    queryKey: leaveKeys.myPromotions(year),
+    queryFn: async ({ signal }) => {
+      const { data } = await api.get<LeavePromotion[]>('/leave/promotions/me', {
+        params: year === undefined ? undefined : { year },
+        signal,
+      });
+      return data;
+    },
+  });
 }
 
 /**

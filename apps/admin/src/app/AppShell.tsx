@@ -1,6 +1,6 @@
 import { NavLink, Outlet } from 'react-router';
 import { AuthGate } from '@/app/AuthGate';
-import { clearToken } from '@/lib/auth';
+import { useLogout } from '@/features/auth/api';
 import './AppShell.css';
 
 /**
@@ -53,6 +53,12 @@ const MENU = [
 ] as const;
 
 export function AppShell() {
+  /*
+   * 서버 세션까지 끊는다. 토큰만 지우면 「새 토큰이 더 안 나오게」 막는 쪽이 남는다
+   * (서버 안내 2026-09-08). 요청이 실패해도 토큰은 지운다 — 공용 PC 가 걸린 일이다.
+   */
+  const logout = useLogout();
+
   return (
     <AuthGate>
       {(me) => (
@@ -86,14 +92,7 @@ export function AppShell() {
             */}
             <div className="shell-account">
               <span className="shell-account-name">{me.name}</span>
-              <button
-                type="button"
-                className="shell-logout"
-                onClick={() => {
-                  clearToken();
-                  window.location.assign('/');
-                }}
-              >
+              <button type="button" className="shell-logout" onClick={() => logout.mutate()}>
                 로그아웃
               </button>
             </div>
