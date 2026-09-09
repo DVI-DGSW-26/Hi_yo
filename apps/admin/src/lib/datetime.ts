@@ -190,3 +190,14 @@ export function formatKstClock(value: string, baseDate?: string): string {
 function hasTimeZone(value: string): boolean {
   return /(?:Z|[+-]\d{2}:?\d{2})$/.test(value);
 }
+
+/**
+ * 입력칸(`datetime-local`)의 `yyyy-MM-ddTHH:mm` 을 서버로 보낼 일시로 바꾼다.
+ *
+ * **적은 값을 KST 벽시계로 읽는다.** 오프셋을 붙이지 않고 보내면 서버가 자기 기준으로
+ * 해석하고, 브라우저 타임존을 따라가면 해외에서 연 화면이 몇 시간 어긋난 시각을 남긴다.
+ * 관리팀이 적는 것은 한국 시간의 「몇 시」이므로 그대로 `+09:00` 을 붙인다.
+ */
+export function kstInputToIso(value: string): string {
+  return `${value}:00+09:00`;
+}

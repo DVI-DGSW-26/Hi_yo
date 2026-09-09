@@ -10,10 +10,23 @@ interface Props {
   error?: string;
   /** 자동으로 채워지는 값. 입력칸처럼 보이면 눌러본다 (DESIGN_ADMIN.md 4장) */
   readOnly?: boolean;
-  type?: 'text' | 'number' | 'date' | 'month' | 'time';
+  type?: 'text' | 'number' | 'date' | 'datetime-local' | 'month' | 'time';
   placeholder?: string;
   /** 서버가 받는 한계를 그대로 넣는다 */
   maxLength?: number;
+  /**
+   * 여러 줄로 받는다. `type` 은 무시된다.
+   *
+   * **문단이 여러 개인 값에만 쓴다** — 촉진 통보의 「보낸 본문 원문」처럼 한 줄 칸에서는
+   * 무엇을 붙여넣었는지 읽어서 확인할 수 없는 값이다. 사유·메모 한 줄은 그대로 한 줄 칸이다.
+   *
+   * **새 컴포넌트를 만들지 않고 여기에 둔다** (2026-09-09에 물어보고 정했다).
+   * 라벨 자리·필수 표시·오류 테두리·`aria` 연결이 한 줄 칸과 같아야 하는데,
+   * 따로 만들면 규칙이 바뀔 때 두 곳을 고쳐야 한다 (`DESIGN_RULES.md` 7장).
+   */
+  multiline?: boolean;
+  /** 여러 줄일 때 처음 보이는 줄 수. 넘치면 칸이 늘지 않고 안에서 스크롤한다 */
+  rows?: number;
 }
 
 /** 라벨은 필드 위. 필수 표시는 라벨 뒤 `*` 하나 (DESIGN_ADMIN.md 4장). */
@@ -27,6 +40,8 @@ export function Field({
   type = 'text',
   placeholder,
   maxLength,
+  multiline,
+  rows = 6,
 }: Props) {
   /*
    * **라벨로 id 를 만들지 않는다** (2026-09-02).
@@ -53,17 +68,31 @@ export function Field({
         {label}
         {required && <span className="field-required"> *</span>}
       </label>
-      <input
-        id={id}
-        className={error ? 'field-input has-error' : 'field-input'}
-        type={type}
-        value={value}
-        placeholder={placeholder}
-        maxLength={maxLength}
-        onChange={(event) => onChange?.(event.target.value)}
-        aria-invalid={error ? true : undefined}
-        aria-describedby={error ? `${id}-error` : undefined}
-      />
+      {multiline ? (
+        <textarea
+          id={id}
+          className={error ? 'field-input is-multiline has-error' : 'field-input is-multiline'}
+          rows={rows}
+          value={value}
+          placeholder={placeholder}
+          maxLength={maxLength}
+          onChange={(event) => onChange?.(event.target.value)}
+          aria-invalid={error ? true : undefined}
+          aria-describedby={error ? `${id}-error` : undefined}
+        />
+      ) : (
+        <input
+          id={id}
+          className={error ? 'field-input has-error' : 'field-input'}
+          type={type}
+          value={value}
+          placeholder={placeholder}
+          maxLength={maxLength}
+          onChange={(event) => onChange?.(event.target.value)}
+          aria-invalid={error ? true : undefined}
+          aria-describedby={error ? `${id}-error` : undefined}
+        />
+      )}
       {error && (
         <span className="field-error" id={`${id}-error`}>
           {error}

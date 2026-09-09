@@ -29,6 +29,7 @@ const MENU = [
       { to: '/leave-calendar', label: '연차 달력' },
       { to: '/approvals', label: '연차 결재' },
       { to: '/leave-ledger', label: '연차관리대장' },
+      { to: '/leave-promotions', label: '연차촉진' },
       { to: '/company-leaves', label: '단체연차' },
       { to: '/holidays', label: '공휴일' },
     ],
