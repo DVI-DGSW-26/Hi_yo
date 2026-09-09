@@ -150,6 +150,7 @@ export const leaveKeys = {
   types: () => ['requests', 'types'] as const,
   requests: (params: PageParams) => ['requests', 'list', params] as const,
   myPromotions: (year?: number) => [...leaveKeys.all, 'promotions', 'me', year ?? 'all'] as const,
+  myPlans: (year?: number) => [...leaveKeys.all, 'plans', 'me', year ?? 'all'] as const,
 };
 
 export function useLeaveBalance() {
@@ -278,8 +279,13 @@ export interface LeavePlan {
   /** 마감(통보 + 10일)을 넘겨 낸 건. 서버가 막지 않고 표시만 한다 */
   late: boolean;
   plannedDays: number;
-  /** **참고용 계산값이다.** 연차가 그만큼 줄었다는 뜻이 아니다 */
-  remainingAfterPlan: number;
+  /**
+   * **참고용 계산값이다.** 연차가 그만큼 줄었다는 뜻이 아니다.
+   *
+   * **조회로 받은 건에는 `null`이다** (2026-09-09 서버 안내) — 제출 시점 값이라 지금은
+   * 틀린 숫자라서다. 진짜 잔여는 `GET /leave/balance`다.
+   */
+  remainingAfterPlan: number | null;
   signed: boolean;
   days: PlannedDay[];
   note: string | null;
@@ -330,6 +336,29 @@ export function useMyPromotions(year?: number) {
     queryKey: leaveKeys.myPromotions(year),
     queryFn: async ({ signal }) => {
       const { data } = await api.get<LeavePromotion[]>('/leave/promotions/me', {
+        params: year === undefined ? undefined : { year },
+        signal,
+      });
+      return data;
+    },
+  });
+}
+
+/**
+ * 내가 낸 연차사용계획서. `GET /leave/promotions/plans/me` (2026-09-09에 열렸다)
+ *
+ * 그전에는 낸 뒤에 **무슨 날짜를 냈는지 다시 볼 수 없었다** — 제출 응답을 그 화면이
+ * 들고 있는 동안만 보였다.
+ *
+ * **단건 경로(`GET /leave/promotions/{promotionId}/plan`) 대신 목록을 쓴다.** 단건은
+ * 없으면 404고, 「아직 안 냈다」는 오류가 아니라 정상 상태다 — 목록에서 찾으면 404를
+ * 정상 흐름으로 다룰 필요가 없다. 촉진은 해마다 많아야 두 건이라 무게도 가볍다.
+ */
+export function useMyPlans(year?: number) {
+  return useQuery({
+    queryKey: leaveKeys.myPlans(year),
+    queryFn: async ({ signal }) => {
+      const { data } = await api.get<LeavePlan[]>('/leave/promotions/plans/me', {
         params: year === undefined ? undefined : { year },
         signal,
       });
