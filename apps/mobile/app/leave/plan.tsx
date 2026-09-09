@@ -12,11 +12,12 @@ import {
   SignaturePad,
   TextField,
 } from '@/components';
-import { useSubmitLeavePlan } from '@/features/leave/api';
+import { useMyPlans, useSubmitLeavePlan } from '@/features/leave/api';
 import { LeaveCalendarSection } from '@/features/leave/LeaveCalendarSection';
 import { LeavePlanBalanceSection } from '@/features/leave/LeavePlanBalanceSection';
 import { LeavePlanPickedSection } from '@/features/leave/LeavePlanPickedSection';
 import { LeavePlanResult } from '@/features/leave/LeavePlanResult';
+import { QueryState } from '@/components';
 import { cycleDay, sortedDates, toPlannedDays, type PickedDays } from '@/features/leave/planDays';
 
 /**
@@ -55,6 +56,10 @@ export default function LeavePlanScreen() {
 
   const submit = useSubmitLeavePlan(promotionId);
 
+  // 이 통보에 대한 계획서를 이미 냈는지. 없으면 undefined 다 — 오류가 아니다.
+  const plans = useMyPlans();
+  const submitted = plans.data?.find((plan) => plan.promotionId === promotionId);
+
   const dates = sortedDates(picked);
 
   function send() {
@@ -76,6 +81,37 @@ export default function LeavePlanScreen() {
         <ScrollView contentContainerStyle={styles.scroll}>
           <LeavePlanResult plan={submit.data} />
         </ScrollView>
+      </>
+    );
+  }
+
+  /*
+   * **이미 낸 건이면 그것을 보여준다** (2026-09-09에 조회가 열렸다).
+   *
+   * 그전에는 낸 사람이 이 화면에 다시 들어오면 빈 폼이 나왔고, 내면 409였다.
+   * 지금은 낸 날짜를 그대로 다시 본다.
+   *
+   * 목록이 아직 안 왔으면 폼을 그리지 않는다 — 낸 사람에게 빈 달력을 잠깐 보여주고
+   * 나서 결과로 바꾸면, 그 사이에 날짜를 고르기 시작한 사람의 입력이 사라진다.
+   */
+  if (submitted !== undefined) {
+    return (
+      <>
+        <Stack.Screen options={{ title: '연차사용계획서' }} />
+        <ScrollView contentContainerStyle={styles.scroll}>
+          <LeavePlanResult plan={submitted} />
+        </ScrollView>
+      </>
+    );
+  }
+
+  if (plans.isPending || plans.error) {
+    return (
+      <>
+        <Stack.Screen options={{ title: '연차사용계획서' }} />
+        <QueryState query={plans} wrapState={(state) => <Section>{state}</Section>}>
+          {() => null}
+        </QueryState>
       </>
     );
   }
