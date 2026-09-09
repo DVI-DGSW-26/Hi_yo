@@ -1,6 +1,5 @@
 import { Stack, useRouter } from 'expo-router';
 import { ScrollView, StyleSheet, Text } from 'react-native';
-import { maskAccountNo } from '@hr/format';
 import { colors, typography } from '@hr/tokens';
 import { ListRow, QueryState, Section, SectionDivider, SectionTitle } from '@/components';
 import { useMe } from '@/features/employees/api';
@@ -16,13 +15,10 @@ import { formatServerDate } from '@/lib/format';
  * **개인 항목(생년월일·성별·연락처·이메일·주소·비상연락처)은 뺐다** — 어깨너머로 보이는
  * 자리에 둘 이유가 없다는 판단이다.
  *
- * 그 결정으로 마스킹 확인이 걸린 값이 **계좌번호 하나로 줄었다.** 그리고 9-02에 답이
- * 왔다 — **서버는 계좌를 마스킹하지 않는다.** 셋 다 원문이다. 「서버가 마스킹해서 준다」는
- * 전제로 받은 값을 그대로 그리고 있었으니 **계좌번호가 통째로 보이고 있었다.**
- * 이제 `maskAccountNo`로 가린다 (`docs/01_물어볼_것.md` 서버 10번).
- *
- * 원칙은 서버가 가린 값을 받는 것이다 (`CLAUDE.md` 2장). 지금은 원문이 내려오므로
- * **서버에 다시 물을 것으로 남겨 뒀다** — 개발자 도구·네트워크 로그에는 그대로 보인다.
+ * 그 결정으로 마스킹 확인이 걸린 값이 **계좌번호 하나로 줄었다.** 9-02에 「서버는
+ * 마스킹하지 않는다」는 답이 와서 화면에서 가렸는데, 그러면 개발자 도구·네트워크 로그에
+ * 그대로 남아 되물었다. **9-09에 서버가 가려서 주기로 했다** (회신 24번) —
+ * `bankAccountMasked`를 그대로 그린다. `CLAUDE.md` 2장의 원칙이 지켜지는 모양이다.
  *
  * **통장정보 수정을 만들었다** (2026-09-07). `PUT`이 셋을 전부 덮어쓰는 것과, 무엇이
  * 마스킹돼 오는지가 9-02에 확정되면서 풀렸다 — 바꾸는 화면은 따로 둔다.
@@ -112,10 +108,10 @@ export default function ProfileScreen() {
                     value={data.bankAccount?.bankName ?? undefined}
                     placeholder="아직이에요"
                   />
-                  {/* 서버가 원문을 준다. 그리기 직전에 가린다 (2026-09-02 회신 10번). */}
+                  {/* 서버가 가려서 준다 (2026-09-09 회신 24번). 화면에서 다시 가리지 않는다. */}
                   <ListRow
                     label="계좌번호"
-                    value={accountText(data.bankAccount?.bankAccount ?? null)}
+                    value={data.bankAccount?.bankAccountMasked ?? undefined}
                     placeholder="아직이에요"
                   />
                   <ListRow
@@ -163,10 +159,6 @@ function dateText(value: string | null): string {
   return value === null ? '아직이에요' : formatServerDate(value, 'yyyy년 M월 d일');
 }
 
-/** 계좌번호는 가려서 그린다. 없으면 `undefined`를 돌려 `placeholder`가 나오게 둔다 */
-function accountText(value: string | null): string | undefined {
-  return value === null ? undefined : maskAccountNo(value);
-}
 
 const styles = StyleSheet.create({
   flex: { flex: 1, backgroundColor: colors.white },
