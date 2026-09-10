@@ -1,4 +1,5 @@
 import { queryClient } from './queryClient';
+import { isCallbackUrl, readCallbackUrl } from './relayCallback';
 
 /**
  * DVI 통합 로그인(Keycloak) 연동 — **웹**.
@@ -212,31 +213,36 @@ export function loginRetryUsed(): boolean {
   return readSession(RETRIED_KEY) !== null;
 }
 
+/** 중계 경로의 콜백과 판별은 `relayCallback.ts` 가 한다. 웹판은 그 방식을 계속 쓴다 */
+export { isCallbackUrl, readCallbackUrl };
+
 /**
- * 콜백 주소에서 결과를 꺼낸다 — `<사이트>/auth/callback#token=<JWT>`.
+ * 웹판에는 갱신이 아직 없다.
  *
- * **fragment 로 온다.** 서버로 전송되지 않아 접근로그에 토큰이 남지 않는다.
- * 앱판과 같은 함수다 — 일부 환경이 쿼리로 넘겨줄 수 있어 둘 다 본다.
+ * 중계 경로의 갱신은 `GET /auth/refresh` 인데 **세션 쿠키로 인증한다.** 쿠키가
+ * `SameSite=Lax` 라 프런트와 API 가 같은 사이트(`*.dvi-ind.com`)여야 실린다 —
+ * `hr.dvi-ind.com` 에 올리면 조건이 맞는다. 붙이는 것은 배포 뒤에 따로 한다.
+ *
+ * 그때까지는 만료되면 401 이 오고 기존 재로그인 경로가 받는다.
  */
-export function readCallbackUrl(url: string): { token?: string; error?: string } {
-  const hashAt = url.indexOf('#');
-  const queryAt = url.indexOf('?');
-
-  const parts: string[] = [];
-  if (hashAt >= 0) parts.push(url.slice(hashAt + 1));
-  if (queryAt >= 0) parts.push(url.slice(queryAt + 1, hashAt >= 0 ? hashAt : undefined));
-
-  for (const part of parts) {
-    const params = new URLSearchParams(part);
-    const token = params.get('token');
-    const error = params.get('error');
-    if (token) return { token };
-    if (error) return { error };
-  }
-  return {};
+export async function refreshTokens(): Promise<number | null> {
+  return null;
 }
 
-/** 이 주소가 로그인 콜백인가 */
-export function isCallbackUrl(url: string): boolean {
-  return url.includes('/auth/callback');
+export function canRefresh(): boolean {
+  return false;
+}
+
+/** 앱판과 모양을 맞춘다. 웹은 콜백에 완성된 토큰이 실려 와서 바꿀 것이 없다 */
+export async function handleCallback(
+  url: string,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const { token, error } = readCallbackUrl(url);
+  forgetCallbackUrl();
+  if (token !== undefined) {
+    await setToken(token);
+    return { ok: true };
+  }
+  if (error !== undefined) return { ok: false, error };
+  return { ok: false, error: '로그인 결과를 받지 못했어요.' };
 }

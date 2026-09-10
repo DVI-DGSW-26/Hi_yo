@@ -7,18 +7,16 @@ import { ApiError } from '@hr/api';
 import { Button, Section } from '@/components';
 import {
   callbackUrl,
-  forgetCallbackUrl,
   getToken,
+  handleCallback,
   isCallbackUrl,
   loadToken,
   loginRetryUsed,
   pendingCallbackUrl,
-  readCallbackUrl,
   redirectToLoginOnce,
-  setToken,
   startLogin,
 } from '@/lib/auth';
-import { authKeys, useAuthMe } from './api';
+import { authKeys, useAuthMe, useTokenRefresh } from './api';
 
 /**
  * 로그인하지 않았으면 화면을 그리지 않는다.
@@ -33,6 +31,8 @@ export function AuthGate({ children }: { children: ReactNode }) {
   const [ready, setReady] = useState(false);
   const [failure, setFailure] = useState<string>();
   const me = useAuthMe();
+  // 만료 1분 전에 조용히 갱신한다. 결과를 화면에서 쓰지 않는다 — 실패해도 그냥 둔다.
+  useTokenRefresh();
 
   // 저장해 둔 토큰을 메모리로 올린다. 그 전에는 로그인 화면을 보여주지 않는다 —
   // 이미 로그인한 사람에게 로그인 화면이 잠깐 스치면 안 된다.
@@ -64,36 +64,28 @@ export function AuthGate({ children }: { children: ReactNode }) {
     if (!url || !isCallbackUrl(url) || handled.current === url) return;
     handled.current = url;
 
-    const { token, error } = readCallbackUrl(url);
-    // 다 읽었다. 웹은 여기서 주소창의 `#token=` 이 지워진다 (앱은 할 일이 없다).
-    forgetCallbackUrl();
-    if (token) {
-      setFailure(undefined);
-      setToken(token).then(() => {
+    /*
+     * **앱과 웹이 콜백에서 받는 것이 다르다.**
+     *
+     * 앱은 Keycloak 과 직접 붙어서 `code` 를 받고, 그것을 토큰으로 바꿔야 로그인이
+     * 끝난다(왕복이 하나 더 있다). 웹은 서버 중계라 완성된 토큰이 실려 온다.
+     * **그 차이는 `handleCallback` 안에 둔다** — 이 화면은 「끝났나 아닌가」만 본다.
+     */
+    void handleCallback(url).then((result) => {
+      if (result.ok) {
+        setFailure(undefined);
         // 토큰이 생겼으니 다시 물어본다.
         queryClient.invalidateQueries({ queryKey: authKeys.me });
-      });
-      return;
-    }
-    if (error) {
-      // 서버가 준 사유를 그대로 보여준다. 앱에서 문구를 만들지 않는다.
-      setFailure(error);
-      return;
-    }
-    /*
-     * 토큰도 사유도 없다.
-     *
-     * **주소에 실린 것이 아예 없으면 조용히 지나간다.** 웹에서 콜백을 처리하고 나면
-     * `#token=` 을 지우는데, 그 뒤에 `Linking.useURL()` 이 늦게 `/auth/callback`(맨몸)
-     * 을 들고 오는 수가 있다. 그것을 새 콜백으로 보고 실패라고 적으면, 방금 제대로
-     * 로그인한 사람에게 「로그인 결과를 받지 못했어요」가 뜬다.
-     *
-     * 실린 것이 있는데(`#`·`?`) 그중에 토큰도 사유도 없었다면 그때는 진짜 이상한
-     * 것이므로 알린다.
-     */
-    if (url.includes('#') || url.includes('?')) {
-      setFailure('로그인 결과를 받지 못했어요.');
-    }
+        return;
+      }
+      /*
+       * **주소에 실린 것이 아예 없으면 조용히 지나간다.** 웹에서 콜백을 처리하고 나면
+       * `#token=` 을 지우는데, 그 뒤에 `Linking.useURL()` 이 늦게 `/auth/callback`
+       * (맨몸)을 들고 오는 수가 있다. 그것을 새 콜백으로 보고 실패라고 적으면, 방금
+       * 제대로 로그인한 사람에게 「로그인 결과를 받지 못했어요」가 뜬다.
+       */
+      if (url.includes('#') || url.includes('?')) setFailure(result.error);
+    });
   }, [url, queryClient]);
 
   if (!ready) return <Loading />;

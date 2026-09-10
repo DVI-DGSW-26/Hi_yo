@@ -1,33 +1,55 @@
+import axios from 'axios';
+import * as Crypto from 'expo-crypto';
 import * as Linking from 'expo-linking';
 import * as SecureStore from 'expo-secure-store';
+import {
+  authorizeUrl,
+  codeExchangeBody,
+  discoveryOf,
+  readAuthorizeCallback,
+  readTokenResponse,
+  refreshBody,
+  type TokenSet,
+} from './oidc';
 import { queryClient } from './queryClient';
+import { isCallbackUrl } from './relayCallback';
 
 /**
- * DVI 통합 로그인(Keycloak) 연동 — 모바일.
+ * DVI 통합 로그인(Keycloak) — **앱이 직접 붙는다** (2026-09-10 전환).
  *
- * 관리팀 화면(`apps/admin/src/lib/auth.ts`)과 같은 흐름이다. 다른 것은 둘뿐이다 —
- * **돌아오는 곳이 웹 주소가 아니라 앱 딥링크(`hr://auth/callback`)이고,
- * 토큰을 `expo-secure-store`에 둔다** (`CLAUDE.md` 2장. `AsyncStorage`를 쓰지 않는다).
+ * 그전에는 서버가 중계했다. 그 경로는 **없어지지 않고** 관리팀 웹과 이 앱의 웹판이
+ * 계속 쓴다 (백엔드 30·31·32번 회신, 2026-09-09) — 웹판은 `auth.web.ts` 다.
+ *
+ * **왜 옮겼나.** 중계 경로는 액세스 토큰만 주고 갱신 수단이 없었다. 수명이 15분이라
+ * 직원이 15분마다 다시 로그인해야 했다. 직접 붙으면 `refresh_token` 을 받는다.
  *
  * 흐름
- * 1. 로그인 버튼 → 시스템 브라우저로 `/auth/login?redirect=<앱 딥링크>` 열기
- * 2. 서버가 `hr://auth/callback#token=<JWT>` 로 돌려보낸다 → OS가 앱을 깨운다
- * 3. 토큰을 SecureStore에 넣고 이후 요청에 `Authorization: Bearer` 로 붙인다
+ * 1. 로그인 버튼 → PKCE 한 쌍을 만들어 보관하고 시스템 브라우저로 Keycloak 을 연다
+ * 2. Keycloak 이 `hr://auth/callback?code=...&state=...` 로 앱을 깨운다
+ * 3. `state` 를 대조하고 `code` 를 토큰으로 바꾼다 — 이때 `code_verifier` 를 같이 낸다
+ * 4. 액세스·갱신 토큰을 `expo-secure-store` 에 둔다 (`CLAUDE.md` 2장)
  *
- * **`expo-web-browser`를 쓰지 않았다.** 앱 안에서 열리는 로그인 시트가 더 매끄럽지만
- * 라이브러리가 하나 늘어난다 (`CLAUDE.md` 7장). 이미 있는 `expo-linking`으로 시스템
- * 브라우저를 열어도 같은 결과가 나온다. 시트가 필요해지면 그때 제안한다.
+ * **`expo-auth-session` 을 쓰지 않았다.** 그쪽은 `expo-web-browser` 까지 딸려와 둘이
+ * 늘고, **이미 실기기에서 통과한 딥링크 경로를 갈아엎게 된다** (2026-09-08 확인).
+ * PKCE 해시에 필요한 `expo-crypto` 하나만 더했다 (`CLAUDE.md` 7장).
  *
- * **`hr://auth/callback`이 아직 등록되지 않았다** (2026-09-01 실호출 확인).
- * 그 주소로 `redirect`를 넣어 부르면 서버가 이렇게 답한다 —
- * `400 등록되지 않은 콜백 주소입니다. 백엔드에 이 주소를 알려주세요: hr://auth/callback`
- *
- * 커스텀 스킴을 받아주지 않는 것이 아니라 **등록만 안 된 것이다.** 등록되면 그날 바로
- * 돈다. 개발 빌드는 앞이 달라지므로 로그인 화면이 `callbackUrl()` 값을 띄우고,
- * 기기에서 읽어 그 값도 같이 등록을 요청한다.
+ * **콜백 주소는 등록돼 있다** — `hi-yo-app` + `hr://auth/callback` 으로 authorization
+ * 요청을 보내면 Keycloak 이 로그인 화면을 준다 (2026-09-10 실호출로 확인).
  */
 
 const TOKEN_KEY = 'hr.accessToken';
+const REFRESH_KEY = 'hr.refreshToken';
+/** 브라우저에 다녀오는 동안 보관하는 PKCE 한 쌍. 로그인이 끝나면 지운다 */
+const PENDING_KEY = 'hr.loginPending';
+
+const issuer = process.env.EXPO_PUBLIC_OIDC_ISSUER ?? '';
+const clientId = process.env.EXPO_PUBLIC_OIDC_CLIENT_ID ?? '';
+
+if (__DEV__ && (!issuer || !clientId)) {
+  throw new Error(
+    'EXPO_PUBLIC_OIDC_ISSUER / EXPO_PUBLIC_OIDC_CLIENT_ID 가 없습니다. apps/mobile/.env.example 을 보세요.',
+  );
+}
 
 /**
  * 메모리에 든 토큰.
@@ -36,18 +58,33 @@ const TOKEN_KEY = 'hr.accessToken';
  * `authHeaders()`는 이 값만 본다.
  */
 let memoryToken: string | null = null;
+let memoryRefreshToken: string | null = null;
 
 /** 401 자동 재로그인을 한 번만 하기 위한 표시. 앱이 살아 있는 동안만 유지된다 */
 let loginRetried = false;
 
-/** 앱이 뜰 때 한 번 부른다. 저장해 둔 토큰을 메모리로 올린다 */
-export async function loadToken(): Promise<string | null> {
+async function readSecure(key: string): Promise<string | null> {
   try {
-    memoryToken = await SecureStore.getItemAsync(TOKEN_KEY);
+    return await SecureStore.getItemAsync(key);
   } catch {
     // 기기 보안 저장소를 못 쓰는 경우. 이번 실행에서는 다시 로그인한다.
-    memoryToken = null;
+    return null;
   }
+}
+
+async function writeSecure(key: string, value: string | null): Promise<void> {
+  try {
+    if (value === null) await SecureStore.deleteItemAsync(key);
+    else await SecureStore.setItemAsync(key, value);
+  } catch {
+    // 저장에 실패해도 이번 실행은 메모리 토큰으로 돈다.
+  }
+}
+
+/** 앱이 뜰 때 한 번 부른다. 저장해 둔 토큰을 메모리로 올린다 */
+export async function loadToken(): Promise<string | null> {
+  memoryToken = await readSecure(TOKEN_KEY);
+  memoryRefreshToken = await readSecure(REFRESH_KEY);
   return memoryToken;
 }
 
@@ -56,18 +93,21 @@ export function getToken(): string | null {
 }
 
 /**
- * 콜백에서 받은 토큰을 보관한다.
+ * 받은 토큰 묶음을 보관한다.
  *
  * **여기서 재시도 표시를 지우지 않는다.** 토큰을 받은 것과 그 토큰이 통하는 것은 다르다 —
  * 그룹에 없거나 인사 정보에 연결되지 않은 계정도 로그인은 되고 토큰도 받는다.
  * 여기서 지우면 `401 → 로그인 → 토큰 → 401`이 끝없이 돈다.
  */
-export async function setToken(token: string): Promise<void> {
-  memoryToken = token;
-  try {
-    await SecureStore.setItemAsync(TOKEN_KEY, token);
-  } catch {
-    // 저장에 실패해도 이번 실행은 메모리 토큰으로 돈다. 앱을 다시 켜면 로그인한다.
+export async function setTokens(tokens: TokenSet): Promise<void> {
+  memoryToken = tokens.accessToken;
+  await writeSecure(TOKEN_KEY, tokens.accessToken);
+
+  // **갱신 토큰이 안 오면 있던 것을 지우지 않는다.** Keycloak 설정에 따라 갱신 응답이
+  // 새 갱신 토큰을 안 줄 수 있는데, 그때 지우면 다음 갱신을 못 한다.
+  if (tokens.refreshToken !== null) {
+    memoryRefreshToken = tokens.refreshToken;
+    await writeSecure(REFRESH_KEY, tokens.refreshToken);
   }
 }
 
@@ -77,26 +117,22 @@ export function markAuthenticated(): void {
 }
 
 /**
- * 로그아웃 — 토큰을 지우고 **받아 둔 것도 같이 버린다.** 전 서비스 동시 로그아웃은 아직 없다.
+ * 로그아웃 — 토큰을 지우고 **받아 둔 것도 같이 버린다.**
  *
  * **캐시를 비우는 것이 토큰을 지우는 것만큼 중요하다** (2026-09-03).
  * 앱은 로그인하러 시스템 브라우저로 갔다 오는 동안에도 **살아 있다.** 토큰만 지우면
  * 급여명세서 금액·근태·인사정보가 쿼리 캐시에 그대로 남아서, 같은 기기에서 다른 사람이
  * 로그인하면 **다시 불러오기 전까지 앞사람 값이 그려진다.** 급여를 다루는 앱에서 그건 사고다.
- *
- * 관리팀 화면은 로그아웃이 `window.location`으로 페이지를 통째로 옮겨서 지금도 남지 않지만,
- * 같은 자리에서 같은 것을 보장하도록 그쪽도 여기서 비운다.
  */
 export async function clearToken(): Promise<void> {
   memoryToken = null;
-  try {
-    await SecureStore.deleteItemAsync(TOKEN_KEY);
-  } catch {
-    // 지우지 못해도 메모리에서는 사라진다.
-  }
+  memoryRefreshToken = null;
+  await writeSecure(TOKEN_KEY, null);
+  await writeSecure(REFRESH_KEY, null);
+  await writeSecure(PENDING_KEY, null);
   // **캐시 비우기를 `await` 뒤에 둔다.** `AuthGate`가 401을 만나면 렌더 도중에
   // `redirectToLoginOnce()`를 부르는데, 그 자리에서 캐시를 비우면 쿼리를 보고 있는
-  // 컴포넌트들이 렌더 중에 갱신된다. `await` 뒤로 미루면 렌더가 끝난 뒤에 돈다.
+  // 컴포넌트들이 렌더 중에 갱신된다.
   queryClient.clear();
 }
 
@@ -105,43 +141,67 @@ export async function clearToken(): Promise<void> {
  *
  * **경로에 앞 슬래시를 붙이지 않는다.** `'/auth/callback'`으로 부르면 배포 빌드에서
  * **`hr:///auth/callback`(슬래시 3개)이 나온다** — 2026-09-08 실기기에서 확인했다.
- * `expo-linking`의 `createURL`이 마지막을 `scheme + ':' + '/' + hostUri + path` 로
- * 조립하는데, 커스텀 스킴 배포 빌드는 `hostUri`가 비어서 `ensureLeadingSlash('', true)`가
- * `/` 를 돌려주고 거기에 경로의 앞 슬래시가 또 붙는다.
- *
- * **개발 빌드에서는 드러나지 않는다** — `hostUri`가 `192.168.x.x:8081`이라 슬래시가 채워진다.
- * 브라우저로도 개발 빌드로도 못 잡고, 배포 APK를 실기기에 올려야 보이는 버그였다.
- *
- * 앞 슬래시를 뺀 지금도 개발 빌드는 그대로다. expo-hosted 분기가 `removeLeadingSlash` 를
- * 거쳐 `exp://192.168.x.x:8081/--/auth/callback` 을 만든다.
- *
- * 서버에 등록할 주소는 빌드마다 다르므로 값은 `expo-linking` 이 만들게 두고, 그 값을
- * 그대로 서버에 등록한다.
+ * 개발 빌드에서는 드러나지 않는다. 브라우저로도 개발 빌드로도 못 잡고, 배포 APK를
+ * 실기기에 올려야 보이는 버그였다.
  */
 export function callbackUrl(): string {
   return Linking.createURL('auth/callback');
 }
 
+/** base64url. **`+/=` 를 그대로 두면 PKCE 대조가 실패한다** (RFC 7636) */
+function toBase64Url(value: string): string {
+  return value.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+
+function randomBase64Url(byteCount: number): string {
+  const bytes = Crypto.getRandomBytes(byteCount);
+  let binary = '';
+  for (const byte of bytes) binary += String.fromCharCode(byte);
+  return toBase64Url(globalThis.btoa(binary));
+}
+
+/** PKCE 한 쌍과 state. 난수는 기기 보안 난수를 쓴다 */
+async function createPending(): Promise<{ verifier: string; challenge: string; state: string }> {
+  const verifier = randomBase64Url(32);
+  const state = randomBase64Url(16);
+  const digest = await Crypto.digestStringAsync(
+    Crypto.CryptoDigestAlgorithm.SHA256,
+    verifier,
+    { encoding: Crypto.CryptoEncoding.BASE64 },
+  );
+
+  return { verifier, challenge: toBase64Url(digest), state };
+}
+
 /**
- * 로그인 시작 주소.
+ * 로그인 화면 주소를 만든다.
  *
- * **`redirect`에 앱 딥링크를 실어 보낸다.** 이것을 빠뜨리면 서버가 웹 기본 콜백으로
- * 돌려보내서 **토큰이 앱으로 영영 오지 않는다.** `callbackUrl()`을 만들어 두고도 여기에
- * 붙이지 않고 있었다 (2026-09-01 고침).
- *
- * 등록되지 않은 주소면 서버가 **400과 함께 그 주소를 그대로 찍어** 준다. 개발 빌드는
- * 앞이 달라지므로 로그인 화면이 그 값을 띄우고, 기기에서 읽어 서버에 등록을 요청한다.
+ * **돌아올 주소를 반드시 싣는다.** 중계 경로 때 이것을 빠뜨려 **토큰이 앱으로 영영 오지
+ * 않는** 코드였던 적이 있다 (2026-09-01 고침). 방식이 바뀌어도 같은 자리다.
  */
-export function loginUrl(): string {
-  const base = process.env.EXPO_PUBLIC_API_BASE_URL ?? '';
-  return `${base.replace(/\/$/, '')}/auth/login?redirect=${encodeURIComponent(callbackUrl())}`;
+export function buildAuthorizeUrl(codeChallenge: string, state: string): string {
+  return authorizeUrl({
+    issuer,
+    clientId,
+    redirectUri: callbackUrl(),
+    codeChallenge,
+    state,
+  });
+}
+
+async function openLogin(): Promise<void> {
+  const pending = await createPending();
+  // **브라우저에 다녀오는 사이 앱이 꺼질 수 있다.** 메모리에 두면 verifier 를 잃고
+  // 로그인이 끝나지 않는다. 보안 저장소에 둔다.
+  await writeSecure(PENDING_KEY, JSON.stringify(pending));
+  await Linking.openURL(buildAuthorizeUrl(pending.challenge, pending.state));
 }
 
 /** 사용자가 로그인 버튼을 눌렀을 때. 시스템 브라우저가 열린다 */
 export async function startLogin(): Promise<void> {
   loginRetried = false;
   await clearToken();
-  await Linking.openURL(loginUrl());
+  await openLogin();
 }
 
 /**
@@ -149,15 +209,13 @@ export async function startLogin(): Promise<void> {
  *
  * 401이 만료 때문만은 아니다 — Keycloak 그룹에 없거나 인사 정보에 연결되지 않은 계정도
  * 401이고, 그 경우는 다시 로그인해도 계속 401이라 무한 루프에 빠진다.
- *
- * @returns 브라우저를 열었으면 `true`. 이미 한 번 갔다 왔으면 `false`
  */
 export async function redirectToLoginOnce(): Promise<boolean> {
   if (loginRetried) return false;
 
   loginRetried = true;
   await clearToken();
-  await Linking.openURL(loginUrl());
+  await openLogin();
   return true;
 }
 
@@ -165,50 +223,106 @@ export function loginRetryUsed(): boolean {
   return loginRetried;
 }
 
-/**
- * 딥링크에서 결과를 꺼낸다 — `hr://auth/callback#token=<JWT>`.
- *
- * **fragment로 온다.** 서버로 전송되지 않아 접근로그에 토큰이 남지 않기 때문이다.
- * 일부 환경이 fragment 대신 쿼리로 넘겨줄 수 있어 둘 다 본다.
- */
-export function readCallbackUrl(url: string): { token?: string; error?: string } {
-  const hashAt = url.indexOf('#');
-  const queryAt = url.indexOf('?');
+/** 이 딥링크가 로그인 콜백인가. 두 방식이 같은 경로로 돌아온다 */
+export { isCallbackUrl };
 
-  const parts: string[] = [];
-  if (hashAt >= 0) parts.push(url.slice(hashAt + 1));
-  if (queryAt >= 0) parts.push(url.slice(queryAt + 1, hashAt >= 0 ? hashAt : undefined));
-
-  for (const part of parts) {
-    const params = new URLSearchParams(part);
-    const token = params.get('token');
-    const error = params.get('error');
-    if (token) return { token };
-    if (error) return { error };
-  }
-  return {};
-}
-
-/**
- * 웹판에만 실체가 있다. 앱은 `Linking.useURL()` 이 딥링크를 그대로 주므로 쓸 것이 없다.
- *
- * **웹은 그 훅을 믿을 수 없다** — 첫 렌더에 `null` 을 주고 프로미스가 풀린 뒤에야 값이
- * 오는데, 그 사이에 `app/auth/callback.tsx` 의 `<Redirect>` 가 주소를 `/` 로 바꿔서
- * `#token=` 이 사라진다. 그래서 웹판은 모듈이 뜰 때 주소를 낚아채 둔다.
- */
+/** 웹판에만 실체가 있다. 앱은 `Linking.useURL()` 이 딥링크를 그대로 준다 */
 export function pendingCallbackUrl(): string | undefined {
   return undefined;
 }
 
-/**
- * 웹판에만 실체가 있다. 웹은 여기서 주소창의 `#token=` 을 지운다.
- * 앱은 딥링크라 주소창이 없다.
- */
+/** 웹판에만 실체가 있다. 앱은 주소창이 없다 */
 export function forgetCallbackUrl(): void {
   // 앱에서는 할 일이 없다.
 }
 
-/** 이 딥링크가 로그인 콜백인가 */
-export function isCallbackUrl(url: string): boolean {
-  return url.includes('/auth/callback');
+/**
+ * 토큰 요청.
+ *
+ * **`api` 인스턴스를 쓰지 않는다.** 그쪽은 HR 서버(`baseURL`)로 가고 `Authorization`
+ * 헤더를 붙인다. 여기는 Keycloak 이고, 공개 클라이언트라 실을 시크릿도 없다.
+ */
+async function postToken(body: string): Promise<TokenSet | null> {
+  const { data } = await axios.post(discoveryOf(issuer).tokenEndpoint, body, {
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+  });
+  return readTokenResponse(data);
+}
+
+/**
+ * 콜백을 받아 로그인을 끝낸다.
+ *
+ * **`state` 를 대조한다.** 다른 곳에서 밀어 넣은 콜백으로 엉뚱한 세션에 붙는 것을 막는다.
+ *
+ * 오류 메시지에 `code` 나 토큰을 넣지 않는다 (`CLAUDE.md` 2장).
+ */
+export async function handleCallback(
+  url: string,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const { code, state, error } = readAuthorizeCallback(url);
+  if (error !== undefined) return { ok: false, error };
+  if (code === undefined) return { ok: false, error: '로그인 결과를 받지 못했어요.' };
+
+  const savedRaw = await readSecure(PENDING_KEY);
+  if (savedRaw === null) return { ok: false, error: '로그인을 처음부터 다시 해주세요.' };
+
+  let saved: { verifier?: string; state?: string } = {};
+  try {
+    saved = JSON.parse(savedRaw) as { verifier?: string; state?: string };
+  } catch {
+    saved = {};
+  }
+
+  if (saved.verifier === undefined || saved.state !== state) {
+    await writeSecure(PENDING_KEY, null);
+    return { ok: false, error: '로그인을 처음부터 다시 해주세요.' };
+  }
+
+  try {
+    const tokens = await postToken(
+      codeExchangeBody({
+        clientId,
+        code,
+        redirectUri: callbackUrl(),
+        codeVerifier: saved.verifier,
+      }),
+    );
+    if (tokens === null) return { ok: false, error: '로그인 결과를 받지 못했어요.' };
+
+    await setTokens(tokens);
+    return { ok: true };
+  } catch {
+    // 서버 응답 본문에는 코드·토큰이 섞인다. 화면에 그대로 내보내지 않는다.
+    return { ok: false, error: '로그인을 마치지 못했어요. 잠시 후 다시 시도해주세요.' };
+  } finally {
+    await writeSecure(PENDING_KEY, null);
+  }
+}
+
+/**
+ * 액세스 토큰 갱신.
+ *
+ * **실패해도 로그아웃시키지 않는다.** 지금 들고 있는 토큰이 아직 살아 있을 수 있고,
+ * 토큰이 실제로 죽는 순간 401 이 와서 기존 재로그인 경로가 받는다. 갱신은 **더 나은
+ * 경로일 뿐 유일한 경로가 아니다** — 관리팀 화면과 같은 판단이다 (2026-09-09).
+ *
+ * @returns 남은 수명(초). 갱신하지 못했으면 `null`
+ */
+export async function refreshTokens(): Promise<number | null> {
+  if (memoryRefreshToken === null) return null;
+
+  try {
+    const tokens = await postToken(refreshBody({ clientId, refreshToken: memoryRefreshToken }));
+    if (tokens === null) return null;
+
+    await setTokens(tokens);
+    return tokens.expiresIn;
+  } catch {
+    return null;
+  }
+}
+
+/** 갱신을 시도할 수 있는가. 없으면 만료 시 재로그인뿐이다 */
+export function canRefresh(): boolean {
+  return memoryRefreshToken !== null;
 }
