@@ -38,10 +38,11 @@ iOS는 별개다 — Apple 개발자 계정이 결제되지 않아 막혀 있다
 
 ## 배포 전에 사람이 할 것
 
-1. **EAS `production` 환경에 `EXPO_PUBLIC_API_BASE_URL`을 넣어야 한다.**
-   넣지 않으면 앱이 뜨자마자 주소가 없다고 멈춘다 (`src/lib/api.ts`).
-   **어떤 주소를 넣을지가 아직 미확정이다** — `.env.example`의 `https://api.dvi-ind.com/hi-yo`는
-   「개발 서버」라고 적혀 있다. 운영 서버가 따로 있는지 확인이 필요하다.
+1. ~~EAS `production` 환경에 `EXPO_PUBLIC_API_BASE_URL`을 넣어야 한다.~~
+   **넣었다 (2026-09-10).** `https://api.dvi-ind.com/hi-yo` 다.
+   **운영 서버가 따로 없다** — 이 주소 하나를 쓴다(사용자 확인). `.env.example`이 이것을
+   「개발 서버」라고 부르는 것은 표현이 낡은 것이다.
+   주소는 시크릿이 아니라 `plaintext` 로 넣었다 (`EXPO_PUBLIC_` 는 번들에 평문으로 들어간다).
 2. **앱 콜백 주소가 서버에 등록돼 있어야 한다.** 배포 빌드는 `hr://auth/callback`이다.
    (`.env.example`의 설명과 `src/lib/auth.ts` 주석을 본다. 2026-09-08에 통과했다.)
 
