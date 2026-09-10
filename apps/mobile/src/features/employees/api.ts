@@ -94,6 +94,43 @@ export function useMe() {
   });
 }
 
+/** `GET /employees/{id}/bank-account` 응답. **원문이다** */
+interface BankAccountFull {
+  employeeId: number;
+  employeeName: string;
+  bankName: string | null;
+  bankAccount: string | null;
+  accountHolder: string | null;
+}
+
+/**
+ * **본인이 자기 계좌 원문을 확인한다.** `GET /employees/{id}/bank-account`
+ *
+ * 명세가 이 경로의 권한을 **「관리팀 또는 본인」**으로, 용도를 **「급여 이체·통장 대조용」**
+ * 으로 적고 있다 (`docs/API_직원.md` 3장). 통장과 대조하는 것이 바로 이 쓰임이다 —
+ * 뒤 네 자리만으로는 잘못 적은 것을 잡을 수 없고, 계좌가 틀리면 급여가 남에게 간다.
+ *
+ * **누를 때만 부른다** (`enabled`). 마이페이지를 열 때마다 원문이 응답과 네트워크 로그에
+ * 실리면, 서버가 9-09에 `bankAccountMasked` 로 바꿔 준 뜻이 없어진다.
+ *
+ * **캐시에 남기지 않는다** (`gcTime: 0`). 가리기를 누르거나 화면을 떠나면 그 자리에서
+ * 사라져야 한다. 계좌번호를 앱 메모리에 만료 없이 두지 않는다 (`CLAUDE.md` 2장).
+ */
+export function useMyBankAccountFull(employeeId: number | undefined, enabled: boolean) {
+  return useQuery({
+    queryKey: [...employeeKeys.all, "bank-account-full", employeeId] as const,
+    enabled: enabled && employeeId !== undefined,
+    gcTime: 0,
+    staleTime: 0,
+    queryFn: async ({ signal }) => {
+      const { data } = await api.get<BankAccountFull>(`/employees/${employeeId}/bank-account`, {
+        signal,
+      });
+      return data;
+    },
+  });
+}
+
 /**
  * 계좌를 바꾼다.
  *
