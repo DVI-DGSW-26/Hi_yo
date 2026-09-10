@@ -41,6 +41,8 @@ export default function SignRequestScreen() {
   const requestId = Number(params.requestId);
 
   const [signature, setSignature] = useState('');
+  // 서명하는 동안 스크롤을 끈다 (2026-09-09 실기기 — 안 끄면 그려지지 않는다).
+  const [signing, setSigning] = useState(false);
 
   const request = useRequest(requestId);
   const sign = useSignRequest(requestId);
@@ -66,7 +68,10 @@ export default function SignRequestScreen() {
     <>
       <Stack.Screen options={{ title: '서명' }} />
 
-      <ScrollView contentContainerStyle={styles.scroll}>
+      <ScrollView
+        contentContainerStyle={[styles.scroll, { paddingBottom: insets.bottom + spacing.sectionY }]}
+        scrollEnabled={!signing}
+      >
         <QueryState query={request}>
           {(data) => (
             <>
@@ -91,7 +96,12 @@ export default function SignRequestScreen() {
         <Section>
           <SectionTitle title="서명" />
           {/* 종이 서식의 「작성」 칸이다. 신청서와 같은 값을 그대로 실어 보낸다 */}
-          <SignaturePad label="신청인 서명" value={signature} onChange={setSignature} />
+          <SignaturePad
+            label="신청인 서명"
+            value={signature}
+            onChange={setSignature}
+            onDrawingChange={setSigning}
+          />
         </Section>
       </ScrollView>
 
@@ -138,6 +148,10 @@ function period(request: LeaveRequest): string {
 }
 
 const styles = StyleSheet.create({
+  /*
+   * `insets.bottom` 을 쓰는 쪽에서 덮어쓴다. 안드로이드는 내비게이션 바 뒤까지
+   * 화면을 그려서(edge-to-edge) 이 값만으로는 마지막 줄이 가린다 (2026-09-09 실기기).
+   */
   scroll: { paddingBottom: spacing.sectionY },
   lead: { ...typography.bodySmall, color: colors.textBody },
   body: { ...typography.bodySmall, color: colors.textBody },

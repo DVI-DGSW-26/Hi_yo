@@ -24,6 +24,16 @@ import { Button } from './Button';
  *
  * **연차 신청서에 붙였다** (`LeaveSignatureSection`). 연차사용계획서와 단체연차는
  * 아직이다 — 그쪽 화면을 만들 때 같은 값을 그대로 실어 보내면 된다.
+ *
+ * **스크롤 안에 있으면 그려지지 않는다** (2026-09-09 실기기에서 드러났다). 캔버스가
+ * `touch-action: none` 과 `preventDefault()` 를 쓰고 웹뷰도 `scrollEnabled={false}` 인데도,
+ * 안드로이드의 네이티브 `ScrollView` 가 세로 드래그를 **웹뷰보다 먼저** 가져간다.
+ * 서명은 안 되고 화면만 움직였다 — 서명이 필수라 연차 신청 자체가 막혔다.
+ *
+ * 그래서 **손가락이 칸 안에 있는 동안 부모 스크롤을 끈다.** 캔버스가 `down`·`up` 을
+ * 알려주고 화면이 `onDrawingChange` 로 받아 `ScrollView` 의 `scrollEnabled` 를 내린다.
+ * 웹뷰 쪽에서 제스처를 「가로채는」 방법으로는 확실하게 막을 수 없어서, **스크롤을
+ * 아예 끄는** 쪽을 골랐다 — 끈 동안에는 경쟁 자체가 없다.
  */
 
 /** 서버에 제안한 상한. base64 기준 128 KB */
@@ -38,9 +48,16 @@ interface Props {
   /** base64. 비어 있으면 아직 그리지 않은 것이다 */
   value: string;
   onChange: (base64: string) => void;
+  /**
+   * 손가락이 칸에 닿아 있는 동안 `true`.
+   *
+   * **스크롤 안에 이 칸을 두는 화면은 반드시 넘긴다** — 받아서 `ScrollView` 의
+   * `scrollEnabled` 를 내려야 그림이 그려진다. 스크롤이 없는 화면에서는 비워도 된다.
+   */
+  onDrawingChange?: (drawing: boolean) => void;
 }
 
-export function SignaturePad({ label, value, onChange }: Props) {
+export function SignaturePad({ label, value, onChange, onDrawingChange }: Props) {
   const webRef = useRef<WebView>(null);
   const [tooBig, setTooBig] = useState(false);
 
@@ -48,6 +65,16 @@ export function SignaturePad({ label, value, onChange }: Props) {
     const raw: unknown = JSON.parse(event.nativeEvent.data);
     if (typeof raw !== 'object' || raw === null) return;
     const message = raw as { type?: string; base64?: string };
+
+    // 손가락이 닿았다·떼어졌다. 화면이 이걸로 부모 스크롤을 끄고 켠다.
+    if (message.type === 'down') {
+      onDrawingChange?.(true);
+      return;
+    }
+    if (message.type === 'up') {
+      onDrawingChange?.(false);
+      return;
+    }
 
     if (message.type === 'too-big') {
       setTooBig(true);
@@ -147,6 +174,8 @@ const PAD_HTML = `<!doctype html>
   function start(event) {
     event.preventDefault();
     drawing = true;
+    // 부모 스크롤을 끄라고 알린다. 이게 없으면 안드로이드에서 그림이 그려지지 않는다.
+    post({ type: 'down' });
     var p = pointOf(event);
     ctx.beginPath();
     ctx.moveTo(p.x, p.y);
@@ -163,6 +192,7 @@ const PAD_HTML = `<!doctype html>
   function end() {
     if (!drawing) return;
     drawing = false;
+    post({ type: 'up' });
     // data URL 의 앞머리를 뗀다. 서버가 받는 것은 base64 문자열이다.
     var base64 = canvas.toDataURL('image/png').split(',')[1] || '';
     if (base64.length > ${MAX_BASE64_LENGTH}) {
@@ -175,7 +205,11 @@ const PAD_HTML = `<!doctype html>
   canvas.addEventListener('touchstart', start, { passive: false });
   canvas.addEventListener('touchmove', move, { passive: false });
   canvas.addEventListener('touchend', end);
-  canvas.addEventListener('touchcancel', function () { drawing = false; });
+  canvas.addEventListener('touchcancel', function () {
+    drawing = false;
+    // 취소도 손가락이 떠난 것이다. 알리지 않으면 스크롤이 꺼진 채로 남는다.
+    post({ type: 'up' });
+  });
 
   window.__clear = function () {
     ctx.clearRect(0, 0, canvas.width, canvas.height);

@@ -394,6 +394,7 @@ export const promotionKeys = {
   targets: (year: number, round: PromotionRound) =>
     [...promotionKeys.all, 'targets', year, round] as const,
   notices: (year: number) => [...promotionKeys.all, 'notices', year] as const,
+  plans: (year: number) => [...promotionKeys.all, 'plans', year] as const,
 };
 
 /**
@@ -410,6 +411,65 @@ export function usePromotionTargets(year: number, round: PromotionRound) {
     queryFn: async ({ signal }) => {
       const { data } = await api.get<PromotionTarget[]>('/leave/promotions/targets', {
         params: { year, round },
+        signal,
+      });
+      return data;
+    },
+  });
+}
+
+/**
+ * 제출된 연차사용계획서 하루치. **값은 `1`(연차) 또는 `0.5`(반차)뿐이다**
+ */
+export interface PlannedDay {
+  date: string;
+  days: number;
+}
+
+/**
+ * 제출된 연차사용계획서. `GET /leave/promotions/plans` (2026-09-09에 열렸다)
+ *
+ * 그전에는 `planSubmitted` 불리언으로 **냈는지만** 알 수 있었다. 무슨 날짜를 냈는지는
+ * 아무도 볼 수 없었다 — 직원 본인도, 관리팀도.
+ *
+ * **`plannedDays`는 차감된 일수가 아니다.** 계획서는 연차를 깎지 않는다 — 실제 차감은
+ * 신청(`POST /requests`)이 결재를 받아야 일어난다. 화면이 「쓴 연차」로 적으면 안 된다.
+ *
+ * **`remainingAfterPlan`은 조회에서 `null`이다** (2026-09-09 안내). 제출 시점 값이라
+ * 지금은 틀린 숫자다 — 그래서 이 화면은 그 값을 쓰지 않는다.
+ */
+export interface PromotionPlan {
+  id: number;
+  promotionId: number;
+  employeeId: number;
+  employeeName: string | null;
+  fiscalYear: number;
+  round: PromotionRound;
+  submittedAt: string | null;
+  planDueOn: string | null;
+  /** 마감(통보 + 10일)을 넘겨 낸 건. 서버가 막지 않고 표시만 한다 */
+  late: boolean;
+  plannedDays: number;
+  remainingAfterPlan: number | null;
+  signed: boolean;
+  days: PlannedDay[];
+  note: string | null;
+  /** 화면에 그대로 띄워도 되는 한국어 안내 */
+  notice: string | null;
+}
+
+/**
+ * 그 해에 제출된 계획서. **차수를 싣지 않고 부른다** — 1차·2차를 다 받는다.
+ *
+ * 통보 기록(`usePromotionNotices`)과 짝이다. 그쪽은 「누구에게 보냈나」이고
+ * 이쪽은 「누가 무슨 날짜를 냈나」다.
+ */
+export function usePromotionPlans(year: number) {
+  return useQuery({
+    queryKey: promotionKeys.plans(year),
+    queryFn: async ({ signal }) => {
+      const { data } = await api.get<PromotionPlan[]>('/leave/promotions/plans', {
+        params: { year },
         signal,
       });
       return data;

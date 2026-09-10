@@ -19,8 +19,8 @@ import { useMyPromotions, type LeavePromotion } from './api';
  * 사라지면 아래가 통째로 밀린다. 대신 **오류는 감추지 않는다** — 마감이 걸린 통보가
  * 있는지 없는지 모르는 채로 두면 직원이 기한을 넘긴다.
  *
- * 낸 건은 들어가는 줄을 놓지 않는다. 한 통보당 계획서는 하나고 두 번째 제출은 409다.
- * 낸 계획서를 **다시 볼 경로는 아직 없다** (`docs/01_물어볼_것.md`).
+ * **낸 건도 눌러서 들어간다** (2026-09-09에 조회가 열렸다). 한 통보당 계획서는 하나고
+ * 두 번째 제출은 409라, 들어가면 폼이 아니라 **낸 날짜가 그대로 보인다.**
  */
 export function LeavePromotionSection() {
   const promotions = useMyPromotions();
@@ -69,15 +69,12 @@ function PromotionRows({ promotion }: { promotion: LeavePromotion }) {
         label="통보 당시 잔여"
         value={formatLeaveDays(promotion.remainingDays)}
       />
-      {promotion.planSubmitted ? (
-        <ListRow label="계획서" value="냈어요" />
-      ) : (
-        <ListRow
-          label="계획서 내기"
-          variant="nav"
-          onPress={() => router.push(`/leave/plan?promotionId=${promotion.id}`)}
-        />
-      )}
+      {/* 낸 건은 「본다」, 안 낸 건은 「낸다」. 가는 곳은 같은 화면이다. */}
+      <ListRow
+        label={promotion.planSubmitted ? '낸 계획서 보기' : '계획서 내기'}
+        variant="nav"
+        onPress={() => router.push(`/leave/plan?promotionId=${promotion.id}`)}
+      />
     </View>
   );
 }

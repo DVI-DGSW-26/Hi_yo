@@ -1,5 +1,6 @@
 import { Stack, useLocalSearchParams } from 'expo-router';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { formatAmount, formatMinutes, formatTargetYm } from '@hr/format';
 import { colors, spacing, typography } from '@hr/tokens';
 import { ListRow, QueryState, Section, SectionDivider, SectionTitle } from '@/components';
@@ -20,13 +21,22 @@ import { usePayroll, type PayrollItem } from '@/features/payroll/api';
  * 본다 (2026-09-01 확정).
  */
 export default function PayslipScreen() {
+  const insets = useSafeAreaInsets();
   const { payrollId } = useLocalSearchParams<{ payrollId: string }>();
   const payroll = usePayroll(Number(payrollId));
 
   return (
     <>
       <Stack.Screen options={{ title: '급여명세서' }} />
-      <ScrollView style={styles.flex}>
+      {/*
+        안드로이드는 내비게이션 바 뒤까지 화면을 그린다 (edge-to-edge). 하단 여백을
+        `insets.bottom` 만큼 주지 않으면 마지막 줄이 그 바에 가린다 — 실기기에서
+        드러났다 (2026-09-09). 하단 CTA 가 있는 화면은 그 막대가 같은 일을 한다.
+      */}
+      <ScrollView
+        style={styles.flex}
+        contentContainerStyle={{ paddingBottom: insets.bottom + spacing.sectionY }}
+      >
         <QueryState query={payroll} wrapState={(state) => <Section>{state}</Section>}>
           {(data) =>
             !data.confirmed ? (
