@@ -1,9 +1,10 @@
 import { Stack, useRouter } from 'expo-router';
-import { ScrollView, StyleSheet, Text } from 'react-native';
+import { useState } from 'react';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, spacing, typography } from '@hr/tokens';
-import { ListRow, QueryState, Section, SectionDivider, SectionTitle } from '@/components';
-import { useMe } from '@/features/employees/api';
+import { Button, ListRow, QueryState, Section, SectionDivider, SectionTitle } from '@/components';
+import { useMe, useMyBankAccountFull } from '@/features/employees/api';
 import { formatServerDate } from '@/lib/format';
 
 /**
@@ -28,6 +29,17 @@ export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const me = useMe();
+
+  /*
+   * **계좌 원문은 누를 때만 부른다.** 기본은 서버가 가려 준 값이고, 「보기」를 눌러야
+   * `GET /employees/{id}/bank-account` 가 한 번 나간다 — 화면을 열 때마다 원문이
+   * 응답·네트워크 로그에 실리지 않게 한다.
+   *
+   * 뒤 네 자리만으로는 잘못 적은 것을 잡을 수 없고, 계좌가 틀리면 급여가 남에게 간다.
+   * 명세도 이 경로의 쓰임을 「통장 대조용」이라고 적었다 (`docs/API_직원.md` 3장).
+   */
+  const [revealed, setRevealed] = useState(false);
+  const full = useMyBankAccountFull(me.data?.summary.id, revealed);
 
   return (
     <>
@@ -118,11 +130,42 @@ export default function ProfileScreen() {
                     value={data.bankAccount?.bankName ?? undefined}
                     placeholder="아직이에요"
                   />
-                  {/* 서버가 가려서 준다 (2026-09-09 회신 24번). 화면에서 다시 가리지 않는다. */}
+                  {/*
+                    기본은 서버가 가려 준 값이다 (2026-09-09 회신 24번) — 화면에서 다시
+                    가리지 않는다. **본인은 「보기」로 원문을 확인할 수 있다** — 통장과
+                    대조해야 잘못 적은 것을 잡는다 (`CLAUDE.md` 2장 마스킹 예외).
+                  */}
                   <ListRow
                     label="계좌번호"
-                    value={data.bankAccount?.bankAccountMasked ?? undefined}
+                    value={
+                      revealed ? undefined : (data.bankAccount?.bankAccountMasked ?? undefined)
+                    }
                     placeholder="아직이에요"
+                    right={
+                      data.bankAccount?.bankAccountMasked == null ? undefined : (
+                        <View style={styles.accountRow}>
+                          {revealed ? (
+                            <QueryState query={full}>
+                              {(loaded) => (
+                                <Text style={styles.accountValue}>
+                                  {loaded.bankAccount ?? data.bankAccount?.bankAccountMasked}
+                                </Text>
+                              )}
+                            </QueryState>
+                          ) : (
+                            <Text style={styles.accountValue}>
+                              {data.bankAccount.bankAccountMasked}
+                            </Text>
+                          )}
+                          <Button
+                            label={revealed ? '가리기' : '보기'}
+                            variant="secondary"
+                            size="inline"
+                            onPress={() => setRevealed((prev) => !prev)}
+                          />
+                        </View>
+                      )
+                    }
                   />
                   <ListRow
                     label="예금주"
@@ -171,6 +214,9 @@ function dateText(value: string | null): string {
 
 
 const styles = StyleSheet.create({
+  /* 값과 「보기」를 한 줄에 둔다. 글꼴을 키우면 값이 줄바꿈되고 버튼은 그대로다 */
+  accountRow: { flexDirection: "row", alignItems: "center", gap: spacing.rowGap, flexShrink: 1 },
+  accountValue: { ...typography.body, color: colors.textStrong, flexShrink: 1 },
   flex: { flex: 1, backgroundColor: colors.white },
   note: { ...typography.label, color: colors.textWeak },
 });
