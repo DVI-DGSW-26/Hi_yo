@@ -1,4 +1,5 @@
-import { queryClient } from './queryClient';
+import { api } from "./api";
+import { queryClient } from "./queryClient";
 import { isCallbackUrl, readCallbackUrl } from './relayCallback';
 
 /**
@@ -217,20 +218,56 @@ export function loginRetryUsed(): boolean {
 export { isCallbackUrl, readCallbackUrl };
 
 /**
- * 웹판에는 갱신이 아직 없다.
+ * 액세스 토큰 갱신 — `GET /auth/refresh`. **웹판(중계 경로)의 방식이다.**
  *
- * 중계 경로의 갱신은 `GET /auth/refresh` 인데 **세션 쿠키로 인증한다.** 쿠키가
- * `SameSite=Lax` 라 프런트와 API 가 같은 사이트(`*.dvi-ind.com`)여야 실린다 —
- * `hr.dvi-ind.com` 에 올리면 조건이 맞는다. 붙이는 것은 배포 뒤에 따로 한다.
+ * **세션 쿠키(`HIYO_SESSION`)로 인증한다.** `Authorization` 헤더를 붙이지 않는다 —
+ * 갱신을 부르는 시점의 토큰은 이미 만료됐거나 만료 직전이라 신원을 증명할 수 없다
+ * (`lib/api.ts` 의 `COOKIE_AUTH_PATHS`). 그래서 `withCredentials` 가 필수다.
  *
- * 그때까지는 만료되면 401 이 오고 기존 재로그인 경로가 받는다.
+ * 쿠키가 `SameSite=Lax` 라 **프런트와 API 가 같은 사이트여야 실린다.**
+ * `hr.dvi-ind.com` ↔ `api.dvi-ind.com` 은 둘 다 `dvi-ind.com` 이라 조건이 맞는다
+ * (서버 확인 2026-09-10). **개발은 `localhost` 라 다른 사이트여서 쿠키가 실리지 않는다** —
+ * 개발 중 갱신이 조용히 실패하는 것은 정상이고, 그때는 만료 시 401 이 와서 기존
+ * 재로그인 경로가 받는다.
+ *
+ * **실패해도 로그아웃시키지 않는다.** 지금 토큰이 아직 살아 있을 수 있다.
+ * 수명은 서버가 준 `expiresIn` 을 쓴다 — 15분을 코드에 적지 않는다.
+ *
+ * @returns 남은 수명(초). 갱신하지 못했으면 `null`
  */
 export async function refreshTokens(): Promise<number | null> {
-  return null;
+  try {
+    /*
+     * **`Content-Type` 을 뗀다. 이게 없으면 갱신이 브라우저에서 막힌다.**
+     *
+     * 우리 axios 인스턴스는 모든 요청에 `application/json` 을 붙이는데, 그 값은
+     * CORS 안전 목록에 없어서 **preflight 가 뜬다.** 그런데 서버의 preflight 응답에는
+     * `Access-Control-Allow-Credentials` 가 없다 — 실제 응답에만 있다
+     * (2026-09-10 실측). 쿠키를 실은 요청은 preflight 에서 그 헤더를 못 보면 실패한다.
+     *
+     * 떼면 헤더 없는 GET 이라 **단순 요청**이 되어 preflight 자체가 안 뜬다.
+     * 토큰도 안 붙는다(`COOKIE_AUTH_PATHS`) — 그래서 남는 커스텀 헤더가 없다.
+     */
+    const { data } = await api.get<{ token?: string; expiresIn?: number }>("/auth/refresh", {
+      withCredentials: true,
+      headers: { "Content-Type": undefined },
+    });
+    // **빈 토큰을 토큰으로 치지 않는다.** 그 값으로 헤더를 만들면 계속 401 을 맞는다.
+    if (typeof data.token !== "string" || data.token === "") return null;
+
+    await setToken(data.token);
+    return typeof data.expiresIn === "number" ? data.expiresIn : null;
+  } catch {
+    return null;
+  }
 }
 
+/**
+ * 웹은 쿠키가 있는지 미리 알 수 없다 — `HttpOnly` 라 읽히지 않는다.
+ * 그래서 **일단 시도한다.** 실패는 위에서 조용히 삼킨다.
+ */
 export function canRefresh(): boolean {
-  return false;
+  return true;
 }
 
 /** 앱판과 모양을 맞춘다. 웹은 콜백에 완성된 토큰이 실려 와서 바꿀 것이 없다 */

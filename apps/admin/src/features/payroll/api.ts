@@ -47,6 +47,13 @@ export interface Payroll {
   corporation: string | null;
   targetYm: number;
   hourlyWage: number | null;
+  /**
+   * 통상임금. **2026-09-10에 정수에서 소수로 바뀌었다** (서버 안내. 예: `10559.23`).
+   *
+   * 직책·직무수당이 있는 사람만 시급과 달라진다. **화면에 내보낸다면 소수 둘째 자리까지다** —
+   * 금액 규칙(세 자리 콤마·소수점 없음, `CLAUDE.md` 5장)의 예외이므로 그때 포맷 함수를
+   * 따로 만든다. 지금은 어느 화면도 쓰지 않는다.
+   */
   ordinaryWage: number | null;
   costType: string | null;
   totalPayment: number;

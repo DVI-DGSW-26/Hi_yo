@@ -269,7 +269,7 @@ POST periods  POST calculate  POST adjustments  PATCH confirm  PATCH close
 | `corporation` | string | |
 | `targetYm` | int32 | `202608` |
 | `hourlyWage` | int32 | 시급 |
-| `ordinaryWage` | int32 | 통상임금 |
+| `ordinaryWage` | **number (소수)** | 통상임금. **2026-09-10에 int32 → 소수로 바뀌었다** (예: `10559.23`). 직책·직무수당이 있는 사람만 시급과 달라진다. **표시한다면 소수 둘째 자리까지** |
 | `costType` | string | |
 | `totalPayment` | int32 | 지급총액 |
 | `totalDeduction` | int32 | 공제총액 |
