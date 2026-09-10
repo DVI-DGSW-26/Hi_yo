@@ -10,17 +10,18 @@ import { fileURLToPath } from 'node:url';
 
 const OUT = dirname(fileURLToPath(import.meta.url));
 
-// packages/tokens/src/colors.ts 와 동일해야 한다.
-const GREEN = '#00C471'; // colors.primary
-const INK = '#191F28';   // colors.textStrong
-const WHITE = '#FFFFFF'; // colors.white
-
-// 스마일을 베이스라인에서 얼마나 끌어올릴지.
+// 로고 고유색이다. UI 토큰(packages/tokens/src/colors.ts)과 일부러 다르다 —
+// 로고는 받은 원본이 최종이고, 토큰에 맞춰 고치지 않는다 (2026-09-11).
 //
-// 0 이면 스마일이 베이스라인 아래에만 있어서 "i" 와 "y" 사이 x-height 구간이 비고,
-// 그래서 "Hi yo" 두 단어처럼 읽힌다. 30 올리면 그 구간을 채워 한 단어로 붙는다.
-// 작게 줄일수록 차이가 커진다. 30 으로 정했다 (2026-09-11).
-const SMILE_DY = Number(process.env.SMILE_DY ?? 30);
+// 앱 화면에서 이 색을 쓰지 않는다. 화면의 초록은 colors.primary(#00C471) 하나뿐이다.
+// 헤더 로고와 그 아래 Primary 버튼이 서로 다른 초록으로 보이는 것은 알고 두는 것이다.
+const GREEN = '#1D9E75'; // 로고 전용. colors.primary 가 아니다
+const INK = '#2C2C2A';   // 로고 전용. colors.textStrong 이 아니다
+const WHITE = '#FFFFFF'; // colors.white 와 같다
+
+// 스마일을 베이스라인에서 얼마나 끌어올릴지. 원본대로 0 이다 — 스마일은
+// 베이스라인 아래에 놓인 "입"이고, 그것이 이 로고의 의도다. 바꾸지 않는다.
+const SMILE_DY = Number(process.env.SMILE_DY ?? 0);
 
 const round = (n, d = 1) => Number(n.toFixed(d));
 
