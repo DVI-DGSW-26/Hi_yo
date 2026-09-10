@@ -1,16 +1,18 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import * as Linking from 'expo-linking';
-import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Platform, StyleSheet, Text, View } from 'react-native';
 import { useQueryClient } from '@tanstack/react-query';
 import { colors, spacing, typography } from '@hr/tokens';
 import { ApiError } from '@hr/api';
 import { Button, Section } from '@/components';
 import {
   callbackUrl,
+  forgetCallbackUrl,
   getToken,
   isCallbackUrl,
   loadToken,
   loginRetryUsed,
+  pendingCallbackUrl,
   readCallbackUrl,
   redirectToLoginOnce,
   setToken,
@@ -44,8 +46,18 @@ export function AuthGate({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  // 서버가 돌려보낸 딥링크. 앱이 꺼져 있었으면 이 URL로 깨어난다.
-  const url = Linking.useURL();
+  /*
+   * 서버가 돌려보낸 딥링크. 앱이 꺼져 있었으면 이 URL로 깨어난다.
+   *
+   * **웹에서는 이 훅만으로는 안 된다.** `useURL()` 은 첫 렌더에 `null` 을 주고
+   * `getInitialURL()` 프로미스가 풀린 뒤에 값을 주는데, 그 사이에
+   * `app/auth/callback.tsx` 의 `<Redirect>` 가 주소를 `/` 로 바꿔 `#token=` 이
+   * 사라진다. 웹판 `pendingCallbackUrl()` 이 모듈 로드 시점에 붙들어 둔 주소를 준다.
+   * 앱판은 `undefined` 를 돌려주므로 기기에서는 지금까지와 똑같이 이 훅만 쓴다
+   * (2026-09-08 실기기에서 통과한 경로다 — 건드리지 않는다).
+   */
+  const linked = Linking.useURL();
+  const url = linked !== null && isCallbackUrl(linked) ? linked : pendingCallbackUrl();
   const handled = useRef<string | undefined>(undefined);
 
   useEffect(() => {
@@ -53,6 +65,8 @@ export function AuthGate({ children }: { children: ReactNode }) {
     handled.current = url;
 
     const { token, error } = readCallbackUrl(url);
+    // 다 읽었다. 웹은 여기서 주소창의 `#token=` 이 지워진다 (앱은 할 일이 없다).
+    forgetCallbackUrl();
     if (token) {
       setFailure(undefined);
       setToken(token).then(() => {
@@ -61,8 +75,25 @@ export function AuthGate({ children }: { children: ReactNode }) {
       });
       return;
     }
-    // 서버가 준 사유를 그대로 보여준다. 앱에서 문구를 만들지 않는다.
-    setFailure(error ?? '로그인 결과를 받지 못했어요.');
+    if (error) {
+      // 서버가 준 사유를 그대로 보여준다. 앱에서 문구를 만들지 않는다.
+      setFailure(error);
+      return;
+    }
+    /*
+     * 토큰도 사유도 없다.
+     *
+     * **주소에 실린 것이 아예 없으면 조용히 지나간다.** 웹에서 콜백을 처리하고 나면
+     * `#token=` 을 지우는데, 그 뒤에 `Linking.useURL()` 이 늦게 `/auth/callback`(맨몸)
+     * 을 들고 오는 수가 있다. 그것을 새 콜백으로 보고 실패라고 적으면, 방금 제대로
+     * 로그인한 사람에게 「로그인 결과를 받지 못했어요」가 뜬다.
+     *
+     * 실린 것이 있는데(`#`·`?`) 그중에 토큰도 사유도 없었다면 그때는 진짜 이상한
+     * 것이므로 알린다.
+     */
+    if (url.includes('#') || url.includes('?')) {
+      setFailure('로그인 결과를 받지 못했어요.');
+    }
   }, [url, queryClient]);
 
   if (!ready) return <Loading />;
@@ -73,7 +104,10 @@ export function AuthGate({ children }: { children: ReactNode }) {
         title="DVI 계정으로 로그인해주세요"
         body={
           failure ??
-          '사내 통합 로그인을 써요. 브라우저에서 로그인하면 앱으로 돌아와요.'
+          // 웹에서는 「앱으로 돌아와요」가 사실이 아니다 — 같은 탭에서 이어진다.
+          (Platform.OS === 'web'
+            ? '사내 통합 로그인을 써요. 로그인하면 이 화면으로 돌아와요.'
+            : '사내 통합 로그인을 써요. 브라우저에서 로그인하면 앱으로 돌아와요.')
         }
         action="로그인하기"
       />

@@ -189,6 +189,25 @@ export function readCallbackUrl(url: string): { token?: string; error?: string }
   return {};
 }
 
+/**
+ * 웹판에만 실체가 있다. 앱은 `Linking.useURL()` 이 딥링크를 그대로 주므로 쓸 것이 없다.
+ *
+ * **웹은 그 훅을 믿을 수 없다** — 첫 렌더에 `null` 을 주고 프로미스가 풀린 뒤에야 값이
+ * 오는데, 그 사이에 `app/auth/callback.tsx` 의 `<Redirect>` 가 주소를 `/` 로 바꿔서
+ * `#token=` 이 사라진다. 그래서 웹판은 모듈이 뜰 때 주소를 낚아채 둔다.
+ */
+export function pendingCallbackUrl(): string | undefined {
+  return undefined;
+}
+
+/**
+ * 웹판에만 실체가 있다. 웹은 여기서 주소창의 `#token=` 을 지운다.
+ * 앱은 딥링크라 주소창이 없다.
+ */
+export function forgetCallbackUrl(): void {
+  // 앱에서는 할 일이 없다.
+}
+
 /** 이 딥링크가 로그인 콜백인가 */
 export function isCallbackUrl(url: string): boolean {
   return url.includes('/auth/callback');

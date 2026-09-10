@@ -7,12 +7,17 @@
     "orientation": "portrait",
     "userInterfaceStyle": "light",
     "runtimeVersion": {
-      "policy": "fingerprint"
+      "policy": "appVersion"
     },
     "updates": {
       "url": "https://u.expo.dev/206956d7-799b-4ba0-8c3e-541798bbd436",
       "checkAutomatically": "ON_LOAD",
       "fallbackToCacheTimeout": 0
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "single",
+      "favicon": "./assets/icon.png"
     },
     "icon": "./assets/icon.png",
     "plugins": [
