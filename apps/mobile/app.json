@@ -14,6 +14,11 @@
       "checkAutomatically": "ON_LOAD",
       "fallbackToCacheTimeout": 0
     },
+    "web": {
+      "bundler": "metro",
+      "output": "static",
+      "favicon": "./assets/icon.png"
+    },
     "icon": "./assets/icon.png",
     "plugins": [
       "expo-router",
