@@ -45,10 +45,24 @@ export default defineConfig({
              */
             'expo-linking': dir('./tests/stubs/expo-linking.ts'),
             'expo-secure-store': dir('./tests/stubs/expo-secure-store.ts'),
+            'expo-crypto': dir('./tests/stubs/expo-crypto.ts'),
           },
         },
+        /*
+         * **`__DEV__` 는 Metro 가 박는 값이라 노드에 없다.** 없으면 그것을 보는 가드가
+         * 참조 오류로 터져서 파일 자체를 못 읽는다. 배포 빌드와 같은 `false` 로 둔다.
+         */
+        define: { __DEV__: false },
         test: {
           name: 'mobile',
+          /*
+           * 앱이 Keycloak 과 직접 붙으면서 주소가 환경변수로 들어왔다. 값은 시크릿이
+           * 아니고(`EXPO_PUBLIC_`), 여기서는 **주소를 조립하는 규칙**만 본다.
+           */
+          env: {
+            EXPO_PUBLIC_OIDC_ISSUER: 'https://api.dvi-ind.com/dauth/realms/dvi',
+            EXPO_PUBLIC_OIDC_CLIENT_ID: 'hi-yo-app',
+          },
           include: ['apps/mobile/src/**/*.test.ts'],
           environment: 'node',
         },

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { callbackUrl, isCallbackUrl, loginUrl, readCallbackUrl } from './auth';
+import { buildAuthorizeUrl, callbackUrl } from './auth';
+import { isCallbackUrl, readCallbackUrl } from './relayCallback';
 
 /**
  * 로그인 딥링크를 읽는 부분.
@@ -8,6 +9,10 @@ import { callbackUrl, isCallbackUrl, loginUrl, readCallbackUrl } from './auth';
  * 앱을 깨우는데, 그 문자열에서 토큰을 못 꺼내면 사용자는 브라우저를 다녀오고도 계속
  * 로그인 화면을 본다. 이 언저리에서 이미 한 번 사고가 났다 — `callbackUrl()` 을 만들어
  * 두고 `loginUrl()` 에 붙이지 않아서 **토큰이 앱으로 올 수 없는 코드**였다 (2026-09-01).
+ *
+ * **2026-09-10에 앱은 Keycloak 과 직접 붙는 방식으로 옮겼다.** 아래 `readCallbackUrl` 은
+ * 이제 **웹판이 쓰는 중계 경로**의 것이고(`relayCallback.ts`), 그 경로는 없어지지 않아서
+ * 이 주장들도 그대로 남는다. 앱의 새 경로는 `oidc.test.ts` 가 본다.
  *
  * `expo-linking`·`expo-secure-store` 는 노드에서 읽히게만 한 대역이다
  * (`tests/stubs`. `vitest.config.mts`). 아래 함수들은 그것을 쓰지 않는다 —
@@ -106,18 +111,25 @@ describe('isCallbackUrl — 이 딥링크가 콜백인가', () => {
   });
 });
 
-describe('loginUrl — redirect 를 반드시 싣는다', () => {
+describe('buildAuthorizeUrl — 돌아올 주소를 반드시 싣는다', () => {
   /*
-   * **이것을 빠뜨리면 서버가 웹 기본 콜백으로 돌려보내서 토큰이 앱으로 영영 오지 않는다.**
-   * 실제로 그런 코드였다 (2026-09-01 고침). 그래서 여기를 테스트로 박아 둔다.
+   * **이것을 빠뜨리면 토큰이 앱으로 영영 오지 않는다.** 실제로 그런 코드였다
+   * (2026-09-01 고침). 중계에서는 `redirect`, 직접 붙는 지금은 `redirect_uri` 로
+   * 이름만 바뀌었고 **틀렸을 때 벌어지는 일은 똑같다.** 그래서 여기를 계속 박아 둔다.
    */
-  it('redirect 에 돌아올 주소를 인코딩해 붙인다', () => {
-    const url = loginUrl();
-    expect(url).toContain('/auth/login?redirect=');
-    expect(url).toContain(encodeURIComponent(callbackUrl()));
+  it('redirect_uri 에 돌아올 주소를 붙인다', () => {
+    const query = new URL(buildAuthorizeUrl('ch4ll3ng3', 'st4te')).searchParams;
+    expect(query.get('redirect_uri')).toBe(callbackUrl());
   });
 
   it('돌아올 주소는 콜백으로 알아볼 수 있는 것이다', () => {
     expect(isCallbackUrl(callbackUrl())).toBe(true);
+  });
+
+  // PKCE 가 빠지면 인가 코드를 가로챈 쪽이 그대로 토큰을 받아간다.
+  it('PKCE 를 S256 으로 싣는다', () => {
+    const query = new URL(buildAuthorizeUrl('ch4ll3ng3', 'st4te')).searchParams;
+    expect(query.get('code_challenge')).toBe('ch4ll3ng3');
+    expect(query.get('code_challenge_method')).toBe('S256');
   });
 });
