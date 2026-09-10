@@ -75,8 +75,25 @@ export function AuthGate({ children }: { children: ReactNode }) {
       });
       return;
     }
-    // 서버가 준 사유를 그대로 보여준다. 앱에서 문구를 만들지 않는다.
-    setFailure(error ?? '로그인 결과를 받지 못했어요.');
+    if (error) {
+      // 서버가 준 사유를 그대로 보여준다. 앱에서 문구를 만들지 않는다.
+      setFailure(error);
+      return;
+    }
+    /*
+     * 토큰도 사유도 없다.
+     *
+     * **주소에 실린 것이 아예 없으면 조용히 지나간다.** 웹에서 콜백을 처리하고 나면
+     * `#token=` 을 지우는데, 그 뒤에 `Linking.useURL()` 이 늦게 `/auth/callback`(맨몸)
+     * 을 들고 오는 수가 있다. 그것을 새 콜백으로 보고 실패라고 적으면, 방금 제대로
+     * 로그인한 사람에게 「로그인 결과를 받지 못했어요」가 뜬다.
+     *
+     * 실린 것이 있는데(`#`·`?`) 그중에 토큰도 사유도 없었다면 그때는 진짜 이상한
+     * 것이므로 알린다.
+     */
+    if (url.includes('#') || url.includes('?')) {
+      setFailure('로그인 결과를 받지 못했어요.');
+    }
   }, [url, queryClient]);
 
   if (!ready) return <Loading />;

@@ -64,6 +64,36 @@ let captured: string | undefined = (() => {
  */
 export function forgetCallbackUrl(): void {
   captured = undefined;
+  strip();
+  /*
+   * **한 번으로는 안 지워진다.** 앱이 처음 뜨는 동안 expo-router 가 자기 history 를
+   * 쓰면서 원래 주소를 되돌린다 — 지우는 시점이 그보다 이르면 `#token=` 이 되살아난다.
+   * 차가운 첫 로드에서만 나타나서 놓치기 쉽다 (2026-09-10 브라우저에서 확인).
+   *
+   * 라우터가 언제 자리 잡는지는 우리가 알 수 없으므로, **지워질 때까지 잠깐 지켜본다.**
+   * 토큰은 이미 꺼내 썼으니 몇 번을 더 지워도 잃을 것이 없다.
+   */
+  let left = STRIP_ATTEMPTS;
+  const timer = setInterval(() => {
+    strip();
+    if (--left <= 0 || noHash()) clearInterval(timer);
+  }, STRIP_INTERVAL_MS);
+}
+
+/** 약 3초 동안 지켜본다. 그 안에 라우터가 자리 잡는다 */
+const STRIP_ATTEMPTS = 30;
+const STRIP_INTERVAL_MS = 100;
+
+function noHash(): boolean {
+  try {
+    return window.location.hash === "";
+  } catch {
+    return true;
+  }
+}
+
+/** 주소창에서 fragment 만 떼어낸다. 경로는 라우터가 쓰던 대로 둔다 */
+function strip(): void {
   try {
     if (window.location.hash === "") return;
     window.history.replaceState(null, "", window.location.pathname + window.location.search);
