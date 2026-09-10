@@ -39,12 +39,23 @@ export function AttendanceOperationsPage() {
   const [date, setDate] = useState(() => todayInKst());
   const [correcting, setCorrecting] = useState<AttendanceDaily>();
   const [confirming, setConfirming] = useState(false);
+  /*
+   * **확정된 날에 판정을 다시 돌리면 확정이 풀린다.** 급여에 들어가고 빠지는 일이라
+   * 조용히 일어나면 안 된다 — 그 날에 확정된 사람이 있을 때만 확인을 받는다.
+   *
+   * 버튼을 따로 두지 않았다. 서버는 `judge` 하나이고 `confirm=false` 는 기본값이라,
+   * 「확정 해제」 버튼을 만들어도 **같은 호출**이 된다 — 같은 일을 하는 버튼이 둘이면
+   * 어느 것을 눌러야 하는지가 새 질문이 된다 (`docs/01_물어볼_것.md` 28번).
+   */
+  const [rejudging, setRejudging] = useState(false);
 
   const daily = useDailyAttendance(date);
   const judge = useJudgeAttendance();
   const collect = useCollectAttendance();
 
   const unconfirmed = daily.data?.filter((row) => !row.confirmed).length;
+  /** 이 날 확정된 사람 수. 0보다 크면 재판정이 그만큼의 확정을 푼다 */
+  const confirmed = daily.data?.filter((row) => row.confirmed).length ?? 0;
 
   const columns: Column<AttendanceDaily>[] = [
     {
@@ -138,8 +149,12 @@ export function AttendanceOperationsPage() {
           <h2 className="section-title">판정</h2>
           <p className="muted">
             연장·야간·지각·조퇴가 판정에서 나와요. 여러 번 돌려도 결과는 같아요.
-            다만 <b>이미 확정한 날에 다시 돌리면 확정이 풀려요</b> — 확정은 아래에서 다시
-            하면 돼요.
+            {confirmed > 0 && (
+              <>
+                {" "}
+                다만 <b>이 날은 {confirmed}명이 확정돼 있어서, 다시 돌리면 그 확정이 풀려요.</b>
+              </>
+            )}
           </p>
           {judge.data && (
             <p className="muted">
@@ -162,7 +177,7 @@ export function AttendanceOperationsPage() {
               label="판정 다시 하기"
               variant="primary"
               loading={judge.isPending && judge.variables?.confirm !== true}
-              onClick={() => judge.mutate({ date })}
+              onClick={() => (confirmed > 0 ? setRejudging(true) : judge.mutate({ date }))}
             />
           </div>
         </div>
@@ -193,6 +208,27 @@ export function AttendanceOperationsPage() {
           {unconfirmed === undefined
             ? '이 날 근태를 아직 못 불러왔어요.'
             : `아직 판정 전인 사람이 ${unconfirmed}명이에요.`}
+        </p>
+        {judge.error && <p className="danger">{judge.error.message}</p>}
+      </Dialog>
+
+      {/*
+        재판정은 여러 번 돌려도 결과가 같아서 원래 확인이 필요 없다. **확정된 날만 다르다** —
+        그 확정이 풀리고, 풀린 사람은 다시 확정할 때까지 급여에서 빠진다.
+        그래서 확정된 사람이 있을 때만 이 상자가 열린다.
+      */}
+      <Dialog
+        open={rejudging}
+        title="판정을 다시 돌릴까요?"
+        description={`${date} 근태를 다시 판정해요. 연장·야간·지각·조퇴를 새로 계산해요.`}
+        confirmLabel="다시 판정하기"
+        loading={judge.isPending}
+        onClose={() => setRejudging(false)}
+        onConfirm={() => judge.mutate({ date }, { onSuccess: () => setRejudging(false) })}
+      >
+        <p className="muted">
+          <b>{confirmed}명의 확정이 풀려요.</b> 그 사람들은 다시 확정할 때까지 급여 계산에서
+          빠져요. 확정은 「확정까지 하기」로 다시 하면 돼요.
         </p>
         {judge.error && <p className="danger">{judge.error.message}</p>}
       </Dialog>
