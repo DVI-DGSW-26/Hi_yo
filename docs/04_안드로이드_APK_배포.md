@@ -22,8 +22,12 @@ iOS는 별개다 — Apple 개발자 계정이 결제되지 않아 막혀 있다
 
 ### `apps/mobile/app.json`
 
-- `runtimeVersion: { "policy": "fingerprint" }` — 네이티브 구성이 바뀌면 값이 저절로 달라진다.
-  구버전 앱이 맞지 않는 업데이트를 받아 깨지는 것을 막는 안전장치다.
+- `runtimeVersion: { "policy": "appVersion" }` — 앱 버전(`version`, 지금 `0.1.0`)이 곧
+  runtimeVersion 이다. **이 값이 같은 앱끼리만 OTA 를 주고받는다.**
+  **처음에 `fingerprint` 정책을 넣었다가 빌드가 죽었다** (2026-09-10) —
+  「Runtime version calculated on local machine not equal to runtime version calculated
+  during build」. 이 리포는 Windows 라 파일이 CRLF 로 놓이고 EAS 리눅스 빌더는 LF 라
+  같은 코드에서 지문이 다르게 나온다. **다시 시도하지 않는다.**
 - `updates.url` — 이 프로젝트의 OTA 주소.
 - `fallbackToCacheTimeout: 0` — 켤 때 기다리지 않는다. 업데이트는 뒤에서 받고
   **다음에 앱을 켤 때** 반영된다. 즉 직원이 고친 내용을 보려면 한 번 껐다 켜야 한다.
@@ -71,9 +75,14 @@ eas update --channel production -m "무엇을 고쳤는지"
 
 **그 외는 OTA로 간다:** 화면, 문구, 계산 없는 표시 로직, 스타일.
 
-헷갈릴 일은 적다. `fingerprint` 정책이라 네이티브가 바뀌면 runtimeVersion이 저절로
-달라지고, 그러면 구버전 앱은 새 OTA를 **받지 않는다.** 업데이트를 올렸는데 아무도
-못 받고 있으면 네이티브가 바뀐 것이니 APK를 다시 돌린다.
+> **네이티브를 바꿨으면 `app.json` 의 `version` 을 반드시 올린다.**
+>
+> `appVersion` 정책이라 runtimeVersion 이 곧 `version` 이다. 올리지 않으면 새 JS 가
+> **옛 네이티브를 쓰는 앱에도 내려간다** — 없는 네이티브 모듈을 부르며 깨진다.
+> 자동으로 막아주지 않는다. **사람이 지켜야 하는 유일한 규칙이다.**
+
+업데이트를 올렸는데 아무도 못 받고 있으면 `version` 이 서로 다른 것이다 —
+그때는 APK 를 다시 돌려 배포한다.
 
 ---
 
